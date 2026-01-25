@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_login'])) {
-    header("Location: /rongyanghome/login.php");
+    header("Location: /login.php");
     exit();
 }
 
@@ -37,14 +37,14 @@ if ($user_role === 'admin') {
         // Redirect to their first allowed module or logout if none
         if (count($allowed_modules) > 0) {
             $first = trim($allowed_modules[0]);
-            if ($first == 'stock') header("Location: /rongyanghome/stock/index.php");
-            elseif ($first == 'projects') header("Location: /rongyanghome/projects/index.php");
-            elseif ($first == 'companytransaction') header("Location: /rongyanghome/companytransaction/index.php");
-            else header("Location: /rongyanghome/dashboard.php");
+            if ($first == 'stock') header("Location: /stock/index.php");
+            elseif ($first == 'projects') header("Location: /projects/index.php");
+            elseif ($first == 'companytransaction') header("Location: /companytransaction/index.php");
+            else header("Location: /dashboard.php");
         } else {
             // No modules allowed, maybe they only have admin access but role is user? 
             // Or just send to dashboard which might show "Access Denied"
-            header("Location: /rongyanghome/dashboard.php?error=access_denied");
+            header("Location: /dashboard.php?error=access_denied");
         }
         exit();
     }
