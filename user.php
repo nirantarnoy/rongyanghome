@@ -162,6 +162,29 @@ while ($row = mysqli_fetch_assoc($companyRes)) {
                             </select>
                         </div>
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">สิทธิ์การเข้าถึงโมดูล</label>
+                        <div class="grid grid-cols-2 gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" name="modules[]" value="admin" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Admin (ระบบหลัก)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" name="modules[]" value="stock" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Stock (คลังสินค้า)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" name="modules[]" value="projects" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Projects (โครงการ)</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" name="modules[]" value="companytransaction" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Transaction (บัญชีบริษัท)</span>
+                            </label>
+                        </div>
+                        <input type="hidden" name="allowed_modules" id="allowed_modules">
+                    </div>
                 </form>
             </div>
             
@@ -244,6 +267,16 @@ function openModal(type, id = null) {
                 $('input[name="full_name"]').val(data.full_name);
                 $('select[name="role"]').val(data.role);
                 $('select[name="company_id"]').val(data.company_id);
+                
+                // Set checkboxes
+                $('input[name="modules[]"]').prop('checked', false);
+                if (data.allowed_modules) {
+                    const modules = data.allowed_modules.split(',');
+                    modules.forEach(m => {
+                        $(`input[name="modules[]"][value="${m}"]`).prop('checked', true);
+                    });
+                }
+                
                 $('#userModal').removeClass('hidden');
             }
         });
@@ -255,6 +288,13 @@ function closeModal() {
 }
 
 function saveUser() {
+    // Collect checked modules
+    const selectedModules = [];
+    $('input[name="modules[]"]:checked').each(function() {
+        selectedModules.push($(this).val());
+    });
+    $('#allowed_modules').val(selectedModules.join(','));
+
     const formData = $('#userForm').serialize();
     const action = $('#user_id').val() ? 'update' : 'create';
 
@@ -303,6 +343,41 @@ function deleteUser(id) {
                     if (res.status === 'success') {
                         Swal.fire('ลบแล้ว!', res.message, 'success');
                         loadData(currentPage);
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function resetPassword(id, username) {
+    Swal.fire({
+        title: 'ยืนยันการรีเซ็ตรหัสผ่าน?',
+        html: `คุณต้องการรีเซ็ตรหัสผ่านของ <b>${username}</b> เป็น <b>123456</b> ใช่หรือไม่?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, รีเซ็ต!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'user_action.php',
+                type: 'POST',
+                data: { action: 'reset_password', id: id },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'รีเซ็ตเรียบร้อย!',
+                            html: `รหัสผ่านของ <b>${username}</b> ถูกรีเซ็ตเป็น <b>123456</b> แล้ว`,
+                            timer: 3000,
+                            showConfirmButton: true
+                        });
                     } else {
                         Swal.fire('ผิดพลาด', res.message, 'error');
                     }

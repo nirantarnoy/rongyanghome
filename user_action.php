@@ -18,6 +18,14 @@ $createUserTableSQL = "CREATE TABLE IF NOT EXISTS users (
 mysqli_query($conn, $createUserTableSQL);
 mysqli_query($conn, "ALTER TABLE users CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
+// Add allowed_modules column if not exists
+$checkColumnSQL = "SHOW COLUMNS FROM users LIKE 'allowed_modules'";
+$columnExists = mysqli_query($conn, $checkColumnSQL);
+if (mysqli_num_rows($columnExists) == 0) {
+    mysqli_query($conn, "ALTER TABLE users ADD COLUMN allowed_modules TEXT");
+}
+
+
 if ($action == 'list') {
     $search = mysqli_real_escape_string($conn, $_GET['search'] ?? '');
     $perPage = $_GET['perPage'] ?? 20;
@@ -59,7 +67,18 @@ if ($action == 'list') {
             $roleBadge = $row['role'] == 'admin' 
                 ? "<span class='px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full'>Admin</span>"
                 : "<span class='px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full'>User</span>";
-            
+
+            $modules = $row['allowed_modules'] ? explode(',', $row['allowed_modules']) : [];
+            $moduleBadges = '';
+            foreach ($modules as $mod) {
+                $color = 'bg-gray-100 text-gray-600';
+                if ($mod == 'admin') $color = 'bg-purple-100 text-purple-700';
+                if ($mod == 'stock') $color = 'bg-indigo-100 text-indigo-700';
+                if ($mod == 'projects') $color = 'bg-amber-100 text-amber-700';
+                if ($mod == 'companytransaction') $color = 'bg-green-100 text-green-700';
+                $moduleBadges .= "<span class='px-2 py-0.5 $color text-[10px] font-bold rounded-md mr-1 uppercase'>$mod</span>";
+            }
+
             $html .= "
             <tr class='hover:bg-gray-50/80 transition-colors group'>
                 <td class='px-6 py-4 text-sm text-gray-500'>$i</td>
@@ -69,12 +88,21 @@ if ($action == 'list') {
                 </td>
                 <td class='px-6 py-4 text-sm text-gray-600 font-medium'>".($row['full_name'] ?: '-')."</td>
                 <td class='px-6 py-4 text-sm text-gray-600'>".($row['company_name'] ?: "<span class='text-gray-300'>ไม่ได้ระบุ</span>")."</td>
-                <td class='px-6 py-4 text-sm'>$roleBadge</td>
+                <td class='px-6 py-4'>
+                    <div class='mb-1'>$roleBadge</div>
+                    <div class='flex flex-wrap gap-y-1'>$moduleBadges</div>
+                </td>
                 <td class='px-6 py-4 text-right space-x-2'>
                     <button onclick='openModal(\"edit\", {$row['id']})' 
                             class='inline-flex items-center p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all' title='แก้ไข'>
                         <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'></path>
+                        </svg>
+                    </button>
+                    <button onclick='resetPassword({$row['id']}, \"{$row['username']}\")' 
+                            class='inline-flex items-center p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all' title='รีเซ็ตรหัสผ่าน'>
+                        <svg class='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'></path>
                         </svg>
                     </button>
                     <button onclick='deleteUser({$row['id']})' 
@@ -114,7 +142,7 @@ if ($action == 'list') {
 
 if ($action == 'get') {
     $id = (int)$_GET['id'];
-    $sql = "SELECT id, username, full_name, role, company_id FROM users WHERE id = $id";
+    $sql = "SELECT id, username, full_name, role, company_id, allowed_modules FROM users WHERE id = $id";
     $result = mysqli_query($conn, $sql);
     echo json_encode(mysqli_fetch_assoc($result));
 }
@@ -125,6 +153,7 @@ if ($action == 'create') {
     $full_name = mysqli_real_escape_string($conn, $_POST['full_name'] ?? '');
     $role = mysqli_real_escape_string($conn, $_POST['role'] ?? '');
     $company_id_raw = $_POST['company_id'] ?? '';
+    $allowed_modules = mysqli_real_escape_string($conn, $_POST['allowed_modules'] ?? '');
 
     if (empty($username) || empty($password_raw) || empty($full_name) || empty($role) || empty($company_id_raw)) {
         echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน']);
@@ -142,8 +171,8 @@ if ($action == 'create') {
         exit;
     }
 
-    $sql = "INSERT INTO users (username, password, full_name, role, company_id) 
-            VALUES ('$username', '$password', '$full_name', '$role', $company_id)";
+    $sql = "INSERT INTO users (username, password, full_name, role, company_id, allowed_modules) 
+            VALUES ('$username', '$password', '$full_name', '$role', $company_id, '$allowed_modules')";
     
     if (mysqli_query($conn, $sql)) {
         echo json_encode(['status' => 'success', 'message' => 'เพิ่มผู้ใช้งานเรียบร้อยแล้ว']);
@@ -158,6 +187,7 @@ if ($action == 'update') {
     $full_name = mysqli_real_escape_string($conn, $_POST['full_name'] ?? '');
     $role = mysqli_real_escape_string($conn, $_POST['role'] ?? '');
     $company_id_raw = $_POST['company_id'] ?? '';
+    $allowed_modules = mysqli_real_escape_string($conn, $_POST['allowed_modules'] ?? '');
 
     if (empty($username) || empty($full_name) || empty($role) || empty($company_id_raw)) {
         echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน']);
@@ -184,7 +214,8 @@ if ($action == 'update') {
             username = '$username', 
             full_name = '$full_name', 
             role = '$role', 
-            company_id = $company_id
+            company_id = $company_id,
+            allowed_modules = '$allowed_modules'
             $passwordUpdate
             WHERE id = $id";
     
@@ -200,6 +231,19 @@ if ($action == 'delete') {
     $sql = "DELETE FROM users WHERE id = $id";
     if (mysqli_query($conn, $sql)) {
         echo json_encode(['status' => 'success', 'message' => 'ลบผู้ใช้งานเรียบร้อยแล้ว']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+    }
+}
+
+if ($action == 'reset_password') {
+    $id = (int)$_POST['id'];
+    $default_password = '123456';
+    $password_hash = password_hash($default_password, PASSWORD_DEFAULT);
+    
+    $sql = "UPDATE users SET password = '$password_hash' WHERE id = $id";
+    if (mysqli_query($conn, $sql)) {
+        echo json_encode(['status' => 'success', 'message' => 'รีเซ็ตรหัสผ่านเป็น 123456 เรียบร้อยแล้ว']);
     } else {
         echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
     }

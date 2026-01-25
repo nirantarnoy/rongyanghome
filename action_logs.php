@@ -1,0 +1,97 @@
+<?php
+require 'auth_check.php';
+include 'config.php';
+
+$company_id = $_SESSION['company_id'];
+?>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติกิจกรรม - RONGYANG HOME</title>
+    <script src="assets/js/tailwindcss.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<?php include 'navbar.php'; ?>
+
+<div class="container max-w-7xl mx-auto px-4 py-8">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            ประวัติกิจกรรมในระบบ
+        </h1>
+        <p class="text-gray-500 mt-1">ตรวจสอบการทำรายการต่างๆ ของผู้ใช้งานในระบบ</p>
+    </div>
+
+    <!-- Table Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50/50 border-b border-gray-100">
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">วันที่-เวลา</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ผู้ใช้งาน</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ประเภท</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">กิจกรรม</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    <?php
+                    $log_sql = "SELECT l.*, u.full_name, u.username 
+                               FROM stock_action_logs l 
+                               LEFT JOIN users u ON l.user_id = u.id 
+                               WHERE l.company_id = ? 
+                               ORDER BY l.created_at DESC 
+                               LIMIT 200";
+                    $log_stmt = mysqli_prepare($conn, $log_sql);
+                    mysqli_stmt_bind_param($log_stmt, "i", $company_id);
+                    mysqli_stmt_execute($log_stmt);
+                    $log_res = mysqli_stmt_get_result($log_stmt);
+
+                    if (mysqli_num_rows($log_res) == 0) {
+                        echo "<tr><td colspan='4' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
+                    } else {
+                        while ($log = mysqli_fetch_assoc($log_res)) {
+                            $type_colors = [
+                                'create' => 'bg-emerald-100 text-emerald-700',
+                                'update' => 'bg-blue-100 text-blue-700',
+                                'delete' => 'bg-red-100 text-red-700',
+                                'view' => 'bg-gray-100 text-gray-700'
+                            ];
+                            $color_class = $type_colors[$log['action_type']] ?? 'bg-gray-100 text-gray-700';
+                            $type_label = strtoupper($log['action_type']);
+                            
+                            $user_display = $log['full_name'] ? htmlspecialchars($log['full_name']) : htmlspecialchars($log['username'] ?? 'System');
+
+                            echo "
+                            <tr class='hover:bg-gray-50/80 transition-colors'>
+                                <td class='px-6 py-4 text-sm text-gray-500'>" . date('d/m/Y H:i:s', strtotime($log['created_at'])) . "</td>
+                                <td class='px-6 py-4'>
+                                    <div class='text-sm font-medium text-gray-900'>$user_display</div>
+                                </td>
+                                <td class='px-6 py-4'>
+                                    <span class='px-2.5 py-1 rounded-full text-xs font-bold $color_class'>$type_label</span>
+                                </td>
+                                <td class='px-6 py-4 text-sm text-gray-600'>" . htmlspecialchars($log['activity']) . "</td>
+                            </tr>";
+                        }
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

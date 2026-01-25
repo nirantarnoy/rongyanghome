@@ -75,7 +75,21 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
         </div>
 
         <!-- Header -->
-        <div class="header-box p-8 mb-10 shadow-lg">
+        <div class="header-box p-8 mb-10 shadow-lg relative">
+            <div class="absolute top-4 right-4 flex items-center gap-3 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
+                <div class="text-right hidden sm:block">
+                    <div class="text-xs font-bold opacity-80 uppercase tracking-wider">ผู้ใช้งาน</div>
+                    <div class="text-sm font-bold"><?= $_SESSION['user_login'] ?></div>
+                </div>
+                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                <a href="../index.php" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-all shadow-lg" title="กลับระบบหลัก">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </a>
+                <?php endif; ?>
+                <a href="../logout.php" class="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-lg transition-all shadow-lg" title="ออกจากระบบ">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </a>
+            </div>
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <div class="flex items-center gap-3 mb-2">

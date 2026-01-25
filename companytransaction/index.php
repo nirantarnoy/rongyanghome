@@ -1,14 +1,5 @@
 <?php
-// Session check for portability
-session_start();
-if (!isset($_SESSION['user_login'])) {
-    if (file_exists('../login.php')) {
-        header("Location: ../login.php");
-    } else {
-        header("Location: login.php");
-    }
-    exit();
-}
+require '../auth_check.php';
 
 $display_year = "2569";
 $view = $_GET['view'] ?? 'dashboard';
@@ -174,7 +165,21 @@ $view = $_GET['view'] ?? 'dashboard';
 
     <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <div class="header-box p-8 md:p-12 text-center text-white mb-8">
+        <div class="header-box p-8 md:p-12 text-center text-white mb-8 relative">
+            <div class="absolute top-4 right-4 flex items-center gap-3 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
+                <div class="text-right hidden sm:block">
+                    <div class="text-xs font-bold opacity-80 uppercase tracking-wider">ผู้ใช้งาน</div>
+                    <div class="text-sm font-bold"><?= $_SESSION['user_login'] ?></div>
+                </div>
+                <?php if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin'): ?>
+                <a href="../index.php" class="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg transition-all shadow-lg" title="กลับระบบหลัก">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </a>
+                <?php endif; ?>
+                <a href="../logout.php" class="bg-red-500/80 hover:bg-red-600 text-white p-2 rounded-lg transition-all shadow-lg" title="ออกจากระบบ">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </a>
+            </div>
             <div class="flex justify-center mb-4 text-4xl">
                 <span>🌳</span>
             </div>
@@ -201,6 +206,9 @@ $view = $_GET['view'] ?? 'dashboard';
                 </a>
                 <a href="index.php?view=category" class="tab-item <?php echo $view == 'category' ? 'active' : ''; ?>">
                     <span class="text-lg">🏷️</span> หมวดหมู่
+                </a>
+                <a href="quotation.php" class="tab-item" target="_blank">
+                    <span class="text-lg">📄</span> ใบเสนอราคา
                 </a>
             </div>
 
@@ -236,19 +244,38 @@ $view = $_GET['view'] ?? 'dashboard';
                         <p class="text-sm font-bold text-[#065f46] mb-2 flex items-center justify-center gap-2">
                             📊 จำนวนรายการทั้งหมด
                         </p>
-                        <p id="dashCount" class="text-4xl font-black text-[#065f46]">0 / 999</p>
+                        <p id="dashCount" class="text-4xl font-black text-[#065f46]">0 รายการ</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Content Area -->
-            <div id="dashContent" class="content-area p-12 flex flex-col items-center justify-center text-center shadow-inner">
-                <p class="text-gray-500 italic">กำลังโหลดข้อมูล...</p>
+            <!-- Transactions Table -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-[#065f46] mb-6">รายการล่าสุด</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-emerald-50 text-emerald-800">
+                            <tr>
+                                <th class="px-4 py-3 text-left rounded-l-lg">วันที่</th>
+                                <th class="px-4 py-3 text-left">โครงการ</th>
+                                <th class="px-4 py-3 text-left">หมวดหมู่</th>
+                                <th class="px-4 py-3 text-left">หมายเหตุ</th>
+                                <th class="px-4 py-3 text-right rounded-r-lg">จำนวนเงิน</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashTransactionTable" class="divide-y divide-gray-100">
+                            <tr>
+                                <td colspan="5" class="px-4 py-8 text-center text-gray-400">กำลังโหลดข้อมูล...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <script>
                 $(document).ready(function() {
                     loadDashboardStats();
+                    loadDashboardTransactions();
                 });
 
                 function loadDashboardStats() {
@@ -265,35 +292,61 @@ $view = $_GET['view'] ?? 'dashboard';
                                     $('#dashExpense').text(d.total_expense.toLocaleString() + ' ฿');
                                     const profitSign = d.total_profit >= 0 ? '+' : '';
                                     $('#dashProfit').text(profitSign + d.total_profit.toLocaleString() + ' ฿');
-                                    $('#dashCount').text(d.total_count + ' / 999');
-                                    
-                                    if (d.total_count > 0) {
-                                        $('#dashContent').html(`
-                                            <div class="mb-6">
-                                                <svg class="w-16 h-16 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-xl font-bold text-[#065f46] mb-2">ระบบพร้อมใช้งาน</h3>
-                                            <p class="text-gray-500">มีการบันทึกข้อมูลแล้ว ${d.total_count} รายการ</p>
-                                        `);
-                                    } else {
-                                        $('#dashContent').html(`
-                                            <div class="mb-6">
-                                                <svg class="w-16 h-16 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                                </svg>
-                                            </div>
-                                            <h3 class="text-xl font-bold text-[#065f46] mb-2">ยังไม่มีข้อมูล</h3>
-                                            <p class="text-gray-500">เริ่มต้นโดยการเพิ่มโครงการและบันทึกรายการ</p>
-                                        `);
-                                    }
+                                    $('#dashCount').text(d.total_count.toLocaleString() + ' รายการ');
                                 }
                             } catch (e) { console.error(e); }
                         }
                     });
                 }
+
+                function loadDashboardTransactions() {
+                    $.ajax({
+                        url: '../projects/transaction_action.php',
+                        type: 'GET',
+                        data: { action: 'list', module_type: 2, search: '' },
+                        success: function(response) {
+                            try {
+                                const res = JSON.parse(response);
+                                if (res.status === 'success') {
+                                    renderDashboardTransactions(res.data);
+                                }
+                            } catch (e) { console.error(e); }
+                        }
+                    });
+                }
+
+                function renderDashboardTransactions(data) {
+                    let html = '';
+                    if (data.length === 0) {
+                        html = '<tr><td colspan="5" class="px-4 py-8 text-center text-gray-400">ยังไม่มีรายการ</td></tr>';
+                    } else {
+                        // Show only latest 20 transactions
+                        const displayData = data.slice(0, 20);
+                        displayData.forEach(t => {
+                            const amountClass = t.direction === 'income' ? 'text-emerald-600' : 'text-red-600';
+                            const amountPrefix = t.direction === 'income' ? '+' : '-';
+                            html += `
+                                <tr class="hover:bg-emerald-50/50 transition-colors">
+                                    <td class="px-4 py-3 text-gray-600">${t.transaction_date}</td>
+                                    <td class="px-4 py-3">
+                                        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">${t.project_name}</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center gap-2">
+                                            <span>${t.category_icon}</span>
+                                            <span class="font-medium text-gray-700">${t.category_name}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-gray-500">${t.note || '-'}</td>
+                                    <td class="px-4 py-3 text-right font-bold ${amountClass}">${amountPrefix}${parseFloat(t.amount).toLocaleString()} ฿</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    $('#dashTransactionTable').html(html);
+                }
             </script>
+
 
         <?php elseif ($view == 'list'): ?>
             <!-- List View -->

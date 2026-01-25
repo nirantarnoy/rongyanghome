@@ -60,15 +60,28 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center gap-6">
-                <a href="index.php" class="nav-link text-sm font-medium <?= $current_page == 'index.php' ? 'active' : '' ?>">เมนูหลัก</a>
-                <a href="dashboard.php" class="nav-link text-sm font-medium <?= $current_page == 'dashboard.php' ? 'active' : '' ?>">Dashboard</a>
-                <a href="company.php" class="nav-link text-sm font-medium <?= $current_page == 'company.php' ? 'active' : '' ?>">บริษัท</a>
-                <a href="user.php" class="nav-link text-sm font-medium <?= $current_page == 'user.php' ? 'active' : '' ?>">ผู้ใช้งาน</a>
+                <?php 
+                $allowed_modules = isset($_SESSION['allowed_modules']) ? explode(',', $_SESSION['allowed_modules']) : [];
+                $user_role = $_SESSION['user_role'] ?? 'user';
+                $is_admin = ($user_role === 'admin');
+                ?>
                 
+                <a href="index.php" class="nav-link text-sm font-medium <?= $current_page == 'index.php' ? 'active' : '' ?>">เมนูหลัก</a>
+                
+                <?php if ($is_admin || in_array('admin', $allowed_modules)): ?>
+                    <a href="dashboard.php" class="nav-link text-sm font-medium <?= $current_page == 'dashboard.php' ? 'active' : '' ?>">Dashboard</a>
+                    <a href="company.php" class="nav-link text-sm font-medium <?= $current_page == 'company.php' ? 'active' : '' ?>">บริษัท</a>
+                    <a href="user.php" class="nav-link text-sm font-medium <?= $current_page == 'user.php' ? 'active' : '' ?>">ผู้ใช้งาน</a>
+                    <a href="login_logs.php" class="nav-link text-sm font-medium <?= $current_page == 'login_logs.php' ? 'active' : '' ?>">ประวัติการเข้าสู่ระบบ</a>
+                <?php endif; ?>
                 <div class="h-6 w-px bg-slate-200"></div>
 
-                <div class="flex items-center gap-2 text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <span class="font-bold"><?= $_SESSION['user_login'] ?></span>
+                    </div>
+                    <div class="w-px h-4 bg-slate-300"></div>
                     <span id="nav-clock"><?= date('H:i') ?></span>
                 </div>
                 <!-- Logout Button -->
