@@ -7,6 +7,27 @@ if (!isset($_SESSION['user_login'])) {
     exit();
 }
 
+// Load active year for the company (if not already loaded)
+if (!isset($_SESSION['active_year']) && isset($_SESSION['company_id'])) {
+    require_once __DIR__ . '/config.php';
+    $company_id = $_SESSION['company_id'];
+    
+    $year_sql = "SELECT active_year FROM year_settings WHERE company_id = ?";
+    $year_stmt = mysqli_prepare($conn, $year_sql);
+    if ($year_stmt) {
+        mysqli_stmt_bind_param($year_stmt, "i", $company_id);
+        mysqli_stmt_execute($year_stmt);
+        $year_res = mysqli_stmt_get_result($year_stmt);
+        $year_data = mysqli_fetch_assoc($year_res);
+        
+        $_SESSION['active_year'] = $year_data['active_year'] ?? (int)date('Y');
+        mysqli_stmt_close($year_stmt);
+    } else {
+        $_SESSION['active_year'] = (int)date('Y');
+    }
+}
+
+
 // Module Access Control
 $current_path = $_SERVER['PHP_SELF'];
 $allowed_modules = isset($_SESSION['allowed_modules']) ? explode(',', $_SESSION['allowed_modules']) : [];

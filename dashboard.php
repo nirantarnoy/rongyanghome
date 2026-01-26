@@ -3,6 +3,14 @@ require 'auth_check.php';
 require 'config.php';
 require 'functions.php';
 
+$user_role = $_SESSION['user_role'] ?? 'user';
+
+// Only admin can view dashboard
+if ($user_role !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
+
 // Get Date Range
 $start_date = $_GET['start_date'] ?? date('Y-m-d');
 $end_date = $_GET['end_date'] ?? date('Y-m-d');

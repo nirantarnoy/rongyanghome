@@ -2,6 +2,14 @@
 require 'auth_check.php';
 include 'config.php';
 
+$user_role = $_SESSION['user_role'] ?? 'user';
+
+// Only admin can manage companies
+if ($user_role !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
+
 // Create table if not exists (for demonstration/initial setup)
 $createTableSQL = "CREATE TABLE IF NOT EXISTS company (
     id INT AUTO_INCREMENT PRIMARY KEY,

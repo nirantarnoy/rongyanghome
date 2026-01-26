@@ -2,6 +2,14 @@
 require 'auth_check.php';
 include 'config.php';
 
+$user_role = $_SESSION['user_role'] ?? 'user';
+
+// Only admin can manage users
+if ($user_role !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
+
 // Fetch companies for the dropdown
 $companySql = "SELECT id, company_name FROM company ORDER BY company_name ASC";
 $companyRes = mysqli_query($conn, $companySql);

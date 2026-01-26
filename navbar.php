@@ -76,6 +76,16 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <?php endif; ?>
                 <div class="h-6 w-px bg-slate-200"></div>
 
+                <?php if ($is_admin): ?>
+                <a href="year_management.php" class="flex items-center gap-2 text-sm font-medium <?= $current_page == 'year_management.php' ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600' ?> transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    <span class="font-bold text-indigo-600"><?= $_SESSION['active_year'] ?? date('Y') ?></span>
+                </a>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <?php endif; ?>
+
                 <div class="flex items-center gap-3 text-sm text-slate-600 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
                     <div class="flex items-center gap-2">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>

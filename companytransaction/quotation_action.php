@@ -19,6 +19,7 @@ if ($action == 'save') {
     $subtotal = (float)$_POST['subtotal'];
     $vat_amount = (float)$_POST['vat_amount'];
     $grand_total = (float)$_POST['grand_total'];
+    $notes = mysqli_real_escape_string($conn, $_POST['notes'] ?? '');
     $signature1 = mysqli_real_escape_string($conn, $_POST['signature1'] ?? '');
     $signature2 = mysqli_real_escape_string($conn, $_POST['signature2'] ?? '');
     $signature3 = mysqli_real_escape_string($conn, $_POST['signature3'] ?? '');
@@ -38,14 +39,15 @@ if ($action == 'save') {
                 subtotal = $subtotal,
                 vat_amount = $vat_amount,
                 grand_total = $grand_total,
+                notes = '$notes',
                 signature1 = '$signature1',
                 signature2 = '$signature2',
                 signature3 = '$signature3'
                 WHERE id = $id AND company_id = $company_id";
     } else {
         // Insert
-        $sql = "INSERT INTO quotations (company_id, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, items, vat_enabled, vat_type, subtotal, vat_amount, grand_total, signature1, signature2, signature3)
-                VALUES ($company_id, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$items', $vat_enabled, '$vat_type', $subtotal, $vat_amount, $grand_total, '$signature1', '$signature2', '$signature3')";
+        $sql = "INSERT INTO quotations (company_id, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, items, vat_enabled, vat_type, subtotal, vat_amount, grand_total, notes, signature1, signature2, signature3)
+                VALUES ($company_id, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$items', $vat_enabled, '$vat_type', $subtotal, $vat_amount, $grand_total, '$notes', '$signature1', '$signature2', '$signature3')";
     }
     
     if (mysqli_query($conn, $sql)) {

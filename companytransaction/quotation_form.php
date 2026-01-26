@@ -126,6 +126,11 @@ if ($edit_id) {
             </div>
         </div>
 
+        <div class="border-t pt-6 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">หมายเหตุ</h3>
+            <textarea id="notes" rows="4" placeholder="บันทึกหมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"><?= htmlspecialchars($quotation_data['notes'] ?? '') ?></textarea>
+        </div>
+
         <div class="border-t pt-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">ลายเซ็น</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -344,6 +349,7 @@ function saveQuotation() {
         subtotal: subtotal,
         vat_amount: vatAmount,
         grand_total: grandTotal,
+        notes: $('#notes').val(),
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
         signature3: $('#sig3_preview').attr('src') || ''
@@ -499,6 +505,14 @@ function generatePreview() {
                     </div>
                 </div>
             </div>
+            
+            <!-- Notes -->
+            ${$('#notes').val().trim() ? `
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-sm font-bold text-gray-700 mb-2">หมายเหตุ:</p>
+                <p class="text-sm text-gray-700 whitespace-pre-wrap">${$('#notes').val()}</p>
+            </div>
+            ` : ''}
             
             <!-- Signatures -->
             <div class="grid grid-cols-3 gap-8 mt-12">

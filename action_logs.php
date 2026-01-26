@@ -3,6 +3,13 @@ require 'auth_check.php';
 include 'config.php';
 
 $company_id = $_SESSION['company_id'];
+$user_role = $_SESSION['user_role'] ?? 'user';
+
+// Only admin can view action logs
+if ($user_role !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
