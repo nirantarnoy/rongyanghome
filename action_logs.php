@@ -48,6 +48,7 @@ if ($user_role !== 'admin') {
                     <tr class="bg-gray-50/50 border-b border-gray-100">
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">วันที่-เวลา</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ผู้ใช้งาน</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">Module</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ประเภท</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">กิจกรรม</th>
                     </tr>
@@ -55,7 +56,7 @@ if ($user_role !== 'admin') {
                 <tbody class="divide-y divide-gray-50">
                     <?php
                     $log_sql = "SELECT l.*, u.full_name, u.username 
-                               FROM stock_action_logs l 
+                               FROM action_logs l 
                                LEFT JOIN users u ON l.user_id = u.id 
                                WHERE l.company_id = ? 
                                ORDER BY l.created_at DESC 
@@ -66,7 +67,7 @@ if ($user_role !== 'admin') {
                     $log_res = mysqli_stmt_get_result($log_stmt);
 
                     if (mysqli_num_rows($log_res) == 0) {
-                        echo "<tr><td colspan='4' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
+                        echo "<tr><td colspan='5' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
                     } else {
                         while ($log = mysqli_fetch_assoc($log_res)) {
                             $type_colors = [
@@ -78,6 +79,15 @@ if ($user_role !== 'admin') {
                             $color_class = $type_colors[$log['action_type']] ?? 'bg-gray-100 text-gray-700';
                             $type_label = strtoupper($log['action_type']);
                             
+                            $module_colors = [
+                                'stock' => 'bg-purple-100 text-purple-700',
+                                'quotation' => 'bg-indigo-100 text-indigo-700',
+                                'project' => 'bg-amber-100 text-amber-700',
+                                'transaction' => 'bg-teal-100 text-teal-700'
+                            ];
+                            $module_color = $module_colors[$log['module']] ?? 'bg-gray-100 text-gray-700';
+                            $module_label = strtoupper($log['module']);
+                            
                             $user_display = $log['full_name'] ? htmlspecialchars($log['full_name']) : htmlspecialchars($log['username'] ?? 'System');
 
                             echo "
@@ -85,6 +95,9 @@ if ($user_role !== 'admin') {
                                 <td class='px-6 py-4 text-sm text-gray-500'>" . date('d/m/Y H:i:s', strtotime($log['created_at'])) . "</td>
                                 <td class='px-6 py-4'>
                                     <div class='text-sm font-medium text-gray-900'>$user_display</div>
+                                </td>
+                                <td class='px-6 py-4'>
+                                    <span class='px-2.5 py-1 rounded-full text-xs font-bold $module_color'>$module_label</span>
                                 </td>
                                 <td class='px-6 py-4'>
                                     <span class='px-2.5 py-1 rounded-full text-xs font-bold $color_class'>$type_label</span>

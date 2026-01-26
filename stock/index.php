@@ -64,8 +64,12 @@ $total_items = mysqli_fetch_assoc($count_res)['total'] ?? 0;
         
         <div class="stock-nav">
             <a href="?tab=warehouse" class="nav-tab <?= $tab == 'warehouse' ? 'active' : '' ?>">
+                <i class="fas fa-boxes"></i>
+                <span>สินค้า</span>
+            </a>
+            <a href="?tab=warehouses_manage" class="nav-tab <?= $tab == 'warehouses_manage' ? 'active' : '' ?>">
                 <i class="fas fa-warehouse"></i>
-                <span>คลังสินค้า</span>
+                <span>จัดการคลังสินค้า</span>
             </a>
             <a href="?tab=transactions" class="nav-tab <?= $tab == 'transactions' ? 'active' : '' ?>">
                 <i class="fas fa-exchange-alt"></i>
@@ -94,6 +98,9 @@ $total_items = mysqli_fetch_assoc($count_res)['total'] ?? 0;
             switch ($tab) {
                 case 'warehouse':
                     include 'tabs/warehouse.php';
+                    break;
+                case 'warehouses_manage':
+                    include 'tabs/warehouses_manage.php';
                     break;
                 case 'transactions':
                     include 'tabs/transactions.php';

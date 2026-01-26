@@ -1,0 +1,5 @@
+--- stock_requisition_items ---
+id | int(11) | NO | PRI |  | auto_increment
+requisition_id | int(11) | NO | MUL |  | 
+product_id | int(11) | NO | MUL |  | 
+qty | int(11) | NO |  |  | 

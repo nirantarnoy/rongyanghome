@@ -207,9 +207,6 @@ $view = $_GET['view'] ?? 'dashboard';
                 <a href="index.php?view=category" class="tab-item <?php echo $view == 'category' ? 'active' : ''; ?>">
                     <span class="text-lg">🏷️</span> หมวดหมู่
                 </a>
-                <a href="quotation.php" class="tab-item" target="_blank">
-                    <span class="text-lg">📄</span> ใบเสนอราคา
-                </a>
             </div>
 
             <!-- Add Button -->

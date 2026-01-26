@@ -36,10 +36,26 @@
             <input type="number" name="qty" class="form-control" min="1" required>
         </div>
         <div class="form-group">
+            <label>คลังสินค้า</label>
+            <select name="warehouse_id" class="form-control" required>
+                <option value="">-- เลือกคลังสินค้า --</option>
+                <?php
+                $w_sql = "SELECT id, name FROM stock_warehouses WHERE company_id = ? ORDER BY name ASC";
+                $w_stmt = mysqli_prepare($conn, $w_sql);
+                mysqli_stmt_bind_param($w_stmt, "i", $company_id);
+                mysqli_stmt_execute($w_stmt);
+                $w_res = mysqli_stmt_get_result($w_stmt);
+                while ($w = mysqli_fetch_assoc($w_res)) {
+                    echo "<option value='{$w['id']}'>{$w['name']}</option>";
+                }
+                ?>
+            </select>
+        </div>
+        <div class="form-group">
             <label>วันที่รายการ</label>
             <input type="date" name="transaction_date" class="form-control" value="<?= date('Y-m-d') ?>" required>
         </div>
-        <div class="form-group" style="grid-column: span 2;">
+        <div class="form-group" style="grid-column: span 3;">
             <label>หมายเหตุ / รายละเอียด</label>
             <input type="text" name="note" class="form-control" placeholder="เช่น รับจาก Supplier A, เบิกไปใช้หน้างาน B">
         </div>
@@ -52,7 +68,13 @@
 </div>
 
 <div class="content-card">
-    <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem;">ประวัติรายการล่าสุด</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0; font-size: 1.3rem;">ประวัติรายการล่าสุด</h2>
+        <div style="position: relative; width: 300px;">
+            <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9CA3AF;"></i>
+            <input type="text" id="transSearch" class="form-control" placeholder="ค้นหาสินค้า, คลัง, หมายเหตุ..." style="padding-left: 2.5rem;" onkeyup="loadTransactions()">
+        </div>
+    </div>
     <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <thead>
@@ -100,9 +122,11 @@ $(document).ready(function() {
 });
 
 function loadTransactions() {
+    const search = $('#transSearch').val();
     $.ajax({
         url: 'stock_action.php?action=get_transactions',
         type: 'GET',
+        data: { search: search },
         success: function(html) {
             $('#transactionHistory').html(html);
         }

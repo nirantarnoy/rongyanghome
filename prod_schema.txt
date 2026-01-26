@@ -1,0 +1,10 @@
+--- stock_production_orders ---
+id | int(11) | NO | PRI |  | auto_increment
+company_id | int(11) | NO | MUL |  | 
+order_no | varchar(50) | NO |  |  | 
+product_id | int(11) | NO | MUL |  | 
+qty | int(11) | NO |  |  | 
+status | enum('pending','in_progress','completed','cancelled') | YES |  | pending | 
+start_date | date | YES |  |  | 
+end_date | date | YES |  |  | 
+created_at | datetime | YES |  | current_timestamp() | 

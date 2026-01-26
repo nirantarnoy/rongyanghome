@@ -8,7 +8,8 @@
     </h2>
     
     <form id="productionForm" class="grid-form">
-        <div class="form-group">
+        <input type="hidden" name="id" id="production_id">
+         <div class="form-group">
             <label>เลขที่ใบสั่งผลิต *</label>
             <input type="text" name="order_no" class="form-control" value="PO-<?= date('YmdHis') ?>" required>
         </div>
@@ -98,8 +99,11 @@
             <input type="text" name="foreman" class="form-control" placeholder="ชื่อหัวหน้าช่าง">
         </div>
 
-        <div style="grid-column: 1/-1; text-align: center; margin-top: 2rem;">
-            <button type="submit" class="btn-primary" style="background: #10B981; width: 100%; padding: 1rem; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <div style="grid-column: 1/-1; text-align: center; margin-top: 2rem; display: flex; justify-content: center; gap: 1rem;">
+            <button type="button" id="btnCancelProductionEdit" class="btn-primary" style="background: #6B7280; display: none; width: 200px;">
+                ยกเลิก
+            </button>
+            <button type="submit" id="btnSubmitProduction" class="btn-primary" style="background: #10B981; width: 100%; padding: 1rem; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                 <i class="fas fa-check-square"></i> สร้างใบสั่งผลิต
             </button>
         </div>
@@ -107,9 +111,15 @@
 </div>
 
 <div class="content-card">
-    <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
-        <i class="fas fa-list-ul" style="color: var(--accent-purple);"></i> รายการใบสั่งผลิต
-    </h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-list-ul" style="color: var(--accent-purple);"></i> รายการใบสั่งผลิต
+        </h2>
+        <div style="position: relative; width: 300px;">
+            <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9CA3AF;"></i>
+            <input type="text" id="prodSearch" class="form-control" placeholder="ค้นหาเลขที่, ลูกค้า, สินค้า..." style="padding-left: 2.5rem;" onkeyup="loadProductionOrders()">
+        </div>
+    </div>
     <div style="overflow-x: auto;">
         <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <thead>
@@ -127,6 +137,16 @@
                 <!-- Production orders will be loaded here via AJAX -->
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- View Production Modal -->
+<div id="viewProductionModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+    <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 2rem; border-radius: 1rem; width: 80%; max-width: 800px; position: relative; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+        <span class="close" onclick="closeProductionModal()" style="position: absolute; right: 1.5rem; top: 1rem; font-size: 2rem; cursor: pointer; color: #9CA3AF;">&times;</span>
+        <div id="viewProductionContent">
+            <!-- Content loaded via AJAX -->
+        </div>
     </div>
 </div>
 
@@ -185,31 +205,53 @@ $(document).ready(function() {
     $('#productionForm').on('submit', function(e) {
         e.preventDefault();
         const formData = $(this).serialize();
+        const productionId = $('#production_id').val();
+        const action = productionId ? 'update_production' : 'add_production';
         
         $.ajax({
-            url: 'stock_action.php?action=add_production',
+            url: 'stock_action.php?action=' + action,
             type: 'POST',
             data: formData,
             dataType: 'json',
             success: function(res) {
                 if (res.status === 'success') {
                     Swal.fire('สำเร็จ', res.message, 'success');
-                    $('#productionForm')[0].reset();
-                    $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
-                    bomRowCount = 0;
+                    resetProductionForm();
                     loadProductionOrders();
                 } else {
                     Swal.fire('ผิดพลาด', res.message, 'error');
                 }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', xhr.responseText);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + error + '<br><br>กรุณาตรวจสอบ Console สำหรับรายละเอียด', 'error');
             }
         });
     });
+
+    $('#btnCancelProductionEdit').on('click', function() {
+        resetProductionForm();
+    });
 });
 
+function resetProductionForm() {
+    $('#productionForm')[0].reset();
+    $('#production_id').val('');
+    $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
+    bomRowCount = 0;
+    $('#btnSubmitProduction').html('<i class="fas fa-check-square"></i> สร้างใบสั่งผลิต');
+    $('#btnCancelProductionEdit').hide();
+    $('.content-card h2:first').html('<i class="fas fa-industry" style="color: var(--accent-purple);"></i> สร้างใบสั่งผลิต');
+    // Reset order number to default
+    $('input[name="order_no"]').val('PO-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14));
+}
+
 function loadProductionOrders() {
+    const search = $('#prodSearch').val();
     $.ajax({
         url: 'stock_action.php?action=get_productions',
         type: 'GET',
+        data: { search: search },
         success: function(html) {
             $('#productionHistory').html(html);
         }
@@ -228,6 +270,200 @@ function updateProductionStatus(id, status) {
             } else {
                 Swal.fire('ผิดพลาด', res.message, 'error');
             }
+        }
+    });
+}
+
+function editProduction(id) {
+    $.ajax({
+        url: 'stock_action.php?action=get_production',
+        type: 'GET',
+        data: { id: id },
+        dataType: 'json',
+        success: function(order) {
+            if (order) {
+                $('#production_id').val(order.id);
+                $('input[name="order_no"]').val(order.order_no);
+                $('input[name="order_date"]').val(order.order_date);
+                $('input[name="due_date"]').val(order.due_date);
+                $('input[name="customer_name"]').val(order.customer_name);
+                $('input[name="project_name"]').val(order.project_name);
+                $('#prod_select').val(order.product_id);
+                $('#prod_sku').val(order.sku);
+                $('input[name="qty"]').val(order.qty);
+                $('#prod_unit').val(order.unit);
+                $('input[name="dimensions"]').val(order.dimensions);
+                $('textarea[name="instructions"]').val(order.instructions);
+                $('textarea[name="qc_standards"]').val(order.qc_standards);
+                $('input[name="ordered_by"]').val(order.ordered_by);
+                $('input[name="foreman"]').val(order.foreman);
+                
+                // Load BOM
+                $('#bomItemsContainer').html('');
+                bomRowCount = 0;
+                if (order.bom && order.bom.length > 0) {
+                    $('#noBomText').hide();
+                    order.bom.forEach(item => {
+                        addBomRowWithData(item.product_id, item.qty);
+                    });
+                } else {
+                    $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
+                }
+                
+                $('#btnSubmitProduction').html('<i class="fas fa-save"></i> อัปเดตใบสั่งผลิต');
+                $('#btnCancelProductionEdit').show();
+                $('.content-card h2:first').html('<i class="fas fa-edit" style="color: var(--accent-purple);"></i> แก้ไขใบสั่งผลิต');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+    });
+}
+
+function addBomRowWithData(productId, qty) {
+    $('#noBomText').hide();
+    const html = `
+    <div class="bom-item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.8rem; border: 1px solid var(--border-color);">
+        <div class="form-group" style="flex: 3;">
+            <label>วัสดุ/วัตถุดิบ</label>
+            <select name="bom[${bomRowCount}][product_id]" class="form-control" required>
+                <option value="">-- เลือกวัสดุ --</option>
+                <?php
+                mysqli_data_seek($prod_res, 0);
+                while ($prod = mysqli_fetch_assoc($prod_res)) {
+                    echo "<option value='{$prod['id']}'>{$prod['name']} ({$prod['sku']})</option>";
+                }
+                ?>
+            </select>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>จำนวนที่ใช้</label>
+            <input type="number" step="0.01" name="bom[${bomRowCount}][qty]" class="form-control" min="0.01" value="${qty}" required>
+        </div>
+        <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem;" onclick="removeBomRow(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>`;
+    $('#bomItemsContainer').append(html);
+    $(`select[name="bom[${bomRowCount}][product_id]"]`).val(productId);
+    bomRowCount++;
+}
+
+function deleteProduction(id) {
+    Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: "คุณต้องการลบใบสั่งผลิตนี้ใช่หรือไม่?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2430',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'ใช่, ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'stock_action.php?action=delete_production',
+                type: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        Swal.fire('ลบแล้ว!', res.message, 'success');
+                        loadProductionOrders();
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function viewProduction(id) {
+    $.ajax({
+        url: 'stock_action.php?action=get_production_details',
+        type: 'GET',
+        data: { id: id },
+        success: function(html) {
+            $('#viewProductionContent').html(html);
+            $('#viewProductionModal').fadeIn(200);
+        }
+    });
+}
+
+function closeProductionModal() {
+    $('#viewProductionModal').fadeOut(200);
+}
+
+// Close modal when clicking outside
+$(window).on('click', function(event) {
+    if ($(event.target).is('#viewProductionModal')) {
+        closeProductionModal();
+    }
+});
+
+function approveMaterialReq(id) {
+    Swal.fire({
+        title: 'ยืนยันการอนุมัติ?',
+        text: "ระบบจะทำการตัดสต็อกสินค้าตามรายการในใบเบิกนี้",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10B981',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'อนุมัติและตัดสต็อก',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'stock_action.php?action=approve_material_requisition',
+                type: 'POST',
+                data: { requisition_id: id },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        // Refresh the modal content
+                        const prodId = $('#production_id').val();
+                        // If we are in edit mode, we have the ID in #production_id
+                        // But if we just clicked "view", we might need to get it from the modal content or a global variable
+                        // For now, let's try to find it from the modal content if #production_id is empty
+                        const currentProdId = prodId || $('#viewProductionContent').find('a[href*="print_production.php"]').attr('href').split('id=')[1];
+                        if (currentProdId) viewProduction(currentProdId);
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function rejectMaterialReq(id) {
+    Swal.fire({
+        title: 'ยืนยันการปฏิเสธ?',
+        text: "คุณต้องการปฏิเสธใบเบิกวัสดุนี้ใช่หรือไม่?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'ปฏิเสธ',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'stock_action.php?action=reject_material_requisition',
+                type: 'POST',
+                data: { requisition_id: id },
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        const currentProdId = $('#production_id').val() || $('#viewProductionContent').find('a[href*="print_production.php"]').attr('href').split('id=')[1];
+                        if (currentProdId) viewProduction(currentProdId);
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
         }
     });
 }

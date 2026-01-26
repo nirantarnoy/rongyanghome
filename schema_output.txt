@@ -1,0 +1,42 @@
+--- stock_products ---
+id | int(11) | NO | PRI |  | auto_increment
+company_id | int(11) | NO | MUL |  | 
+year | int(11) | NO | MUL | 2026 | 
+category_id | int(11) | YES | MUL |  | 
+name | varchar(255) | NO |  |  | 
+sku | varchar(100) | YES |  |  | 
+unit | varchar(50) | YES |  |  | 
+price | decimal(10,2) | YES |  | 0.00 | 
+min_stock | int(11) | YES |  | 0 | 
+image_url | text | YES |  |  | 
+description | text | YES |  |  | 
+created_at | datetime | YES |  | current_timestamp() | 
+updated_at | datetime | YES |  | current_timestamp() | on update current_timestamp()
+
+--- stock_transactions ---
+id | int(11) | NO | PRI |  | auto_increment
+company_id | int(11) | NO | MUL |  | 
+year | int(11) | NO | MUL | 2026 | 
+product_id | int(11) | NO | MUL |  | 
+warehouse_id | int(11) | YES |  |  | 
+type | enum('in','out') | NO |  |  | 
+qty | int(11) | NO |  |  | 
+note | text | YES |  |  | 
+transaction_date | date | NO |  |  | 
+created_at | datetime | YES |  | current_timestamp() | 
+
+--- stock_requisitions ---
+id | int(11) | NO | PRI |  | auto_increment
+company_id | int(11) | NO | MUL |  | 
+req_no | varchar(50) | NO |  |  | 
+po_no | varchar(100) | YES |  |  | 
+so_no | varchar(100) | YES |  |  | 
+customer_name | varchar(255) | YES |  |  | 
+phone | varchar(20) | YES |  |  | 
+shipping_address | text | YES |  |  | 
+shipping_method | varchar(255) | YES |  |  | 
+requisition_date | date | YES |  |  | 
+requester_name | varchar(255) | YES |  |  | 
+status | enum('pending','approved','rejected') | YES |  | pending | 
+created_at | datetime | YES |  | current_timestamp() | 
+

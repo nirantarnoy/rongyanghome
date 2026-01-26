@@ -112,6 +112,19 @@
         </a>
         <?php endif; ?>
 
+        <!-- Menu Item: Documents (จัดการเอกสาร) -->
+        <a href="documents/index.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
+            <div class="flex flex-col items-center">
+                <div class="menu-icon bg-rose-50 text-rose-600 w-20 h-20 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-rose-600 group-hover:text-white transition-colors shadow-sm">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-rose-600 transition-colors">จัดการเอกสาร</h3>
+                <p class="text-gray-500 text-center text-sm">ใบเสนอราคา ใบแจ้งหนี้ ใบเสร็จ</p>
+            </div>
+        </a>
+
         <!-- Menu Item 4: Company -->
         <?php if ($is_admin || in_array('admin', $allowed_modules)): ?>
         <a href="company.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
@@ -161,12 +174,12 @@
         <?php if ($is_admin || in_array('admin', $allowed_modules)): ?>
         <a href="login_logs.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
             <div class="flex flex-col items-center">
-                <div class="menu-icon bg-emerald-50 text-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-sm">
+                <div class="menu-icon bg-teal-50 text-teal-600 w-20 h-20 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-600 group-hover:text-white transition-colors shadow-sm">
                     <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-emerald-600 transition-colors">ประวัติการเข้าสู่ระบบ</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-teal-600 transition-colors">ประวัติการเข้าสู่ระบบ</h3>
                 <p class="text-gray-500 text-center text-sm">ตรวจสอบประวัติการเข้าใช้งานระบบ</p>
             </div>
         </a>

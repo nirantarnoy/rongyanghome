@@ -25,6 +25,115 @@ function logStockAction($conn, $company_id, $activity, $action_type) {
 }
 
 
+if ($action == 'add_warehouse') {
+    header('Content-Type: application/json');
+    $name = $_POST['name'] ?? '';
+    $location = $_POST['location'] ?? '';
+    $sql = "INSERT INTO stock_warehouses (company_id, name, location) VALUES (?, ?, ?)";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "iss", $company_id, $name, $location);
+    if (mysqli_stmt_execute($stmt)) {
+        logStockAction($conn, $company_id, "เพิ่มคลังสินค้า: $name", 'create');
+        echo json_encode(['status' => 'success', 'message' => 'เพิ่มคลังสินค้าเรียบร้อยแล้ว']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+    }
+    exit;
+}
+
+if ($action == 'update_warehouse') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    $name = $_POST['name'] ?? '';
+    $location = $_POST['location'] ?? '';
+    $sql = "UPDATE stock_warehouses SET name = ?, location = ? WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ssii", $name, $location, $id, $company_id);
+    if (mysqli_stmt_execute($stmt)) {
+        logStockAction($conn, $company_id, "แก้ไขคลังสินค้า: $name", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'อัปเดตคลังสินค้าเรียบร้อยแล้ว']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+    }
+    exit;
+}
+
+if ($action == 'get_warehouses') {
+    header('Content-Type: text/html');
+    $sql = "SELECT * FROM stock_warehouses WHERE company_id = ? ORDER BY name ASC";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    if (mysqli_num_rows($res) == 0) {
+        echo '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">ยังไม่มีข้อมูลคลังสินค้า</p>';
+        exit;
+    }
+
+    while ($row = mysqli_fetch_assoc($res)) {
+        echo '
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 0.5rem; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            <div>
+                <div style="font-weight: 600; color: var(--text-dark);">'.htmlspecialchars($row['name']).'</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">'.htmlspecialchars($row['location']).'</div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                <button onclick="editWarehouse('.$row['id'].', \''.addslashes($row['name']).'\', \''.addslashes($row['location']).'\')" style="background: #6366F1; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.8rem;">
+                    <i class="fas fa-edit"></i> แก้ไข
+                </button>
+                <button onclick="deleteWarehouse('.$row['id'].')" style="background: #EF4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.8rem;">
+                    <i class="fas fa-trash"></i> ลบ
+                </button>
+            </div>
+        </div>';
+    }
+    exit;
+}
+
+if ($action == 'get_warehouses_json') {
+    header('Content-Type: application/json');
+    $sql = "SELECT * FROM stock_warehouses WHERE company_id = ? ORDER BY name ASC";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $warehouses = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $warehouses[] = $row;
+    }
+    echo json_encode($warehouses);
+    exit;
+}
+
+if ($action == 'delete_warehouse') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    
+    // Check if there are transactions in this warehouse
+    $check_sql = "SELECT COUNT(*) as count FROM stock_transactions WHERE warehouse_id = ? AND company_id = ?";
+    $check_stmt = mysqli_prepare($conn, $check_sql);
+    mysqli_stmt_bind_param($check_stmt, "ii", $id, $company_id);
+    mysqli_stmt_execute($check_stmt);
+    $count = mysqli_fetch_assoc(mysqli_stmt_get_result($check_stmt))['count'];
+    
+    if ($count > 0) {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่สามารถลบคลังสินค้าได้เนื่องจากมีรายการเคลื่อนไหวในคลังนี้แล้ว']);
+        exit;
+    }
+
+    $sql = "DELETE FROM stock_warehouses WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+    if (mysqli_stmt_execute($stmt)) {
+        logStockAction($conn, $company_id, "ลบคลังสินค้า ID: $id", 'delete');
+        echo json_encode(['status' => 'success', 'message' => 'ลบคลังสินค้าเรียบร้อยแล้ว']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+    }
+    exit;
+}
+
 if ($action == 'add_category') {
     header('Content-Type: application/json');
     $name = $_POST['name'] ?? '';
@@ -67,6 +176,24 @@ if ($action == 'delete_category') {
     } else {
         echo json_encode(['status' => 'error']);
     }
+    exit;
+}
+
+if ($action == 'get_stock_balance') {
+    header('Content-Type: application/json');
+    $product_id = $_GET['product_id'] ?? 0;
+    $warehouse_id = $_GET['warehouse_id'] ?? 0;
+    
+    $sql = "SELECT SUM(CASE WHEN type='in' THEN qty ELSE -qty END) as balance 
+            FROM stock_transactions 
+            WHERE product_id = ? AND warehouse_id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "iii", $product_id, $warehouse_id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $balance = mysqli_fetch_assoc($res)['balance'] ?? 0;
+    
+    echo json_encode(['balance' => (int)$balance]);
     exit;
 }
 
@@ -173,8 +300,7 @@ if ($action == 'update_product') {
 
 if ($action == 'get_products') {
     header('Content-Type: text/html');
-    $sql = "SELECT p.*, c.name as category_name, 
-            (SELECT SUM(CASE WHEN type='in' THEN qty ELSE -qty END) FROM stock_transactions WHERE product_id = p.id) as current_stock
+    $sql = "SELECT p.*, c.name as category_name
             FROM stock_products p 
             LEFT JOIN stock_categories c ON p.category_id = c.id 
             WHERE p.company_id = ? 
@@ -189,11 +315,45 @@ if ($action == 'get_products') {
         exit;
     }
 
+    // Get warehouses for this company
+    $w_sql = "SELECT * FROM stock_warehouses WHERE company_id = ? ORDER BY name ASC";
+    $w_stmt = mysqli_prepare($conn, $w_sql);
+    mysqli_stmt_bind_param($w_stmt, "i", $company_id);
+    mysqli_stmt_execute($w_stmt);
+    $w_res = mysqli_stmt_get_result($w_stmt);
+    $warehouses = [];
+    while ($w_row = mysqli_fetch_assoc($w_res)) {
+        $warehouses[] = $w_row;
+    }
+
     while ($row = mysqli_fetch_assoc($res)) {
-        $stock = $row['current_stock'] ?? 0;
+        // Calculate stock per warehouse
+        $stock_by_warehouse = [];
+        $total_stock = 0;
+        foreach ($warehouses as $w) {
+            $st_sql = "SELECT SUM(CASE WHEN type='in' THEN qty ELSE -qty END) as qty 
+                       FROM stock_transactions 
+                       WHERE product_id = ? AND warehouse_id = ?";
+            $st_stmt = mysqli_prepare($conn, $st_sql);
+            mysqli_stmt_bind_param($st_stmt, "ii", $row['id'], $w['id']);
+            mysqli_stmt_execute($st_stmt);
+            $st_qty = mysqli_fetch_assoc(mysqli_stmt_get_result($st_stmt))['qty'] ?? 0;
+            $stock_by_warehouse[$w['name']] = $st_qty;
+            $total_stock += $st_qty;
+        }
+
         $img = !empty($row['image_url']) ? $row['image_url'] : 'https://via.placeholder.com/300x180?text=No+Image';
-        $low_stock_class = ($stock <= $row['min_stock']) ? 'style="background: #FEE2E2; color: #991B1B;"' : '';
+        $low_stock_class = ($total_stock <= $row['min_stock']) ? 'style="background: #FEE2E2; color: #991B1B;"' : '';
         
+        $warehouse_details = "";
+        if (!empty($stock_by_warehouse)) {
+            $warehouse_details = '<div style="margin-top: 0.5rem; font-size: 0.8rem; border-top: 1px dashed #DDD; padding-top: 0.5rem;">';
+            foreach ($stock_by_warehouse as $w_name => $qty) {
+                $warehouse_details .= '<div style="display: flex; justify-content: space-between;"><span>'.htmlspecialchars($w_name).':</span> <b>'.number_format($qty).'</b></div>';
+            }
+            $warehouse_details .= '</div>';
+        }
+
         echo '
         <div class="product-card">
             <img src="'.$img.'" class="product-img" alt="'.$row['name'].'">
@@ -202,8 +362,9 @@ if ($action == 'get_products') {
                 <div class="product-sku">SKU: '.htmlspecialchars($row['sku']).' | '.htmlspecialchars($row['category_name'] ?? 'ทั่วไป').'</div>
                 <div class="product-meta">
                     <div class="product-price">฿'.number_format($row['price'], 2).'</div>
-                    <div class="product-stock" '.$low_stock_class.'>คงเหลือ: '.$stock.' '.$row['unit'].'</div>
+                    <div class="product-stock" '.$low_stock_class.'>รวม: '.$total_stock.' '.$row['unit'].'</div>
                 </div>
+                '.$warehouse_details.'
                 <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
                     <button onclick="editProduct('.$row['id'].')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background: #6366F1;">
                         <i class="fas fa-edit"></i> แก้ไข
@@ -269,14 +430,15 @@ if ($action == 'delete_product') {
 if ($action == 'add_transaction') {
     header('Content-Type: application/json');
     $product_id = $_POST['product_id'] ?? 0;
+    $warehouse_id = $_POST['warehouse_id'] ?? 0;
     $type = $_POST['type'] ?? 'in';
     $qty = $_POST['qty'] ?? 0;
     $note = $_POST['note'] ?? '';
     $transaction_date = $_POST['transaction_date'] ?? date('Y-m-d');
 
-    $sql = "INSERT INTO stock_transactions (company_id, product_id, type, qty, note, transaction_date) VALUES (?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO stock_transactions (company_id, product_id, warehouse_id, type, qty, note, transaction_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "iisiss", $company_id, $product_id, $type, $qty, $note, $transaction_date);
+    mysqli_stmt_bind_param($stmt, "iiisiss", $company_id, $product_id, $warehouse_id, $type, $qty, $note, $transaction_date);
 
     if (mysqli_stmt_execute($stmt)) {
         logStockAction($conn, $company_id, "บันทึกรายการ $type: สินค้า ID $product_id จำนวน $qty", 'create');
@@ -289,14 +451,26 @@ if ($action == 'add_transaction') {
 
 if ($action == 'get_transactions') {
     header('Content-Type: text/html');
-    $sql = "SELECT t.*, p.name as product_name, p.unit 
+    $search = $_GET['search'] ?? '';
+    $where = "WHERE t.company_id = ?";
+    if ($search) {
+        $search_term = "%$search%";
+        $where .= " AND (p.name LIKE ? OR p.sku LIKE ? OR t.note LIKE ? OR w.name LIKE ?)";
+    }
+
+    $sql = "SELECT t.*, p.name as product_name, p.unit, w.name as warehouse_name 
             FROM stock_transactions t 
             JOIN stock_products p ON t.product_id = p.id 
-            WHERE t.company_id = ? 
+            LEFT JOIN stock_warehouses w ON t.warehouse_id = w.id
+            $where 
             ORDER BY t.transaction_date DESC, t.id DESC 
-            LIMIT 50";
+            LIMIT 100";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $company_id);
+    if ($search) {
+        mysqli_stmt_bind_param($stmt, "issss", $company_id, $search_term, $search_term, $search_term, $search_term);
+    } else {
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+    }
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
 
@@ -314,7 +488,10 @@ if ($action == 'get_transactions') {
         <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: 1rem;">'.date('d/m/Y', strtotime($row['transaction_date'])).'</td>
             <td style="padding: 1rem;">'.$type_label.'</td>
-            <td style="padding: 1rem; font-weight: 500;">'.htmlspecialchars($row['product_name']).'</td>
+            <td style="padding: 1rem;">
+                <div style="font-weight: 500;">'.htmlspecialchars($row['product_name']).'</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);"><i class="fas fa-warehouse"></i> '.htmlspecialchars($row['warehouse_name'] ?? 'ไม่ระบุ').'</div>
+            </td>
             <td style="padding: 1rem; text-align: right; font-weight: 700; color: '.$qty_color.';">'.$qty_prefix.number_format($row['qty']).' '.$row['unit'].'</td>
             <td style="padding: 1rem; color: var(--text-muted);">'.htmlspecialchars($row['note']).'</td>
             <td style="padding: 1rem; text-align: center;">
@@ -364,6 +541,7 @@ if ($action == 'add_production') {
 
     mysqli_begin_transaction($conn);
     try {
+        // Insert production order
         $sql = "INSERT INTO stock_production_orders (company_id, order_no, order_date, due_date, customer_name, project_name, product_id, sku, qty, unit, dimensions, instructions, qc_standards, ordered_by, foreman, status) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
@@ -371,6 +549,7 @@ if ($action == 'add_production') {
         mysqli_stmt_execute($stmt);
         $production_order_id = mysqli_insert_id($conn);
 
+        // Insert BOM items
         foreach ($bom as $item) {
             $sql_bom = "INSERT INTO stock_production_bom (production_order_id, product_id, qty) VALUES (?, ?, ?)";
             $stmt_bom = mysqli_prepare($conn, $sql_bom);
@@ -378,9 +557,184 @@ if ($action == 'add_production') {
             mysqli_stmt_execute($stmt_bom);
         }
 
+        // Auto-create material requisition if BOM exists
+        if (!empty($bom)) {
+            $requisition_no = 'MR-' . date('Ymd') . '-' . str_pad($production_order_id, 4, '0', STR_PAD_LEFT);
+            $purpose = "เบิกวัสดุสำหรับใบสั่งผลิต: $order_no";
+            
+            $sql_req = "INSERT INTO material_requisitions (company_id, requisition_no, production_order_id, requisition_date, requested_by, department, purpose, status) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')";
+            $stmt_req = mysqli_prepare($conn, $sql_req);
+            $department = 'ฝ่ายผลิต';
+            mysqli_stmt_bind_param($stmt_req, "isissss", $company_id, $requisition_no, $production_order_id, $order_date, $ordered_by, $department, $purpose);
+            mysqli_stmt_execute($stmt_req);
+            $requisition_id = mysqli_insert_id($conn);
+
+            // Insert requisition items from BOM
+            foreach ($bom as $item) {
+                // Get product unit
+                $unit_sql = "SELECT unit FROM stock_products WHERE id = ?";
+                $unit_stmt = mysqli_prepare($conn, $unit_sql);
+                mysqli_stmt_bind_param($unit_stmt, "i", $item['product_id']);
+                mysqli_stmt_execute($unit_stmt);
+                $product_unit = mysqli_fetch_assoc(mysqli_stmt_get_result($unit_stmt))['unit'] ?? '';
+                
+                $sql_req_item = "INSERT INTO material_requisition_items (requisition_id, product_id, qty_requested, unit) 
+                                VALUES (?, ?, ?, ?)";
+                $stmt_req_item = mysqli_prepare($conn, $sql_req_item);
+                mysqli_stmt_bind_param($stmt_req_item, "iids", $requisition_id, $item['product_id'], $item['qty'], $product_unit);
+                mysqli_stmt_execute($stmt_req_item);
+            }
+            
+            logStockAction($conn, $company_id, "สร้างใบเบิกจ่ายวัสดุอัตโนมัติ: $requisition_no จากใบสั่งผลิต $order_no", 'create');
+        }
+
         mysqli_commit($conn);
         logStockAction($conn, $company_id, "สร้างใบสั่งผลิต: $order_no", 'create');
-        echo json_encode(['status' => 'success', 'message' => 'สร้างใบสั่งผลิตเรียบร้อยแล้ว']);
+        
+        $message = 'สร้างใบสั่งผลิตเรียบร้อยแล้ว';
+        if (!empty($bom)) {
+            $message .= ' และสร้างใบเบิกจ่ายวัสดุอัตโนมัติแล้ว';
+        }
+        
+        echo json_encode(['status' => 'success', 'message' => $message, 'production_id' => $production_order_id]);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($action == 'update_production') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    $order_no = $_POST['order_no'] ?? '';
+    $order_date = $_POST['order_date'] ?? date('Y-m-d');
+    $due_date = $_POST['due_date'] ?? null;
+    $customer_name = $_POST['customer_name'] ?? '';
+    $project_name = $_POST['project_name'] ?? '';
+    $product_id = $_POST['product_id'] ?? 0;
+    $sku = $_POST['sku'] ?? '';
+    $qty = $_POST['qty'] ?? 0;
+    $unit = $_POST['unit'] ?? '';
+    $dimensions = $_POST['dimensions'] ?? '';
+    $instructions = $_POST['instructions'] ?? '';
+    $qc_standards = $_POST['qc_standards'] ?? '';
+    $ordered_by = $_POST['ordered_by'] ?? '';
+    $foreman = $_POST['foreman'] ?? '';
+    $bom = $_POST['bom'] ?? [];
+
+    mysqli_begin_transaction($conn);
+    try {
+        $sql = "UPDATE stock_production_orders SET order_no = ?, order_date = ?, due_date = ?, customer_name = ?, project_name = ?, product_id = ?, sku = ?, qty = ?, unit = ?, dimensions = ?, instructions = ?, qc_standards = ?, ordered_by = ?, foreman = ? WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sssssisdssssssii", $order_no, $order_date, $due_date, $customer_name, $project_name, $product_id, $sku, $qty, $unit, $dimensions, $instructions, $qc_standards, $ordered_by, $foreman, $id, $company_id);
+        mysqli_stmt_execute($stmt);
+
+        // Update BOM: Delete old and insert new
+        $sql_del_bom = "DELETE FROM stock_production_bom WHERE production_order_id = ?";
+        $stmt_del = mysqli_prepare($conn, $sql_del_bom);
+        mysqli_stmt_bind_param($stmt_del, "i", $id);
+        mysqli_stmt_execute($stmt_del);
+
+        if (!empty($bom)) {
+            foreach ($bom as $item) {
+                $sql_bom = "INSERT INTO stock_production_bom (production_order_id, product_id, qty) VALUES (?, ?, ?)";
+                $stmt_bom = mysqli_prepare($conn, $sql_bom);
+                mysqli_stmt_bind_param($stmt_bom, "iid", $id, $item['product_id'], $item['qty']);
+                mysqli_stmt_execute($stmt_bom);
+            }
+
+            // Update pending material requisition if exists
+            $sql_check_req = "SELECT id FROM material_requisitions WHERE production_order_id = ? AND status = 'pending' LIMIT 1";
+            $stmt_check_req = mysqli_prepare($conn, $sql_check_req);
+            mysqli_stmt_bind_param($stmt_check_req, "i", $id);
+            mysqli_stmt_execute($stmt_check_req);
+            $res_check_req = mysqli_stmt_get_result($stmt_check_req);
+            
+            if ($row_req = mysqli_fetch_assoc($res_check_req)) {
+                $requisition_id = $row_req['id'];
+                
+                // Delete old items
+                $sql_del_req_items = "DELETE FROM material_requisition_items WHERE requisition_id = ?";
+                $stmt_del_req_items = mysqli_prepare($conn, $sql_del_req_items);
+                mysqli_stmt_bind_param($stmt_del_req_items, "i", $requisition_id);
+                mysqli_stmt_execute($stmt_del_req_items);
+                
+                // Insert new items from updated BOM
+                foreach ($bom as $item) {
+                    $unit_sql = "SELECT unit FROM stock_products WHERE id = ?";
+                    $unit_stmt = mysqli_prepare($conn, $unit_sql);
+                    mysqli_stmt_bind_param($unit_stmt, "i", $item['product_id']);
+                    mysqli_stmt_execute($unit_stmt);
+                    $product_unit = mysqli_fetch_assoc(mysqli_stmt_get_result($unit_stmt))['unit'] ?? '';
+                    
+                    $sql_req_item = "INSERT INTO material_requisition_items (requisition_id, product_id, qty_requested, unit) 
+                                    VALUES (?, ?, ?, ?)";
+                    $stmt_req_item = mysqli_prepare($conn, $sql_req_item);
+                    mysqli_stmt_bind_param($stmt_req_item, "iids", $requisition_id, $item['product_id'], $item['qty'], $product_unit);
+                    mysqli_stmt_execute($stmt_req_item);
+                }
+                logStockAction($conn, $company_id, "อัปเดตรายการในใบเบิกวัสดุ ID: $requisition_id ตามการแก้ไข BOM", 'update');
+            }
+        }
+
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "แก้ไขใบสั่งผลิต: $order_no", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'อัปเดตใบสั่งผลิตและรายการเบิกวัสดุเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($action == 'get_production') {
+    header('Content-Type: application/json');
+    $id = $_GET['id'] ?? 0;
+    $sql = "SELECT * FROM stock_production_orders WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $order = mysqli_fetch_assoc($res);
+    
+    if ($order) {
+        $sql_bom = "SELECT b.*, p.name as product_name, p.sku FROM stock_production_bom b JOIN stock_products p ON b.product_id = p.id WHERE b.production_order_id = ?";
+        $stmt_bom = mysqli_prepare($conn, $sql_bom);
+        mysqli_stmt_bind_param($stmt_bom, "i", $id);
+        mysqli_stmt_execute($stmt_bom);
+        $res_bom = mysqli_stmt_get_result($stmt_bom);
+        $order['bom'] = [];
+        while ($bom_row = mysqli_fetch_assoc($res_bom)) {
+            $order['bom'][] = $bom_row;
+        }
+    }
+    echo json_encode($order);
+    exit;
+}
+
+if ($action == 'delete_production') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    
+    mysqli_begin_transaction($conn);
+    try {
+        // Delete BOM first
+        $sql_bom = "DELETE FROM stock_production_bom WHERE production_order_id = ?";
+        $stmt_bom = mysqli_prepare($conn, $sql_bom);
+        mysqli_stmt_bind_param($stmt_bom, "i", $id);
+        mysqli_stmt_execute($stmt_bom);
+
+        // Delete order
+        $sql = "DELETE FROM stock_production_orders WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        mysqli_stmt_execute($stmt);
+
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "ลบใบสั่งผลิต ID: $id", 'delete');
+        echo json_encode(['status' => 'success', 'message' => 'ลบใบสั่งผลิตเรียบร้อยแล้ว']);
     } catch (Exception $e) {
         mysqli_rollback($conn);
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
@@ -388,15 +742,27 @@ if ($action == 'add_production') {
     exit;
 }
 
+
 if ($action == 'get_productions') {
     header('Content-Type: text/html');
+    $search = $_GET['search'] ?? '';
+    $where = "WHERE po.company_id = ?";
+    if ($search) {
+        $search_term = "%$search%";
+        $where .= " AND (po.order_no LIKE ? OR po.customer_name LIKE ? OR po.project_name LIKE ? OR p.name LIKE ?)";
+    }
+
     $sql = "SELECT po.*, p.name as product_name 
             FROM stock_production_orders po 
             LEFT JOIN stock_products p ON po.product_id = p.id 
-            WHERE po.company_id = ? 
+            $where 
             ORDER BY po.id DESC";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $company_id);
+    if ($search) {
+        mysqli_stmt_bind_param($stmt, "issss", $company_id, $search_term, $search_term, $search_term, $search_term);
+    } else {
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+    }
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
 
@@ -427,12 +793,28 @@ if ($action == 'get_productions') {
             <td style="padding: 1rem; text-align: right; font-weight: 700;">'.number_format($row['qty']).' '.$row['unit'].'</td>
             <td style="padding: 1rem; text-align: center;">'.$status_badge.'</td>
             <td style="padding: 1rem; text-align: center;">
-                <select onchange="updateProductionStatus('.$row['id'].', this.value)" style="padding: 0.3rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.8rem;">
-                    <option value="pending" '.($row['status'] == 'pending' ? 'selected' : '').'>รอดำเนินการ</option>
-                    <option value="in_progress" '.($row['status'] == 'in_progress' ? 'selected' : '').'>กำลังผลิต</option>
-                    <option value="completed" '.($row['status'] == 'completed' ? 'selected' : '').'>เสร็จสิ้น</option>
-                    <option value="cancelled" '.($row['status'] == 'cancelled' ? 'selected' : '').'>ยกเลิก</option>
-                </select>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+                    <select onchange="updateProductionStatus('.$row['id'].', this.value)" style="padding: 0.3rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.8rem; width: 100%;">
+                        <option value="pending" '.($row['status'] == 'pending' ? 'selected' : '').'>รอดำเนินการ</option>
+                        <option value="in_progress" '.($row['status'] == 'in_progress' ? 'selected' : '').'>กำลังผลิต</option>
+                        <option value="completed" '.($row['status'] == 'completed' ? 'selected' : '').'>เสร็จสิ้น</option>
+                        <option value="cancelled" '.($row['status'] == 'cancelled' ? 'selected' : '').'>ยกเลิก</option>
+                    </select>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <button onclick="viewProduction('.$row['id'].')" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #6366F1;" title="ดูรายละเอียด">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <a href="print_production.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #10B981;" title="พิมพ์">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        <button onclick="editProduction('.$row['id'].')" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #6366F1;" title="แก้ไข">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteProduction('.$row['id'].')" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #EF4444;" title="ลบ">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
             </td>
         </tr>';
     }
@@ -463,6 +845,7 @@ if ($action == 'add_requisition') {
     $po_no = $_POST['po_no'] ?? '';
     $so_no = $_POST['so_no'] ?? '';
     $customer_name = $_POST['customer_name'] ?? '';
+    $requester_name = $_POST['requester_name'] ?? '';
     $phone = $_POST['phone'] ?? '';
     $shipping_address = $_POST['shipping_address'] ?? '';
     $shipping_method = $_POST['shipping_method'] ?? '';
@@ -471,23 +854,23 @@ if ($action == 'add_requisition') {
 
     mysqli_begin_transaction($conn);
     try {
-        $sql = "INSERT INTO stock_requisitions (company_id, req_no, po_no, so_no, customer_name, phone, shipping_address, shipping_method, requisition_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO stock_requisitions (company_id, req_no, po_no, so_no, customer_name, requester_name, phone, shipping_address, shipping_method, requisition_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "issssssss", $company_id, $req_no, $po_no, $so_no, $customer_name, $phone, $shipping_address, $shipping_method, $requisition_date);
+        mysqli_stmt_bind_param($stmt, "isssssssss", $company_id, $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date);
         mysqli_stmt_execute($stmt);
         $requisition_id = mysqli_insert_id($conn);
 
         foreach ($items as $item) {
-            $sql_item = "INSERT INTO stock_requisition_items (requisition_id, product_id, qty) VALUES (?, ?, ?)";
+            $sql_item = "INSERT INTO stock_requisition_items (requisition_id, product_id, warehouse_id, qty) VALUES (?, ?, ?, ?)";
             $stmt_item = mysqli_prepare($conn, $sql_item);
-            mysqli_stmt_bind_param($stmt_item, "iii", $requisition_id, $item['product_id'], $item['qty']);
+            mysqli_stmt_bind_param($stmt_item, "iiii", $requisition_id, $item['product_id'], $item['warehouse_id'], $item['qty']);
             mysqli_stmt_execute($stmt_item);
         }
 
         mysqli_commit($conn);
         logStockAction($conn, $company_id, "สร้างใบเบิกสินค้า: $req_no", 'create');
         echo json_encode(['status' => 'success', 'message' => 'สร้างใบเบิกเรียบร้อยแล้ว']);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         mysqli_rollback($conn);
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
     }
@@ -496,9 +879,20 @@ if ($action == 'add_requisition') {
 
 if ($action == 'get_requisitions') {
     header('Content-Type: text/html');
-    $sql = "SELECT * FROM stock_requisitions WHERE company_id = ? ORDER BY id DESC";
+    $search = $_GET['search'] ?? '';
+    $where = "WHERE company_id = ?";
+    if ($search) {
+        $search_term = "%$search%";
+        $where .= " AND (req_no LIKE ? OR customer_name LIKE ? OR requester_name LIKE ?)";
+    }
+    
+    $sql = "SELECT * FROM stock_requisitions $where ORDER BY id DESC";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $company_id);
+    if ($search) {
+        mysqli_stmt_bind_param($stmt, "isss", $company_id, $search_term, $search_term, $search_term);
+    } else {
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+    }
     mysqli_stmt_execute($stmt);
     $res = mysqli_stmt_get_result($stmt);
 
@@ -520,14 +914,25 @@ if ($action == 'get_requisitions') {
         <tr style="border-bottom: 1px solid var(--border-color);">
             <td style="padding: 1rem;">'.date('d/m/Y', strtotime($row['requisition_date'] ?? $row['created_at'])).'</td>
             <td style="padding: 1rem; font-weight: 600;">'.htmlspecialchars($row['req_no']).'</td>
-            <td style="padding: 1rem;">'.htmlspecialchars($row['customer_name']).'</td>
+            <td style="padding: 1rem;">
+                <div style="font-weight: 600;">'.htmlspecialchars($row['customer_name']).'</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">ผู้เบิก: '.htmlspecialchars($row['requester_name'] ?? '-').'</div>
+            </td>
             <td style="padding: 1rem; text-align: center;">'.$status_badge.'</td>
             <td style="padding: 1rem; text-align: center;">
-                <select onchange="updateRequisitionStatus('.$row['id'].', this.value)" style="padding: 0.3rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.8rem;">
-                    <option value="pending" '.($row['status'] == 'pending' ? 'selected' : '').'>รออนุมัติ</option>
-                    <option value="approved" '.($row['status'] == 'approved' ? 'selected' : '').'>อนุมัติ</option>
-                    <option value="rejected" '.($row['status'] == 'rejected' ? 'selected' : '').'>ปฏิเสธ</option>
-                </select>
+                <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                    <select onchange="updateRequisitionStatus('.$row['id'].', this.value)" style="padding: 0.3rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.8rem;">
+                        <option value="pending" '.($row['status'] == 'pending' ? 'selected' : '').'>รออนุมัติ</option>
+                        <option value="approved" '.($row['status'] == 'approved' ? 'selected' : '').'>อนุมัติ</option>
+                        <option value="rejected" '.($row['status'] == 'rejected' ? 'selected' : '').'>ปฏิเสธ</option>
+                    </select>
+                    <button onclick="viewRequisition('.$row['id'].')" class="btn-primary" style="padding: 0.4rem; background: #6366F1;" title="ดูรายละเอียด">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <a href="print_requisition.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.4rem; background: #10B981;" title="พิมพ์">
+                        <i class="fas fa-print"></i>
+                    </a>
+                </div>
             </td>
         </tr>';
     }
@@ -546,6 +951,13 @@ if ($action == 'update_requisition_status') {
     if (mysqli_stmt_execute($stmt)) {
         // If approved, we should automatically create stock 'out' transactions
         if ($status == 'approved') {
+            // Get requisition number
+            $sql_req = "SELECT req_no FROM stock_requisitions WHERE id = ?";
+            $stmt_req = mysqli_prepare($conn, $sql_req);
+            mysqli_stmt_bind_param($stmt_req, "i", $id);
+            mysqli_stmt_execute($stmt_req);
+            $req_no = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_req))['req_no'] ?? $id;
+
             $sql_items = "SELECT * FROM stock_requisition_items WHERE requisition_id = ?";
             $stmt_items = mysqli_prepare($conn, $sql_items);
             mysqli_stmt_bind_param($stmt_items, "i", $id);
@@ -553,11 +965,11 @@ if ($action == 'update_requisition_status') {
             $res_items = mysqli_stmt_get_result($stmt_items);
             
             while ($item = mysqli_fetch_assoc($res_items)) {
-                $sql_trans = "INSERT INTO stock_transactions (company_id, product_id, type, qty, note, transaction_date) VALUES (?, ?, 'out', ?, ?, ?)";
-                $note = "เบิกตามใบเบิกเลขที่ " . $id;
+                $sql_trans = "INSERT INTO stock_transactions (company_id, product_id, warehouse_id, type, qty, note, transaction_date) VALUES (?, ?, ?, 'out', ?, ?, ?)";
+                $note = "เบิกตามใบเบิกเลขที่ " . $req_no;
                 $date = date('Y-m-d');
                 $stmt_trans = mysqli_prepare($conn, $sql_trans);
-                mysqli_stmt_bind_param($stmt_trans, "iiiss", $company_id, $item['product_id'], $item['qty'], $note, $date);
+                mysqli_stmt_bind_param($stmt_trans, "iiiiss", $company_id, $item['product_id'], $item['warehouse_id'], $item['qty'], $note, $date);
                 mysqli_stmt_execute($stmt_trans);
             }
         }
@@ -565,6 +977,438 @@ if ($action == 'update_requisition_status') {
         echo json_encode(['status' => 'success', 'message' => 'อัปเดตสถานะเรียบร้อยแล้ว']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . mysqli_error($conn)]);
+    }
+    exit;
+}
+
+if ($action == 'get_requisition_details') {
+    header('Content-Type: text/html');
+    $id = $_GET['id'] ?? 0;
+    
+    $sql = "SELECT * FROM stock_requisitions WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $req = mysqli_fetch_assoc($res);
+    
+    if (!$req) {
+        echo '<p>ไม่พบข้อมูลใบเบิก</p>';
+        exit;
+    }
+    
+    $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, w.name as warehouse_name 
+                  FROM stock_requisition_items ri 
+                  JOIN stock_products p ON ri.product_id = p.id 
+                  LEFT JOIN stock_warehouses w ON ri.warehouse_id = w.id
+                  WHERE ri.requisition_id = ?";
+    $stmt_items = mysqli_prepare($conn, $sql_items);
+    mysqli_stmt_bind_param($stmt_items, "i", $id);
+    mysqli_stmt_execute($stmt_items);
+    $res_items = mysqli_stmt_get_result($stmt_items);
+    
+    echo '
+    <div style="margin-bottom: 2rem; border-bottom: 2px solid #F3F4F6; padding-bottom: 1rem;">
+        <h2 style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">รายละเอียดใบเบิกสินค้า</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div>
+                <p><strong>เลขที่ใบเบิก:</strong> '.htmlspecialchars($req['req_no']).'</p>
+                <p><strong>วันที่เบิก:</strong> '.date('d/m/Y', strtotime($req['requisition_date'])).'</p>
+                <p><strong>ชื่อลูกค้า:</strong> '.htmlspecialchars($req['customer_name']).'</p>
+                <p><strong>ผู้เบิก:</strong> '.htmlspecialchars($req['requester_name'] ?? '-').'</p>
+            </div>
+            <div>
+                <p><strong>เลขที่ PO:</strong> '.htmlspecialchars($req['po_no'] ?? '-').'</p>
+                <p><strong>เลขที่ SO:</strong> '.htmlspecialchars($req['so_no'] ?? '-').'</p>
+                <p><strong>เบอร์โทรศัพท์:</strong> '.htmlspecialchars($req['phone'] ?? '-').'</p>
+            </div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <p><strong>ที่อยู่จัดส่ง:</strong> '.nl2br(htmlspecialchars($req['shipping_address'] ?? '-')).'</p>
+            <p><strong>ช่องทางการจัดส่ง:</strong> '.htmlspecialchars($req['shipping_method'] ?? '-').'</p>
+        </div>
+    </div>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #F9FAFB; border-bottom: 2px solid #E5E7EB;">
+                <th style="padding: 0.75rem; text-align: left;">สินค้า</th>
+                <th style="padding: 0.75rem; text-align: left;">คลังสินค้า</th>
+                <th style="padding: 0.75rem; text-align: right;">จำนวน</th>
+            </tr>
+        </thead>
+        <tbody>';
+    
+    while ($item = mysqli_fetch_assoc($res_items)) {
+        echo '
+            <tr style="border-bottom: 1px solid #F3F4F6;">
+                <td style="padding: 0.75rem;">
+                    <div style="font-weight: 500;">'.htmlspecialchars($item['product_name']).'</div>
+                    <div style="font-size: 0.8rem; color: #6B7280;">SKU: '.htmlspecialchars($item['sku']).'</div>
+                </td>
+                <td style="padding: 0.75rem;">'.htmlspecialchars($item['warehouse_name'] ?? 'ไม่ระบุ').'</td>
+                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">'.number_format($item['qty']).' '.htmlspecialchars($item['unit']).'</td>
+            </tr>';
+    }
+    
+    echo '
+        </tbody>
+    </table>
+    
+    <div style="margin-top: 2rem; text-align: right;">
+        <button onclick="closeModal()" class="btn-primary" style="background: #9CA3AF;">ปิดหน้าต่าง</button>
+        <a href="print_requisition.php?id='.$id.'" target="_blank" class="btn-primary" style="background: #10B981; margin-left: 0.5rem;">
+            <i class="fas fa-print"></i> พิมพ์ใบเบิก
+        </a>
+    </div>';
+    exit;
+}
+
+if ($action == 'delete_requisition') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    
+    // Check status
+    $sql_check = "SELECT status FROM stock_requisitions WHERE id = ? AND company_id = ?";
+    $stmt_check = mysqli_prepare($conn, $sql_check);
+    mysqli_stmt_bind_param($stmt_check, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt_check);
+    $status = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_check))['status'] ?? '';
+    
+    if ($status == 'approved') {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่สามารถลบใบเบิกที่อนุมัติแล้วได้']);
+        exit;
+    }
+    
+    mysqli_begin_transaction($conn);
+    try {
+        // Delete items
+        $sql_del_items = "DELETE FROM stock_requisition_items WHERE requisition_id = ?";
+        $stmt_del_items = mysqli_prepare($conn, $sql_del_items);
+        mysqli_stmt_bind_param($stmt_del_items, "i", $id);
+        mysqli_stmt_execute($stmt_del_items);
+        
+        // Delete requisition
+        $sql_del = "DELETE FROM stock_requisitions WHERE id = ? AND company_id = ?";
+        $stmt_del = mysqli_prepare($conn, $sql_del);
+        mysqli_stmt_bind_param($stmt_del, "ii", $id, $company_id);
+        mysqli_stmt_execute($stmt_del);
+        
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "ลบใบเบิกสินค้า ID: $id", 'delete');
+        echo json_encode(['status' => 'success', 'message' => 'ลบใบเบิกเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+
+if ($action == 'get_production_details') {
+    header('Content-Type: text/html');
+    $id = $_GET['id'] ?? 0;
+    
+    $sql = "SELECT po.*, p.name as product_name, p.sku as product_sku, p.unit as product_unit 
+            FROM stock_production_orders po 
+            LEFT JOIN stock_products p ON po.product_id = p.id 
+            WHERE po.id = ? AND po.company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $order = mysqli_fetch_assoc($res);
+    
+    if (!$order) {
+        echo '<p>ไม่พบข้อมูลใบสั่งผลิต</p>';
+        exit;
+    }
+    
+    $sql_bom = "SELECT b.*, p.name as product_name, p.sku, p.unit 
+                FROM stock_production_bom b 
+                JOIN stock_products p ON b.product_id = p.id 
+                WHERE b.production_order_id = ?";
+    $stmt_bom = mysqli_prepare($conn, $sql_bom);
+    mysqli_stmt_bind_param($stmt_bom, "i", $id);
+    mysqli_stmt_execute($stmt_bom);
+    $res_bom = mysqli_stmt_get_result($stmt_bom);
+    
+    echo '
+    <div style="margin-bottom: 2rem; border-bottom: 2px solid #F3F4F6; padding-bottom: 1rem;">
+        <h2 style="margin: 0; color: var(--text-dark); font-size: 1.5rem;">รายละเอียดใบสั่งผลิต</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div>
+                <p><strong>เลขที่ใบสั่งผลิต:</strong> '.htmlspecialchars($order['order_no']).'</p>
+                <p><strong>วันที่สั่งผลิต:</strong> '.date('d/m/Y', strtotime($order['order_date'])).'</p>
+                <p><strong>กำหนดเสร็จ:</strong> '.($order['due_date'] ? date('d/m/Y', strtotime($order['due_date'])) : '-').'</p>
+                <p><strong>ลูกค้า:</strong> '.htmlspecialchars($order['customer_name']).'</p>
+                <p><strong>โครงการ:</strong> '.htmlspecialchars($order['project_name'] ?? '-').'</p>
+            </div>
+            <div>
+                <p><strong>สินค้าที่ผลิต:</strong> '.htmlspecialchars($order['product_name']).'</p>
+                <p><strong>SKU:</strong> '.htmlspecialchars($order['sku']).'</p>
+                <p><strong>จำนวน:</strong> '.number_format($order['qty']).' '.htmlspecialchars($order['unit']).'</p>
+                <p><strong>ขนาด/มิติ:</strong> '.htmlspecialchars($order['dimensions'] ?? '-').'</p>
+            </div>
+        </div>
+        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+                <p><strong>ผู้สั่งผลิต:</strong> '.htmlspecialchars($order['ordered_by'] ?? '-').'</p>
+            </div>
+            <div>
+                <p><strong>หัวหน้าช่าง:</strong> '.htmlspecialchars($order['foreman'] ?? '-').'</p>
+            </div>
+        </div>
+    </div>';
+    
+    $mr_html = "";
+    $sql_mr = "SELECT * FROM material_requisitions WHERE production_order_id = ? AND company_id = ? ORDER BY id DESC";
+    $stmt_mr = mysqli_prepare($conn, $sql_mr);
+    mysqli_stmt_bind_param($stmt_mr, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt_mr);
+    $res_mr = mysqli_stmt_get_result($stmt_mr);
+    
+    if (mysqli_num_rows($res_mr) == 0) {
+        $mr_html = '<p style="color: #9CA3AF; text-align: center; padding: 1rem; background: #F9FAFB; border-radius: 0.5rem;">ยังไม่มีใบเบิกวัสดุ</p>';
+    } else {
+        $mr_html = '<table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #F9FAFB; border-bottom: 2px solid #E5E7EB;">
+                        <th style="padding: 0.75rem; text-align: left;">เลขที่ใบเบิก</th>
+                        <th style="padding: 0.75rem; text-align: left;">วันที่</th>
+                        <th style="padding: 0.75rem; text-align: center;">สถานะ</th>
+                        <th style="padding: 0.75rem; text-align: center;">จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody>';
+        while ($mr = mysqli_fetch_assoc($res_mr)) {
+            $status_labels = [
+                'pending' => ['bg' => '#FEF3C7', 'text' => '#92400E', 'label' => 'รออนุมัติ'],
+                'approved' => ['bg' => '#DBEAFE', 'text' => '#1E40AF', 'label' => 'อนุมัติแล้ว'],
+                'completed' => ['bg' => '#D1FAE5', 'text' => '#065F46', 'label' => 'ตัดสต็อกแล้ว'],
+                'rejected' => ['bg' => '#FEE2E2', 'text' => '#991B1B', 'label' => 'ปฏิเสธ']
+            ];
+            $s = $status_labels[$mr['status']] ?? ['bg' => '#F3F4F6', 'text' => '#374151', 'label' => $mr['status']];
+            
+            $mr_html .= '<tr style="border-bottom: 1px solid #F3F4F6;">
+                    <td style="padding: 0.75rem; font-weight: 500;">'.htmlspecialchars($mr['requisition_no']).'</td>
+                    <td style="padding: 0.75rem;">'.date('d/m/Y', strtotime($mr['requisition_date'])).'</td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        <span style="background: '.$s['bg'].'; color: '.$s['text'].'; padding: 0.2rem 0.6rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600;">'.$s['label'].'</span>
+                    </td>
+                    <td style="padding: 0.75rem; text-align: center;">
+                        <div style="display: flex; gap: 0.25rem; justify-content: center;">
+                            <a href="print_material_requisition.php?id='.$mr['id'].'" target="_blank" class="btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; background: #10B981;" title="พิมพ์">
+                                <i class="fas fa-print"></i>
+                            </a>';
+            
+            if ($mr['status'] == 'pending') {
+                $mr_html .= '<button onclick="approveMaterialReq('.$mr['id'].')" class="btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; background: #6366F1;" title="อนุมัติและตัดสต็อก">
+                        <i class="fas fa-check"></i>
+                      </button>
+                      <button onclick="rejectMaterialReq('.$mr['id'].')" class="btn-primary" style="padding: 0.3rem 0.5rem; font-size: 0.75rem; background: #EF4444;" title="ปฏิเสธ">
+                        <i class="fas fa-times"></i>
+                      </button>';
+            }
+            
+            $mr_html .= '      </div>
+                    </td>
+                  </tr>';
+        }
+        $mr_html .= '</tbody></table>';
+    }
+
+    echo '
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+            <span>ใบเบิกวัสดุ (Material Requisitions)</span>
+        </h3>
+        <div id="materialRequisitionsList">
+            '.$mr_html.'
+        </div>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">รายการวัสดุ (BOM)</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #F9FAFB; border-bottom: 2px solid #E5E7EB;">
+                    <th style="padding: 0.75rem; text-align: left;">วัสดุ</th>
+                    <th style="padding: 0.75rem; text-align: right;">จำนวนที่ใช้</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    if (mysqli_num_rows($res_bom) == 0) {
+        echo '<tr><td colspan="2" style="padding: 1rem; text-align: center; color: #9CA3AF;">ไม่มีรายการวัสดุ</td></tr>';
+    } else {
+        while ($bom = mysqli_fetch_assoc($res_bom)) {
+            echo '
+                <tr style="border-bottom: 1px solid #F3F4F6;">
+                    <td style="padding: 0.75rem;">
+                        <div style="font-weight: 500;">'.htmlspecialchars($bom['product_name']).'</div>
+                        <div style="font-size: 0.8rem; color: #6B7280;">SKU: '.htmlspecialchars($bom['sku']).'</div>
+                    </td>
+                    <td style="padding: 0.75rem; text-align: right; font-weight: 600;">'.number_format($bom['qty'], 2).' '.htmlspecialchars($bom['unit']).'</td>
+                </tr>';
+        }
+    }
+    
+    echo '
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">ขั้นตอนการทำงาน / คำแนะนำ</h3>
+        <div style="background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #E5E7EB;">
+            '.nl2br(htmlspecialchars($order['instructions'] ?? 'ไม่มีข้อมูล')).'
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">มาตรฐานการตรวจสอบ (QC)</h3>
+        <div style="background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #E5E7EB;">
+            '.nl2br(htmlspecialchars($order['qc_standards'] ?? 'ไม่มีข้อมูล')).'
+        </div>
+    </div>
+    
+    <div style="margin-top: 2rem; text-align: right;">
+        <button onclick="closeProductionModal()" class="btn-primary" style="background: #9CA3AF;">ปิดหน้าต่าง</button>
+        <a href="print_production.php?id='.$id.'" target="_blank" class="btn-primary" style="background: #10B981; margin-left: 0.5rem;">
+            <i class="fas fa-print"></i> พิมพ์ใบสั่งผลิต
+        </a>
+    </div>';
+    exit;
+}
+
+// Material Requisition Actions
+if ($action == 'get_material_requisitions') {
+    header('Content-Type: application/json');
+    $production_order_id = $_GET['production_order_id'] ?? 0;
+    
+    $sql = "SELECT mr.*, po.order_no as production_order_no
+            FROM material_requisitions mr
+            LEFT JOIN stock_production_orders po ON mr.production_order_id = po.id
+            WHERE mr.production_order_id = ? AND mr.company_id = ?
+            ORDER BY mr.id DESC";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $production_order_id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    $requisitions = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $requisitions[] = $row;
+    }
+    
+    echo json_encode($requisitions);
+    exit;
+}
+
+if ($action == 'approve_material_requisition') {
+    header('Content-Type: application/json');
+    $requisition_id = $_POST['requisition_id'] ?? 0;
+    $approved_by = $_POST['approved_by'] ?? $_SESSION['user_login'];
+    
+    mysqli_begin_transaction($conn);
+    try {
+        // Update requisition status
+        $sql = "UPDATE material_requisitions 
+                SET status = 'approved', approved_by = ?, approved_date = NOW() 
+                WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sii", $approved_by, $requisition_id, $company_id);
+        mysqli_stmt_execute($stmt);
+        
+        // Get requisition items
+        $items_sql = "SELECT * FROM material_requisition_items WHERE requisition_id = ?";
+        $items_stmt = mysqli_prepare($conn, $items_sql);
+        mysqli_stmt_bind_param($items_stmt, "i", $requisition_id);
+        mysqli_stmt_execute($items_stmt);
+        $items_res = mysqli_stmt_get_result($items_stmt);
+        
+        // Deduct stock from warehouses
+        while ($item = mysqli_fetch_assoc($items_res)) {
+            $product_id = $item['product_id'];
+            $qty_needed = $item['qty_requested'];
+            
+            // Find warehouses with sufficient stock
+            $warehouse_sql = "SELECT w.id, w.name, 
+                              SUM(CASE WHEN t.type='in' THEN t.qty ELSE -t.qty END) as balance
+                              FROM stock_warehouses w
+                              LEFT JOIN stock_transactions t ON w.id = t.warehouse_id AND t.product_id = ?
+                              WHERE w.company_id = ?
+                              GROUP BY w.id
+                              HAVING balance > 0
+                              ORDER BY balance DESC";
+            $warehouse_stmt = mysqli_prepare($conn, $warehouse_sql);
+            mysqli_stmt_bind_param($warehouse_stmt, "ii", $product_id, $company_id);
+            mysqli_stmt_execute($warehouse_stmt);
+            $warehouse_res = mysqli_stmt_get_result($warehouse_stmt);
+            
+            $remaining_qty = $qty_needed;
+            while ($warehouse = mysqli_fetch_assoc($warehouse_res)) {
+                if ($remaining_qty <= 0) break;
+                
+                $available = $warehouse['balance'];
+                $to_deduct = min($remaining_qty, $available);
+                
+                // Create stock transaction (out)
+                $trans_sql = "INSERT INTO stock_transactions 
+                              (company_id, product_id, warehouse_id, type, qty, note, transaction_date) 
+                              VALUES (?, ?, ?, 'out', ?, ?, NOW())";
+                $trans_stmt = mysqli_prepare($conn, $trans_sql);
+                $note = "เบิกจ่ายตามใบเบิก: " . $requisition_id;
+                mysqli_stmt_bind_param($trans_stmt, "iiids", $company_id, $product_id, $warehouse['id'], $to_deduct, $note);
+                mysqli_stmt_execute($trans_stmt);
+                
+                // Update requisition item
+                $update_item_sql = "UPDATE material_requisition_items 
+                                    SET qty_issued = qty_issued + ?, warehouse_id = ?
+                                    WHERE id = ?";
+                $update_item_stmt = mysqli_prepare($conn, $update_item_sql);
+                mysqli_stmt_bind_param($update_item_stmt, "dii", $to_deduct, $warehouse['id'], $item['id']);
+                mysqli_stmt_execute($update_item_stmt);
+                
+                $remaining_qty -= $to_deduct;
+            }
+            
+            if ($remaining_qty > 0) {
+                throw new Exception("สินค้า ID $product_id มีสต็อกไม่เพียงพอ (ขาด $remaining_qty)");
+            }
+        }
+        
+        // Update requisition to completed
+        $complete_sql = "UPDATE material_requisitions SET status = 'completed' WHERE id = ?";
+        $complete_stmt = mysqli_prepare($conn, $complete_sql);
+        mysqli_stmt_bind_param($complete_stmt, "i", $requisition_id);
+        mysqli_stmt_execute($complete_stmt);
+        
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "อนุมัติและตัดสต็อกใบเบิกจ่าย ID: $requisition_id", 'update');
+        
+        echo json_encode(['status' => 'success', 'message' => 'อนุมัติและตัดสต็อกเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($action == 'reject_material_requisition') {
+    header('Content-Type: application/json');
+    $requisition_id = $_POST['requisition_id'] ?? 0;
+    
+    $sql = "UPDATE material_requisitions SET status = 'rejected' WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $requisition_id, $company_id);
+    
+    if (mysqli_stmt_execute($stmt)) {
+        logStockAction($conn, $company_id, "ปฏิเสธใบเบิกจ่าย ID: $requisition_id", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'ปฏิเสธใบเบิกจ่ายเรียบร้อยแล้ว']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
     }
     exit;
 }
