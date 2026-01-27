@@ -38,6 +38,12 @@ try {
         $signature1 = mysqli_real_escape_string($conn, $_POST['signature1'] ?? '');
         $signature2 = mysqli_real_escape_string($conn, $_POST['signature2'] ?? '');
         
+        $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
+        $header_address = mysqli_real_escape_string($conn, $_POST['header_address'] ?? '');
+        $header_phone = mysqli_real_escape_string($conn, $_POST['header_phone'] ?? '');
+        $header_tax_id = mysqli_real_escape_string($conn, $_POST['header_tax_id'] ?? '');
+        $header_logo = mysqli_real_escape_string($conn, $_POST['header_logo'] ?? '');
+        
         $issuer_company_id = (int)($_POST['issuer_company_id'] ?? $company_id);
         
         if ($id) {
@@ -59,11 +65,16 @@ try {
                     notes = '$notes',
                     signature1 = '$signature1',
                     signature2 = '$signature2',
+                    header_name = '$header_name',
+                    header_address = '$header_address',
+                    header_phone = '$header_phone',
+                    header_tax_id = '$header_tax_id',
+                    header_logo = '$header_logo',
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO receipts (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, signature1, signature2)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$signature1', '$signature2')";
+            $sql = "INSERT INTO receipts (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, signature1, signature2, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$signature1', '$signature2', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
         }
         
         if (mysqli_query($conn, $sql)) {

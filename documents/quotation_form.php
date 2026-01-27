@@ -15,7 +15,7 @@ $company_res = mysqli_stmt_get_result($company_stmt);
 $company = mysqli_fetch_assoc($company_res);
 
 // Get all companies for selection
-$all_companies_sql = "SELECT id, company_name, address, phone, tax_id FROM company ORDER BY company_name ASC";
+$all_companies_sql = "SELECT id, company_name, address, phone, tax_id, logo FROM company ORDER BY company_name ASC";
 $all_companies_res = mysqli_query($conn, $all_companies_sql);
 $all_companies = [];
 while ($row = mysqli_fetch_assoc($all_companies_res)) {
@@ -72,20 +72,62 @@ if ($edit_id) {
         
         <input type="hidden" id="quotation_id" value="<?= $edit_id ?? '' ?>">
         
-        <div class="mb-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">ออกในนามบริษัท</label>
-            <select id="issuer_company_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" onchange="updateIssuerInfo()">
-                <?php foreach ($all_companies as $c): ?>
-                    <option value="<?= $c['id'] ?>" 
-                        data-name="<?= htmlspecialchars($c['company_name']) ?>" 
-                        data-address="<?= htmlspecialchars($c['address']) ?>" 
-                        data-phone="<?= htmlspecialchars($c['phone']) ?>" 
-                        data-taxid="<?= htmlspecialchars($c['tax_id']) ?>"
-                        <?= ($quotation_data['issuer_company_id'] ?? $company_id) == $c['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($c['company_name']) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+        <div class="mb-6 bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+            <label class="block text-sm font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-7h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                ข้อมูลหัวเอกสาร (สามารถแก้ไขได้)
+            </label>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">เลือกบริษัทต้นแบบ</label>
+                    <select id="issuer_company_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" onchange="loadCompanyTemplate()">
+                        <option value="">-- กำหนดเอง --</option>
+                        <?php foreach ($all_companies as $c): ?>
+                            <option value="<?= $c['id'] ?>" 
+                                data-name="<?= htmlspecialchars($c['company_name']) ?>" 
+                                data-address="<?= htmlspecialchars($c['address']) ?>" 
+                                data-phone="<?= htmlspecialchars($c['phone']) ?>" 
+                                data-taxid="<?= htmlspecialchars($c['tax_id']) ?>"
+                                data-logo="<?= htmlspecialchars($c['logo'] ?? '') ?>"
+                                <?= ($quotation_data['issuer_company_id'] ?? $company_id) == $c['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($c['company_name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ชื่อบริษัทในหัวเอกสาร</label>
+                    <input type="text" id="header_name" value="<?= htmlspecialchars($quotation_data['header_name'] ?? $company['company_name'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ที่อยู่ในหัวเอกสาร</label>
+                    <textarea id="header_address" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"><?= htmlspecialchars($quotation_data['header_address'] ?? $company['address'] ?? '') ?></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">เบอร์โทรศัพท์</label>
+                    <input type="text" id="header_phone" value="<?= htmlspecialchars($quotation_data['header_phone'] ?? $company['phone'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">เลขประจำตัวผู้เสียภาษี</label>
+                    <input type="text" id="header_tax_id" value="<?= htmlspecialchars($quotation_data['header_tax_id'] ?? $company['tax_id'] ?? '') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">โลโก้หัวเอกสาร</label>
+                    <div class="flex items-center gap-4">
+                        <div class="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center overflow-hidden bg-white">
+                            <img id="header_logo_preview" src="<?= $quotation_data['header_logo'] ?? ($company['logo'] ? '../'.$company['logo'] : '') ?>" class="<?= (empty($quotation_data['header_logo']) && empty($company['logo'])) ? 'hidden' : '' ?> w-full h-full object-contain">
+                            <svg id="header_logo_placeholder" class="<?= (!empty($quotation_data['header_logo']) || !empty($company['logo'])) ? 'hidden' : '' ?> w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <input type="file" id="header_logo_input" accept="image/*" onchange="previewHeaderLogo()" class="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -254,9 +296,38 @@ $(document).ready(function() {
     updateIssuerInfo();
 });
 
-function updateIssuerInfo() {
-    // This function can be used to update any UI elements if needed
-    // For now, generatePreview will pull from the selected option
+function loadCompanyTemplate() {
+    const selected = $('#issuer_company_id option:selected');
+    if (selected.val()) {
+        $('#header_name').val(selected.data('name'));
+        $('#header_address').val(selected.data('address'));
+        $('#header_phone').val(selected.data('phone'));
+        $('#header_tax_id').val(selected.data('taxid'));
+        
+        const logo = selected.data('logo');
+        if (logo) {
+            $('#header_logo_preview').attr('src', '../' + logo).removeClass('hidden');
+            $('#header_logo_placeholder').addClass('hidden');
+        } else {
+            $('#header_logo_preview').addClass('hidden').attr('src', '');
+            $('#header_logo_placeholder').removeClass('hidden');
+        }
+    }
+}
+
+function previewHeaderLogo() {
+    const input = document.getElementById('header_logo_input');
+    const preview = document.getElementById('header_logo_preview');
+    const placeholder = document.getElementById('header_logo_placeholder');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
 
 // Load templates from server
@@ -728,6 +799,11 @@ function saveQuotation() {
         grand_total: grandTotal,
         notes: $('#notes').val(),
         issuer_company_id: $('#issuer_company_id').val(),
+        header_name: $('#header_name').val(),
+        header_address: $('#header_address').val(),
+        header_phone: $('#header_phone').val(),
+        header_tax_id: $('#header_tax_id').val(),
+        header_logo: $('#header_logo_preview').attr('src') || '',
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
         signature3: $('#sig3_preview').attr('src') || '',
@@ -875,13 +951,13 @@ function generatePreview() {
             <!-- Header Section -->
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                 <div style="width: 150px;">
-                    <img src="../assets/logo/logo.png" style="width: 120px; height: auto;">
+                    ${$('#header_logo_preview').attr('src') ? `<img src="${$('#header_logo_preview').attr('src')}" style="width: 120px; height: auto;">` : `<img src="../assets/logo/logo.png" style="width: 120px; height: auto;">`}
                 </div>
                 <div style="flex: 1; text-align: center; padding: 0 10px;">
-                    <h1 style="font-size: 18px; font-weight: bold; margin: 0;">${issuerName}</h1>
-                    <p style="font-size: 14px; margin: 2px 0;">${issuerAddress}</p>
-                    <p style="font-size: 14px; margin: 2px 0;">โทร. ${issuerPhone} ไลน์ OA= @ttgoldenteak</p>
-                    <p style="font-size: 14px; margin: 2px 0;">เลขที่ประจำตัวผู้เสียภาษี ${issuerTaxId}</p>
+                    <h1 style="font-size: 18px; font-weight: bold; margin: 0;">${$('#header_name').val()}</h1>
+                    <p style="font-size: 14px; margin: 2px 0;">${$('#header_address').val()}</p>
+                    <p style="font-size: 14px; margin: 2px 0;">โทร. ${$('#header_phone').val()} ไลน์ OA= @ttgoldenteak</p>
+                    <p style="font-size: 14px; margin: 2px 0;">เลขที่ประจำตัวผู้เสียภาษี ${$('#header_tax_id').val()}</p>
                 </div>
                 <div style="width: 150px; text-align: right;">
                     <h2 style="font-size: 20px; font-weight: bold; margin: 0;">ใบเสนอราคา</h2>

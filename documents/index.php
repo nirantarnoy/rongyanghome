@@ -68,6 +68,18 @@ $total_quotations = mysqli_fetch_assoc($count_res)['total'] ?? 0;
                 <i class="fas fa-receipt"></i>
                 <span class="text-sm font-bold">ใบเสร็จรับเงิน</span>
             </a>
+            <a href="?tab=purchase_order" class="nav-tab <?= $tab == 'purchase_order' ? 'active' : '' ?>">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="text-sm font-bold">ใบสั่งซื้อ</span>
+            </a>
+            <a href="?tab=sales_order" class="nav-tab <?= $tab == 'sales_order' ? 'active' : '' ?>">
+                <i class="fas fa-file-invoice"></i>
+                <span class="text-sm font-bold">ใบสั่งขาย</span>
+            </a>
+            <a href="?tab=goods_receipt" class="nav-tab <?= $tab == 'goods_receipt' ? 'active' : '' ?>">
+                <i class="fas fa-box-open"></i>
+                <span class="text-sm font-bold">ใบรับสินค้า</span>
+            </a>
             <a href="?tab=settings" class="nav-tab <?= $tab == 'settings' ? 'active' : '' ?>">
                 <i class="fas fa-cog"></i>
                 <span class="text-sm font-bold">ตั้งค่า</span>
@@ -89,6 +101,15 @@ $total_quotations = mysqli_fetch_assoc($count_res)['total'] ?? 0;
                     break;
                 case 'receipt':
                     include 'tabs/receipt_tab.php';
+                    break;
+                case 'purchase_order':
+                    include 'tabs/purchase_order_tab.php';
+                    break;
+                case 'sales_order':
+                    include 'tabs/sales_order_tab.php';
+                    break;
+                case 'goods_receipt':
+                    include 'tabs/goods_receipt_tab.php';
                     break;
                 case 'settings':
                     include 'tabs/runno_tab.php';

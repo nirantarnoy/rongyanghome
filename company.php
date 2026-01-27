@@ -98,7 +98,7 @@ mysqli_query($conn, "ALTER TABLE company CONVERT TO CHARACTER SET utf8mb4 COLLAT
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50/50 border-b border-gray-100">
-                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ลำดับ</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">โลโก้</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">ชื่อบริษัท</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">เลขผู้เสียภาษี</th>
                         <th class="px-6 py-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">เบอร์โทรศัพท์</th>
@@ -139,6 +139,24 @@ mysqli_query($conn, "ALTER TABLE company CONVERT TO CHARACTER SET utf8mb4 COLLAT
                 
                 <form id="companyForm" class="space-y-5">
                     <input type="hidden" id="company_id" name="id">
+                    
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="relative group">
+                            <div class="w-24 h-24 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-300 flex items-center justify-center group-hover:border-indigo-400 transition-colors">
+                                <img id="logo_preview" src="" class="w-full h-full object-contain hidden">
+                                <svg id="logo_placeholder" class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <label class="absolute -bottom-2 -right-2 bg-indigo-600 text-white p-2 rounded-xl shadow-lg cursor-pointer hover:bg-indigo-700 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                <input type="file" name="logo" id="logo_input" class="hidden" accept="image/*" onchange="previewLogo(this)">
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-3">โลโก้บริษัท (PNG, JPG)</p>
+                    </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1.5">ชื่อบริษัท <span class="text-red-500">*</span></label>
@@ -232,6 +250,8 @@ function openModal(type, id = null) {
     
     if (type === 'add') {
         $('#modalTitle').text('เพิ่มบริษัทใหม่');
+        $('#logo_preview').addClass('hidden').attr('src', '');
+        $('#logo_placeholder').removeClass('hidden');
         $('#companyModal').removeClass('hidden');
     } else {
         $('#modalTitle').text('แก้ไขข้อมูลบริษัท');
@@ -247,6 +267,15 @@ function openModal(type, id = null) {
                 $('input[name="phone"]').val(data.phone);
                 $('input[name="email"]').val(data.email);
                 $('textarea[name="address"]').val(data.address);
+                
+                if (data.logo) {
+                    $('#logo_preview').attr('src', data.logo).removeClass('hidden');
+                    $('#logo_placeholder').addClass('hidden');
+                } else {
+                    $('#logo_preview').addClass('hidden').attr('src', '');
+                    $('#logo_placeholder').removeClass('hidden');
+                }
+                
                 $('#companyModal').removeClass('hidden');
             }
         });
@@ -257,14 +286,29 @@ function closeModal() {
     $('#companyModal').addClass('hidden');
 }
 
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#logo_preview').attr('src', e.target.result).removeClass('hidden');
+            $('#logo_placeholder').addClass('hidden');
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
 function saveCompany() {
-    const formData = $('#companyForm').serialize();
+    const form = document.getElementById('companyForm');
+    const formData = new FormData(form);
     const action = $('#company_id').val() ? 'update' : 'create';
+    formData.append('action', action);
 
     $.ajax({
         url: 'company_action.php',
         type: 'POST',
-        data: formData + '&action=' + action,
+        data: formData,
+        processData: false,
+        contentType: false,
         success: function(response) {
             const res = JSON.parse(response);
             if (res.status === 'success') {
