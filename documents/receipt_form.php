@@ -133,7 +133,7 @@ if ($edit_id) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">เลขที่เอกสาร</label>
-                <input type="text" id="doc_number" value="<?= $receipt_data['doc_number'] ?? 'RC-'.date('Ymd').'-001' ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <input type="text" id="doc_number" value="<?= $receipt_data['doc_number'] ?? '' ?>" placeholder="เช่น RC-<?= date('Ymd') ?>-001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">วันที่</label>
