@@ -60,25 +60,29 @@ $total_quotations = mysqli_fetch_assoc($count_res)['total'] ?? 0;
                 <i class="fas fa-file-invoice-dollar"></i>
                 <span class="text-sm font-bold">ใบเสนอราคา</span>
             </a>
-            <a href="?tab=invoice" class="nav-tab <?= $tab == 'invoice' ? 'active' : '' ?>">
-                <i class="fas fa-file-invoice"></i>
-                <span class="text-sm font-bold">ใบแจ้งหนี้</span>
-            </a>
-            <a href="?tab=receipt" class="nav-tab <?= $tab == 'receipt' ? 'active' : '' ?>">
-                <i class="fas fa-receipt"></i>
-                <span class="text-sm font-bold">ใบเสร็จรับเงิน</span>
-            </a>
             <a href="?tab=purchase_order" class="nav-tab <?= $tab == 'purchase_order' ? 'active' : '' ?>">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="text-sm font-bold">ใบสั่งซื้อ</span>
             </a>
             <a href="?tab=sales_order" class="nav-tab <?= $tab == 'sales_order' ? 'active' : '' ?>">
-                <i class="fas fa-file-invoice"></i>
+                <i class="fas fa-file-invoice-dollar text-emerald-500"></i>
                 <span class="text-sm font-bold">ใบสั่งขาย</span>
+            </a>
+            <a href="?tab=invoice" class="nav-tab <?= $tab == 'invoice' ? 'active' : '' ?>">
+                <i class="fas fa-file-invoice"></i>
+                <span class="text-sm font-bold">ใบแจ้งหนี้</span>
+            </a>
+            <a href="?tab=tax_invoice" class="nav-tab <?= $tab == 'tax_invoice' ? 'active' : '' ?>">
+                <i class="fas fa-file-invoice-dollar text-rose-500"></i>
+                <span class="text-sm font-bold">ใบกำกับภาษี</span>
             </a>
             <a href="?tab=goods_receipt" class="nav-tab <?= $tab == 'goods_receipt' ? 'active' : '' ?>">
                 <i class="fas fa-box-open"></i>
                 <span class="text-sm font-bold">ใบรับสินค้า</span>
+            </a>
+            <a href="?tab=receipt" class="nav-tab <?= $tab == 'receipt' ? 'active' : '' ?>">
+                <i class="fas fa-receipt"></i>
+                <span class="text-sm font-bold">ใบเสร็จรับเงิน</span>
             </a>
             <a href="?tab=settings" class="nav-tab <?= $tab == 'settings' ? 'active' : '' ?>">
                 <i class="fas fa-cog"></i>
@@ -97,6 +101,9 @@ $total_quotations = mysqli_fetch_assoc($count_res)['total'] ?? 0;
                     include 'tabs/quotation_tab.php';
                     break;
                 case 'invoice':
+                    include 'tabs/invoice_tab.php';
+                    break;
+                case 'tax_invoice':
                     include 'tabs/invoice_tab.php';
                     break;
                 case 'receipt':

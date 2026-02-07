@@ -125,7 +125,7 @@ if ($action == 'get_form_data') {
     while($row = mysqli_fetch_assoc($p_res)) $projects[] = $row;
     
     // Get categories
-    $c_sql = "SELECT id, name, direction, icon FROM categories WHERE module_type = $module_type ORDER BY direction DESC, name ASC";
+    $c_sql = "SELECT id, name, direction, icon FROM categories WHERE module_type = $module_type ORDER BY direction DESC, sort_order ASC, name ASC";
     $c_res = mysqli_query($conn, $c_sql);
     $categories = [];
     while($row = mysqli_fetch_assoc($c_res)) $categories[] = $row;
@@ -160,6 +160,59 @@ if ($action == 'get_dashboard_stats') {
     $stats['total_profit'] = $stats['total_income'] - $stats['total_expense'];
     $stats['total_count'] = (int)$stats['total_count'];
     
+    // Get summary by category
+    $cat_sql = "SELECT c.name, c.direction, c.icon, SUM(t.amount) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                $where
+                GROUP BY t.category_id
+                ORDER BY c.sort_order ASC, c.name ASC";
+    $cat_res = mysqli_query($conn, $cat_sql);
+    $categories_summary = ['income' => [], 'expense' => []];
+    while($row = mysqli_fetch_assoc($cat_res)) {
+        $row['total'] = (float)$row['total'];
+        $categories_summary[$row['direction']][] = $row;
+    }
+    $stats['categories_summary'] = $categories_summary;
+
+    // Get stats by monthly
+    $month_sql = "SELECT DATE_FORMAT(t.transaction_date, '%Y-%m') as month,
+                         SUM(CASE WHEN c.direction = 'income' THEN t.amount ELSE 0 END) as income,
+                         SUM(CASE WHEN c.direction = 'expense' THEN t.amount ELSE 0 END) as expense
+                  FROM transactions t
+                  JOIN categories c ON t.category_id = c.id
+                  $where
+                  GROUP BY month
+                  ORDER BY month ASC";
+    $month_res = mysqli_query($conn, $month_sql);
+    $monthly_stats = [];
+    while($row = mysqli_fetch_assoc($month_res)) {
+        $row['income'] = (float)$row['income'];
+        $row['expense'] = (float)$row['expense'];
+        $monthly_stats[] = $row;
+    }
+    $stats['monthly_stats'] = $monthly_stats;
+
+    // Get stats by project comparison
+    $proj_sql = "SELECT p.project_name, 
+                        SUM(CASE WHEN c.direction = 'income' THEN t.amount ELSE 0 END) as income,
+                        SUM(CASE WHEN c.direction = 'expense' THEN t.amount ELSE 0 END) as expense
+                 FROM transactions t
+                 JOIN projects_list p ON t.project_id = p.id
+                 JOIN categories c ON t.category_id = c.id
+                 $where
+                 GROUP BY t.project_id
+                 ORDER BY income DESC";
+    $proj_res = mysqli_query($conn, $proj_sql);
+    $project_comparison = [];
+    while($row = mysqli_fetch_assoc($proj_res)) {
+        $row['income'] = (float)$row['income'];
+        $row['expense'] = (float)$row['expense'];
+        $row['profit'] = $row['income'] - $row['expense'];
+        $project_comparison[] = $row;
+    }
+    $stats['project_comparison'] = $project_comparison;
+
     ob_clean();
     echo json_encode(['status' => 'success', 'data' => $stats]);
     exit;

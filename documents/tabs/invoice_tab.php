@@ -1,12 +1,115 @@
-<div class="bg-white rounded-2xl shadow-sm p-12 text-center">
-    <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
-        <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z"></path>
-        </svg>
+<?php
+$current_type = $tab === 'tax_invoice' ? 'tax_invoice' : 'invoice';
+$title = $current_type === 'tax_invoice' ? 'ใบกำกับภาษี' : 'ใบแจ้งหนี้';
+?>
+<div class="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800"><?= $title ?></h2>
+            <p class="text-sm text-gray-500">จัดการรายการ<?= $title ?>ทั้งหมดของคุณ</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="relative flex-1 md:w-64">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="search_invoice" placeholder="ค้นหา..." class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all text-sm">
+            </div>
+            <a href="invoice_form.php?type=<?= $current_type ?>" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl font-bold transition-all shadow-md active:scale-95 flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span>สร้างใหม่</span>
+            </a>
+        </div>
     </div>
-    <h2 class="text-2xl font-bold text-gray-800 mb-2">ใบแจ้งหนี้ (Invoice)</h2>
-    <p class="text-gray-500 mb-8">ระบบจัดการใบแจ้งหนี้กำลังอยู่ระหว่างการพัฒนา</p>
-    <button class="bg-gray-100 text-gray-400 px-6 py-2 rounded-lg cursor-not-allowed font-medium">
-        เร็วๆ นี้
-    </button>
 </div>
+
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100">
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">เลขที่</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">วันที่</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ลูกค้า</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">ยอดรวม</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="invoice_list" class="divide-y divide-gray-100">
+                <!-- Data will be loaded via AJAX -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    loadInvoices();
+    
+    $('#search_invoice').on('input', function() {
+        loadInvoices($(this).val());
+    });
+});
+
+function loadInvoices(search = '') {
+    $.ajax({
+        url: 'invoice_action.php',
+        type: 'GET',
+        data: { action: 'list', type: '<?= $current_type ?>', search: search },
+        success: function(res) {
+            if (res.status === 'success') {
+                let html = '';
+                if (res.data.length === 0) {
+                    html = '<tr><td colspan="5" class="px-6 py-12 text-center text-gray-400">ไม่พบข้อมูล</td></tr>';
+                } else {
+                    res.data.forEach(item => {
+                        html += `
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 text-sm font-bold text-gray-800">${item.doc_number}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">${new Date(item.doc_date).toLocaleDateString('th-TH')}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">${item.customer_name}</td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
+                                <td class="px-6 py-4 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="invoice_form.php?id=${item.id}" class="w-9 h-9 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="แก้ไข">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button onclick="deleteInvoice(${item.id})" class="w-9 h-9 flex items-center justify-center bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="ลบ">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                }
+                $('#invoice_list').html(html);
+            }
+        }
+    });
+}
+
+function deleteInvoice(id) {
+    Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: 'คุณไม่สามารถกู้คืนข้อมูลนี้ได้!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'invoice_action.php',
+                type: 'POST',
+                data: { action: 'delete', id: id },
+                success: function(res) {
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        loadInvoices();
+                    } else Swal.fire('ผิดพลาด', res.message, 'error');
+                }
+            });
+        }
+    });
+}
+</script>

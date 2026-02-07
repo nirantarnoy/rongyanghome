@@ -344,13 +344,19 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="flex gap-4 mt-8">
-            <button onclick="savePO()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                💾 บันทึก
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10 pt-8 border-t no-print">
+            <button onclick="savePO()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> บันทึก
             </button>
-            <button onclick="generatePreview()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                👁️ ดูตัวอย่าง / พิมพ์
+            <button onclick="generatePreview()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-eye"></i> ดูตัวอย่าง
             </button>
+            
+            <?php if ($edit_id): ?>
+            <button onclick="receiveGoods(<?= $edit_id ?>)" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-box-open"></i> รับสินค้า
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -795,6 +801,10 @@ function ThaiBaht(number) {
     else result += convert(satang) + "สตางค์";
 
     return result;
+}
+
+function receiveGoods(id) {
+    window.location.href = 'goods_receipt_form.php?po_id=' + id;
 }
 
 function exportPDF() {

@@ -85,13 +85,18 @@ function renderList(data) {
                     <td class="px-6 py-4 text-sm text-gray-600">${date}</td>
                     <td class="px-6 py-4 text-sm text-gray-600">${item.customer_name || '-'}</td>
                     <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
-                    <td class="px-6 py-4 text-center space-x-2">
-                        <a href="quotation_form.php?id=${item.id}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all text-sm font-medium">
-                            ✏️ แก้ไข
-                        </a>
-                        <button onclick="deleteQuotation(${item.id})" class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all text-sm font-medium">
-                            🗑️ ลบ
-                        </button>
+                    <td class="px-6 py-4 text-center whitespace-nowrap">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="convertToSO(${item.id})" class="w-9 h-9 flex items-center justify-center bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="แปลงเป็นใบสั่งขาย">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            <a href="quotation_form.php?id=${item.id}" class="w-9 h-9 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="แก้ไข">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button onclick="deleteQuotation(${item.id})" class="w-9 h-9 flex items-center justify-center bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="ลบ">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -99,6 +104,56 @@ function renderList(data) {
     }
     
     $('#quotationList').html(html);
+}
+
+function convertToSO(id) {
+    Swal.fire({
+        title: 'ยืนยันการแปลงเอกสาร?',
+        text: 'คุณต้องการแปลงใบเสนอราคานี้เป็นใบสั่งขายใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, แปลงเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'กำลังประมวลผล...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            $.ajax({
+                url: 'quotation_action.php',
+                type: 'POST',
+                data: { action: 'convert_to_so', id: id },
+                success: function(response) {
+                    try {
+                        let res = typeof response === 'object' ? response : JSON.parse(response);
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                showCancelButton: true,
+                                confirmButtonText: 'ไปหน้าใบสั่งขาย',
+                                cancelButtonText: 'อยู่ที่เดิม'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'sales_order_form.php?id=' + res.so_id;
+                                }
+                            });
+                        } else {
+                            Swal.fire('ผิดพลาด', res.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการประมวลผล', 'error');
+                    }
+                }
+            });
+        }
+    });
 }
 
 function deleteQuotation(id) {

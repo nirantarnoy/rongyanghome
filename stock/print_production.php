@@ -42,24 +42,6 @@ mysqli_stmt_bind_param($comp_stmt, "i", $company_id);
 mysqli_stmt_execute($comp_stmt);
 $comp_result = mysqli_stmt_get_result($comp_stmt);
 $company = mysqli_fetch_assoc($comp_result);
-function generateBarcodeSVG($text) {
-    // Simple 1D barcode simulation using SVG
-    $width = 200;
-    $height = 40;
-    $svg = '<svg width="'.$width.'" height="'.$height.'" viewBox="0 0 '.$width.' '.$height.'" xmlns="http://www.w3.org/2000/svg">';
-    $seed = crc32($text);
-    srand($seed);
-    $x = 10;
-    while ($x < $width - 10) {
-        $w = rand(1, 3);
-        if (rand(0, 1)) {
-            $svg .= '<rect x="'.$x.'" y="0" width="'.$w.'" height="'.$height.'" fill="black" />';
-        }
-        $x += $w + rand(1, 2);
-    }
-    $svg .= '</svg>';
-    return $svg;
-}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -69,8 +51,9 @@ function generateBarcodeSVG($text) {
     <title>ใบสั่งผลิต - <?= $order['order_no'] ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        @page { size: A4; margin: 15mm; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Sarabun', sans-serif; font-size: 14px; line-height: 1.4; color: #333; background: #f5f5f5; padding: 20px; }
+        body { font-family: 'Sarabun', sans-serif; font-size: 13px; line-height: 1.4; color: #000; background: #f5f5f5; padding: 20px; }
         
         .container { 
             width: 210mm; 
@@ -78,329 +61,229 @@ function generateBarcodeSVG($text) {
             margin: 0 auto; 
             background: white; 
             padding: 15mm;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             position: relative;
         }
 
-        /* Top Header */
-        .top-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            margin-bottom: 5px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-        }
+        .header-table { width: 100%; margin-bottom: 20px; border: none; }
+        .header-table td { border: none; padding: 0; vertical-align: top; }
+        
+        .logo-box { width: 80px; height: 80px; margin-right: 15px; }
+        .logo-box img { width: 100%; height: 100%; object-fit: contain; }
 
-        .company-header {
-            text-align: center;
-            flex: 1;
-            font-weight: bold;
-            line-height: 1.2;
-        }
+        .company-name { font-size: 16px; font-weight: bold; margin-top: 25px; }
+        .doc-title-box { text-align: right; }
+        .doc-title { font-size: 24px; font-weight: bold; }
+        .doc-no { font-size: 20px; font-weight: bold; margin-top: 5px; }
 
-        /* Document Title */
-        .doc-title-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .doc-title {
-            font-size: 24px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .meta-info { width: 100%; margin: 15px 0; border: none; }
+        .meta-info td { border: none; padding: 3px 0; }
+        .meta-label { font-weight: bold; width: 100px; }
 
-        /* Main Info Section */
-        .main-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-top: 10px;
-            margin-bottom: 20px;
-        }
-
-        .doc-id-section {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .doc-id {
-            font-size: 28px;
-            font-weight: 700;
-            color: #000;
-        }
-
-        .barcode-container {
-            margin-top: 5px;
-        }
-
-        .logo-container {
-            width: 100px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 25px;
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-        }
-
-        .info-item {
-            display: flex;
-            gap: 10px;
-        }
-
-        .info-label {
-            font-weight: bold;
-            color: #4b5563;
-            min-width: 120px;
-        }
-
-        .info-value {
-            color: #111827;
-            flex: 1;
-        }
-
-        /* Tables */
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            margin: 20px 0 10px 0;
-            color: #1f2937;
-            border-left: 4px solid #6366f1;
-            padding-left: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-
-        th, td {
-            border: 1px solid #d1d5db;
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f3f4f6;
-            font-weight: bold;
-            color: #374151;
-        }
-
+        .section-title { font-size: 16px; font-weight: bold; border-bottom: none; margin-bottom: 10px; margin-top: 20px; text-decoration: none; }
+        
+        table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        table.data-table th, table.data-table td { border: 1px solid #000; padding: 6px 8px; }
+        table.data-table th { background-color: #fff; text-align: center; font-weight: bold; }
+        
         .text-center { text-align: center; }
         .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .font-bold { font-weight: bold; }
 
-        /* Summary */
-        .summary-row {
-            text-align: right;
-            font-weight: bold;
-            font-size: 18px;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f0fdf4;
-            border-radius: 5px;
-        }
+        .signature-section { margin-top: 40px; display: flex; justify-content: space-around; text-align: center; }
+        .sig-box { width: 200px; }
+        .sig-line { border-bottom: 1px dotted #000; margin: 30px 0 5px 0; }
 
-        /* Instructions Section */
-        .instructions-box {
-            padding: 15px;
-            background: #f5f3ff;
-            border: 1px solid #ddd6fe;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
-        }
-
-        .qc-box {
-            padding: 15px;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            white-space: pre-wrap;
-        }
-
-        /* Footer / Signatures */
-        .signature-section {
-            margin-top: 40px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .signature-box {
-            text-align: center;
-            width: 280px;
-        }
-
-        .signature-line {
-            border-bottom: 1px solid #9ca3af;
-            margin-bottom: 8px;
-            height: 50px;
-        }
+        .total-box { text-align: right; padding: 8px; font-weight: bold; font-size: 14px; }
 
         @media print {
             body { background: none; padding: 0; }
-            .container { box-shadow: none; width: 100%; padding: 0; }
+            .container { box-shadow: none; width: 100%; padding: 0; margin: 0; }
             .no-print { display: none; }
-            .info-grid { background: #fff !important; border: 1px solid #ccc; }
-            .instructions-box, .qc-box { background: #fff !important; border: 1px solid #ccc; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Top Header -->
-        <div class="top-header">
-            <div>พิมพ์เมื่อ: <?= date('d/m/Y H:i') ?></div>
-            <div class="company-header">
-                <?= htmlspecialchars($company['company_name'] ?? 'บริษัท บ้านสักทองร้องแหย่ง จำกัด') ?>
-            </div>
-            <div>หน้า 1 / 1</div>
-        </div>
+        <!-- Header -->
+        <table class="header-table">
+            <tr>
+                <td style="width: 80px;">
+                    <div class="logo-box">
+                        <?php 
+                        $logo_path = '../assets/logo/logo.png';
+                        if (file_exists($logo_path)): 
+                        ?>
+                        <img src="<?= $logo_path ?>" alt="Logo">
+                        <?php else: ?>
+                        <div style="border: 1px solid #000; padding: 10px; text-align: center;">LOGO</div>
+                        <?php endif; ?>
+                    </div>
+                </td>
+                <td>
+                    <div class="company-name"><?= htmlspecialchars($company['company_name'] ?? 'บริษัท บ้านสักทองร้องแหย่ง จำกัด') ?></div>
+                </td>
+                <td class="doc-title-box">
+                    <div class="doc-title">ใบสั่งผลิต</div>
+                    <div class="doc-no">เลขที่ <?= htmlspecialchars($order['order_no']) ?></div>
+                </td>
+            </tr>
+        </table>
 
-        <!-- Document Title -->
-        <div class="doc-title-container">
-            <div class="doc-title">ใบสั่งผลิต</div>
-        </div>
+        <!-- Meta Info -->
+        <table class="meta-info">
+            <tr>
+                <td class="meta-label">รับผิดชอบ:</td>
+                <td><?= htmlspecialchars($order['foreman'] ?? 'บจก.บ้านสักทองร้องแหย่ง') ?></td>
+                <td class="meta-label">วันที่เริ่มต้น:</td>
+                <td><?= date('d-m-Y H:i', strtotime($order['order_date'])) ?></td>
+            </tr>
+        </table>
 
-        <!-- Main Info Section -->
-        <div class="main-info">
-            <div class="doc-id-section">
-                <div class="doc-id"><?= htmlspecialchars($order['order_no']) ?></div>
-            </div>
-            <div class="logo-container">
-                <?php 
-                $logo_path = '../assets/logo/logo.png';
-                if (file_exists($logo_path)): 
-                ?>
-                <img src="<?= $logo_path ?>" alt="Logo">
-                <?php else: ?>
-                <div style="font-size: 10px; color: #ccc; border: 1px dashed #ccc; padding: 20px;">LOGO</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Info Grid -->
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">วันที่สั่งผลิต:</span>
-                <span class="info-value"><?= date('d/m/Y', strtotime($order['order_date'])) ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">กำหนดเสร็จ:</span>
-                <span class="info-value"><b><?= $order['due_date'] ? date('d/m/Y', strtotime($order['due_date'])) : '-' ?></b></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">ลูกค้า:</span>
-                <span class="info-value"><?= htmlspecialchars($order['customer_name'] ?? '-') ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">โครงการ:</span>
-                <span class="info-value"><?= htmlspecialchars($order['project_name'] ?? '-') ?></span>
-            </div>
-            <div class="info-item" style="grid-column: span 2;">
-                <span class="info-label">สินค้าที่ผลิต:</span>
-                <span class="info-value">[<?= htmlspecialchars($order['sku'] ?? '-') ?>] <?= htmlspecialchars($order['product_name'] ?? '-') ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">จำนวนที่ผลิต:</span>
-                <span class="info-value"><?= number_format($order['qty'], 2) ?> <?= htmlspecialchars($order['unit'] ?? '-') ?></span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">ขนาด/มิติ:</span>
-                <span class="info-value"><?= htmlspecialchars($order['dimensions'] ?? '-') ?></span>
-            </div>
-        </div>
-
-        <div class="section-title">รายการวัสดุที่ใช้ (BOM - Bill of Materials)</div>
-        <table>
+        <!-- ปฏิบัติการ -->
+        <div class="section-title">ปฏิบัติการ</div>
+        <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 10%;" class="text-center">ลำดับ</th>
-                    <th style="width: 50%;">รายการวัสดุ / SKU</th>
-                    <th style="width: 20%;" class="text-center">จำนวนที่ใช้</th>
-                    <th style="width: 20%;" class="text-center">หน่วย</th>
+                    <th style="width: 15%;">ปฏิบัติการ</th>
+                    <th style="width: 45%;">ศูนย์งาน</th>
+                    <th style="width: 15%;">ระยะเวลา (วัน)</th>
+                    <th style="width: 25%;">ผู้ปฏิบัติงาน</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">เลื่อย</td>
+                    <td>โรงงานบริษัทบ้านสักทองร้องแหย่งจำกัด</td>
+                    <td class="text-center"></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- สินค้าที่จะผลิต -->
+        <div class="section-title">สินค้าที่จะผลิต</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">ที่</th>
+                    <th style="width: 45%;">สินค้า ที่จะผลิต</th>
+                    <th style="width: 15%;">จำนวนที่จะผลิต</th>
+                    <th style="width: 10%;">หน่วย</th>
+                    <th style="width: 12%;">ราคาต่อหน่วย</th>
+                    <th style="width: 13%;">รวมราคา</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php 
+                $price = $order['price'] ?? 0;
+                $total_prod = $order['qty'] * $price;
+                ?>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td><?= htmlspecialchars($order['product_name']) ?></td>
+                    <td class="text-center"><?= number_format($order['qty'], 2) ?></td>
+                    <td class="text-center"><?= htmlspecialchars($order['unit']) ?></td>
+                    <td class="text-right"><?= number_format($price, 2) ?></td>
+                    <td class="text-right"><?= number_format($total_prod, 2) ?></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="total-box">รวมราคา <?= number_format($total_prod, 2) ?> บาท</div>
+
+        <!-- ส่วนประกอบ -->
+        <div class="section-title">ส่วนประกอบ คลังสินค้า(เลือกคลัง) _________________</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">ที่</th>
+                    <th style="width: 45%;">วัสดุ</th>
+                    <th style="width: 15%;">จำนวน</th>
+                    <th style="width: 10%;">หน่วย</th>
+                    <th style="width: 12%;">ราคาต่อหน่วย</th>
+                    <th style="width: 13%;">รวมราคา</th>
                 </tr>
             </thead>
             <tbody>
                 <?php 
                 $no = 1;
+                $total_bom = 0;
                 foreach ($bom_items as $item): 
+                    // Get price from store or database if needed, but assuming it's joined
+                    $item_price = 0; // default 0 if not exist
+                    // Let's try to get price from products table
+                    $p_sql = "SELECT price FROM stock_products WHERE id = ?";
+                    $p_stmt = mysqli_prepare($conn, $p_sql);
+                    mysqli_stmt_bind_param($p_stmt, "i", $item['product_id']);
+                    mysqli_stmt_execute($p_stmt);
+                    $p_res = mysqli_stmt_get_result($p_stmt);
+                    if($p_row = mysqli_fetch_assoc($p_res)) $item_price = $p_row['price'];
+                    
+                    $subtotal = $item['qty'] * $item_price;
+                    $total_bom += $subtotal;
                 ?>
                 <tr>
                     <td class="text-center"><?= $no++ ?></td>
-                    <td>
-                        <div style="font-weight: 600;"><?= htmlspecialchars($item['product_name']) ?></div>
-                        <div style="font-size: 12px; color: #666;">SKU: <?= htmlspecialchars($item['sku'] ?? '-') ?></div>
-                    </td>
+                    <td><?= htmlspecialchars($item['product_name']) ?></td>
                     <td class="text-center"><?= number_format($item['qty'], 2) ?></td>
                     <td class="text-center"><?= htmlspecialchars($item['unit'] ?? '-') ?></td>
+                    <td class="text-right"><?= number_format($item_price, 2) ?></td>
+                    <td class="text-right"><?= number_format($subtotal, 2) ?></td>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($bom_items)): ?>
                 <tr>
-                    <td colspan="4" class="text-center" style="padding: 20px; color: #999;">ไม่มีรายการวัสดุ (BOM)</td>
+                    <td colspan="6" class="text-center">ไม่มีข้อมูล</td>
                 </tr>
                 <?php endif; ?>
             </tbody>
         </table>
-
-        <?php if ($order['instructions']): ?>
-        <div class="section-title">ขั้นตอนการทำงาน / คำแนะนำ</div>
-        <div class="instructions-box"><?= htmlspecialchars($order['instructions']) ?></div>
-        <?php endif; ?>
-
-        <?php if ($order['qc_standards']): ?>
-        <div class="section-title">มาตรฐานการตรวจสอบ (QC)</div>
-        <div class="qc-box"><?= htmlspecialchars($order['qc_standards']) ?></div>
-        <?php endif; ?>
+        <div class="total-box">รวมราคา <?= number_format($total_bom, 2) ?> บาท</div>
 
         <!-- Signatures -->
-        <div class="signature-section">
-            <div class="signature-box">
-                <p>ผู้สั่งผลิต (Ordered By)</p>
-                <div class="signature-line"></div>
-                <p>( <?= htmlspecialchars($order['ordered_by'] ?? '................................................') ?> )</p>
-                <p style="font-size: 12px; margin-top: 5px;">วันที่ <?= date('d/m/Y', strtotime($order['order_date'])) ?></p>
+        <div class="signature-section" style="margin-top: 30px;">
+            <div class="sig-box">
+                <p class="font-bold">ผู้เบิกผลิต</p>
+                <div class="sig-line"></div>
+                <p>( ................................................ )</p>
             </div>
-            <div class="signature-box">
-                <p>ผู้รับคำสั่ง / หัวหน้าช่าง (Foreman)</p>
-                <div class="signature-line"></div>
-                <p>( <?= htmlspecialchars($order['foreman'] ?? '................................................') ?> )</p>
-                <p style="font-size: 12px; margin-top: 5px;">วันที่ ...........................</p>
+            <div class="sig-box">
+                <p class="font-bold">ผู้อนุมัติ</p>
+                <div class="sig-line"></div>
+                <p>( ................................................ )</p>
             </div>
         </div>
 
-        <div style="margin-top: 40px; text-align: center; font-size: 11px; color: #6b7280; border-top: 1px dashed #ccc; padding-top: 10px;">
-            เอกสารนี้เป็นส่วนหนึ่งของระบบจัดการสต็อกและฝ่ายผลิต - <?= htmlspecialchars($company['company_name'] ?? '') ?>
-        </div>
+        <!-- ผลิตภัณฑ์พลอยได้ -->
+        <div class="section-title" style="margin-top: 50px;">ผลิตภัณฑ์พลอยได้หรือเศษผลผลิตคงเหลือ</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">ที่</th>
+                    <th style="width: 45%;">วัสดุ</th>
+                    <th style="width: 15%;">จำนวน</th>
+                    <th style="width: 10%;">หน่วย</th>
+                    <th style="width: 12%;">ราคาต่อหน่วย</th>
+                    <th style="width: 13%;">รวมราคา</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-center">1</td>
+                    <td>ไม้</td>
+                    <td class="text-center"></td>
+                    <td>แผ่น</td>
+                    <td class="text-right"></td>
+                    <td class="text-right"></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="total-box">รวมราคา 0.00 บาท</div>
 
-        <!-- Print Button -->
-        <div class="no-print" style="margin-top: 50px; text-align: center; display: flex; justify-content: center; gap: 15px;">
-            <button onclick="window.print()" style="background: #6366F1; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                <span>🖨️</span> พิมพ์ใบสั่งผลิต
-            </button>
-            <button onclick="window.close()" style="background: #6B7280; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                ปิดหน้าต่าง
-            </button>
+        <!-- Buttons -->
+        <div class="no-print" style="margin-top: 50px; text-align: center;">
+            <button onclick="window.print()" style="background: #10B981; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-family: 'Sarabun';">พิมพ์เอกสาร</button>
+            <button onclick="window.close()" style="margin-left: 10px; background: #6B7280; color: white; border: none; padding: 10px 25px; border-radius: 5px; cursor: pointer; font-family: 'Sarabun';">ปิด</button>
         </div>
     </div>
 </body>

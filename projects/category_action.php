@@ -22,6 +22,7 @@ $createTableSQL = "CREATE TABLE IF NOT EXISTS categories (
     direction ENUM('income', 'expense') NOT NULL,
     module_type INT NOT NULL COMMENT '1=Project, 2=Company',
     icon VARCHAR(50) DEFAULT '📁',
+    sort_order INT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
@@ -35,10 +36,16 @@ if (!mysqli_query($conn, $createTableSQL)) {
 // Ensure table uses utf8mb4
 mysqli_query($conn, "ALTER TABLE categories CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
 
+// Check and add sort_order column if it doesn't exist
+$checkColumn = mysqli_query($conn, "SHOW COLUMNS FROM categories LIKE 'sort_order'");
+if (mysqli_num_rows($checkColumn) == 0) {
+    mysqli_query($conn, "ALTER TABLE categories ADD COLUMN sort_order INT DEFAULT 0 AFTER icon");
+}
+
 if ($action == 'list') {
     $module_type = (int)$_GET['module_type'];
     
-    $sql = "SELECT * FROM categories WHERE module_type = $module_type ORDER BY id ASC";
+    $sql = "SELECT * FROM categories WHERE module_type = $module_type ORDER BY sort_order ASC, id ASC";
     $result = mysqli_query($conn, $sql);
     
     $income = [];
@@ -72,7 +79,11 @@ if ($action == 'save') {
     if ($id > 0) {
         $sql = "UPDATE categories SET name = '$name', direction = '$direction', icon = '$icon' WHERE id = $id";
     } else {
-        $sql = "INSERT INTO categories (name, direction, module_type, icon) VALUES ('$name', '$direction', $module_type, '$icon')";
+        // Get max sort_order
+        $maxRes = mysqli_query($conn, "SELECT MAX(sort_order) as max_order FROM categories WHERE module_type = $module_type AND direction = '$direction'");
+        $maxData = mysqli_fetch_assoc($maxRes);
+        $newOrder = (int)($maxData['max_order'] ?? 0) + 1;
+        $sql = "INSERT INTO categories (name, direction, module_type, icon, sort_order) VALUES ('$name', '$direction', $module_type, '$icon', $newOrder)";
     }
 
     ob_clean();
@@ -105,6 +116,44 @@ if ($action == 'delete') {
     } else {
         echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
     }
+    exit;
+}
+
+if ($action == 'update_order') {
+    $id = (int)$_POST['id'];
+    $direction = $_POST['move']; // 'up' or 'down'
+    $module_type = (int)$_POST['module_type'];
+    $cat_direction = mysqli_real_escape_string($conn, $_POST['cat_direction']);
+
+    // Get current item
+    $res = mysqli_query($conn, "SELECT id, sort_order FROM categories WHERE id = $id");
+    $current = mysqli_fetch_assoc($res);
+    $current_order = (int)$current['sort_order'];
+
+    if ($direction == 'up') {
+        $swapSQL = "SELECT id, sort_order FROM categories 
+                    WHERE module_type = $module_type AND direction = '$cat_direction' 
+                    AND sort_order < $current_order 
+                    ORDER BY sort_order DESC LIMIT 1";
+    } else {
+        $swapSQL = "SELECT id, sort_order FROM categories 
+                    WHERE module_type = $module_type AND direction = '$cat_direction' 
+                    AND sort_order > $current_order 
+                    ORDER BY sort_order ASC LIMIT 1";
+    }
+
+    $swapRes = mysqli_query($conn, $swapSQL);
+    if (mysqli_num_rows($swapRes) > 0) {
+        $target = mysqli_fetch_assoc($swapRes);
+        $target_id = $target['id'];
+        $target_order = $target['sort_order'];
+
+        mysqli_query($conn, "UPDATE categories SET sort_order = $target_order WHERE id = $id");
+        mysqli_query($conn, "UPDATE categories SET sort_order = $current_order WHERE id = $target_id");
+    }
+
+    ob_clean();
+    echo json_encode(['status' => 'success']);
     exit;
 }
 ?>

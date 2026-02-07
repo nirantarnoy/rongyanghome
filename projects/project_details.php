@@ -121,17 +121,42 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
             </div>
         </div>
 
-        <!-- Transactions List -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-gray-800">รายการบันทึกทั้งหมด</h2>
-                <div class="text-sm text-gray-500" id="transCount">0 รายการ</div>
-            </div>
+        <!-- Main Content 3 Columns -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 items-start">
             
-            <div id="transactionList" class="space-y-1">
-                <!-- Loaded via AJAX -->
-                <div class="text-center py-10 text-gray-400 italic">กำลังโหลดข้อมูล...</div>
+            <!-- Col 1: All Transactions -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">รายการบันทึกทั้งหมด</h2>
+                    <div class="text-sm text-gray-500" id="transCount">0 รายการ</div>
+                </div>
+                <div id="transactionList" class="space-y-1">
+                    <div class="text-center py-10 text-gray-400 italic">กำลังโหลดข้อมูล...</div>
+                </div>
             </div>
+
+            <!-- Col 2: Income Summary By Category -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-emerald-700 mb-6 flex flex-col">
+                    <span>ยอดบันทึกรายรับ</span>
+                    <span class="text-sm font-normal text-gray-500">แยกตามหมวดหมู่</span>
+                </h2>
+                <div id="incomeCatList" class="space-y-2">
+                    <div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูล</div>
+                </div>
+            </div>
+
+            <!-- Col 3: Expense Summary By Category -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <h2 class="text-xl font-bold text-red-700 mb-6 flex flex-col">
+                    <span>ยอดบันทึกรายจ่าย</span>
+                    <span class="text-sm font-normal text-gray-500">แยกตามหมวดหมู่</span>
+                </h2>
+                <div id="expenseCatList" class="space-y-2">
+                    <div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูล</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -160,6 +185,50 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
                             const profitSign = d.total_profit >= 0 ? '+' : '';
                             $('#dashProfit').text(profitSign + d.total_profit.toLocaleString() + ' ฿');
                             $('#transCount').text(d.total_count + ' รายการ');
+
+                            if (d.total_count >= 0) {
+                                let expenseHtml = '';
+                                if (d.categories_summary.expense.length > 0) {
+                                    d.categories_summary.expense.forEach(c => {
+                                        expenseHtml += `
+                                            <div class="bg-white p-4 rounded-2xl border border-red-50 shadow-sm mb-3">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
+                                                        ${c.icon}
+                                                    </div>
+                                                    <div class="font-bold text-gray-800">${c.name}</div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายจ่ายรวม</p>
+                                                    <p class="text-lg font-bold text-red-600">-${c.total.toLocaleString()} ฿</p>
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                }
+                                $('#expenseCatList').html(expenseHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายจ่าย</div>');
+
+                                let incomeHtml = '';
+                                if (d.categories_summary.income.length > 0) {
+                                    d.categories_summary.income.forEach(c => {
+                                        incomeHtml += `
+                                            <div class="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm mb-3">
+                                                <div class="flex items-center gap-3 mb-2">
+                                                    <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
+                                                        ${c.icon}
+                                                    </div>
+                                                    <div class="font-bold text-gray-800">${c.name}</div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายรับรวม</p>
+                                                    <p class="text-lg font-bold text-emerald-600">+${c.total.toLocaleString()} ฿</p>
+                                                </div>
+                                            </div>
+                                        `;
+                                    });
+                                }
+                                $('#incomeCatList').html(incomeHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายรับ</div>');
+                            }
                         }
                     } catch (e) { console.error(e); }
                 }

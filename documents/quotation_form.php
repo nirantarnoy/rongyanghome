@@ -43,6 +43,7 @@ if ($edit_id) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
@@ -193,10 +194,16 @@ if ($edit_id) {
         <div class="border-t pt-6 mb-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-gray-800">รายการสินค้า</h3>
-                <button onclick="addItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-all flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    เพิ่มรายการ
-                </button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" onclick="openStockSelector()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-4 py-2 rounded-xl transition-all flex items-center gap-2 border border-emerald-200 shadow-sm active:scale-95">
+                        <i class="fas fa-warehouse"></i>
+                        <span>ดึงจากคลังสินค้า</span>
+                    </button>
+                    <button type="button" onclick="addItem()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl transition-all flex items-center gap-2 shadow-md active:scale-95">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>เพิ่มรายการ</span>
+                    </button>
+                </div>
             </div>
 
             <div id="items-container" class="space-y-4">
@@ -255,21 +262,37 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="flex gap-4 mt-8">
-            <button onclick="saveQuotation()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                💾 บันทึก
-            </button>
-            <button onclick="generatePreview()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                👁️ ดูตัวอย่าง
-            </button>
-            <button onclick="exportPDF()" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                📄 Export PDF
-            </button>
-            <button onclick="printQuotation()" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                🖨️ Print A4
-            </button>
+        <!-- Action Buttons -->
+        <div class="mt-12 mb-20 pt-8 border-t">
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="saveQuotation()" class="flex-1 min-w-[160px] md:flex-none md:w-48 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-emerald-200 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-save text-lg"></i>
+                    <span>บันทึกข้อมูล</span>
+                </button>
+                
+                <?php if ($edit_id): ?>
+                <button onclick="convertToSO(<?= $edit_id ?>)" class="flex-1 min-w-[160px] md:flex-none md:w-48 bg-blue-600 hover:bg-blue-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-blue-200 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-exchange-alt text-lg"></i>
+                    <span>แปลงเป็น SO</span>
+                </button>
+                <?php endif; ?>
+
+                <button onclick="generatePreview()" class="flex-1 min-w-[160px] md:flex-none md:w-48 bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-indigo-200 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-eye text-lg"></i>
+                    <span>ดูตัวอย่าง</span>
+                </button>
+
+                <button onclick="exportPDF()" class="flex-1 min-w-[140px] md:flex-none md:w-40 bg-rose-500 hover:bg-rose-600 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-rose-200 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-file-pdf text-lg"></i>
+                    <span>Export PDF</span>
+                </button>
+
+                <button onclick="printQuotation()" class="flex-1 min-w-[140px] md:flex-none md:w-40 bg-slate-600 hover:bg-slate-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-slate-200 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fas fa-print text-lg"></i>
+                    <span>พิมพ์ A4</span>
+                </button>
+            </div>
         </div>
-    </div>
 
     <!-- Preview Section -->
     <div id="quotation-preview" class="bg-white rounded-2xl shadow-lg p-8" style="display: none;">
@@ -1190,6 +1213,160 @@ function printQuotation() {
     setTimeout(() => {
         window.print();
     }, 500);
+}
+
+function openStockSelector() {
+    Swal.fire({
+        title: 'เลือกสินค้าจากคลังสินค้า',
+        html: `
+            <div class="text-left space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-gray-700">เลือกคลังสินค้า</label>
+                    <select id="swal_warehouse_id" class="swal2-input !m-0 !w-full" onchange="loadWarehouseProducts(this.value)">
+                        <option value="">-- เลือกคลังสินค้า --</option>
+                    </select>
+                </div>
+                <div id="swal_product_list" class="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-2 bg-gray-50 min-h-[150px]">
+                    <p class="text-center text-gray-400 py-12">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>
+                </div>
+            </div>
+        `,
+        width: '700px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            // Load warehouses
+            $.ajax({
+                url: '../stock/stock_action.php',
+                type: 'GET',
+                data: { action: 'get_warehouses_json' },
+                success: function(res) {
+                    if (Array.isArray(res)) {
+                        const select = $('#swal_warehouse_id');
+                        res.forEach(wh => {
+                            select.append(`<option value="${wh.id}">${wh.name}</option>`);
+                        });
+                    }
+                }
+            });
+        }
+    });
+}
+
+function loadWarehouseProducts(whId) {
+    if (!whId) {
+        $('#swal_product_list').html('<p class="text-center text-gray-400 py-12">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>');
+        return;
+    }
+    
+    $('#swal_product_list').html('<div class="flex flex-col items-center justify-center py-12 text-gray-500"><svg class="animate-spin h-8 w-8 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> กำลังโหลดข้อมูลสินค้า...</div>');
+    
+    $.ajax({
+        url: '../stock/stock_action.php',
+        type: 'GET',
+        data: { action: 'get_warehouse_products', warehouse_id: whId },
+        success: function(res) {
+            let html = '';
+            if (!res || res.length === 0) {
+                html = '<div class="text-center text-gray-400 py-12 flex flex-col items-center gap-2"><svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg><p>ไม่มีสินค้าในคลังนี้</p></div>';
+            } else {
+                res.forEach(p => {
+                    const productJson = JSON.stringify(p).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+                    html += `
+                        <div class="flex items-center justify-between p-3 bg-white border rounded-lg hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer group" onclick='addSelectedProduct(${productJson})'>
+                            <div class="flex items-center gap-3">
+                                <div class="w-14 h-14 bg-gray-50 rounded border overflow-hidden flex items-center justify-center">
+                                    ${p.image_url ? `<img src="../stock/${p.image_url}" class="w-full h-full object-contain">` : '<svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-gray-800 group-hover:text-emerald-600 transition-colors">${p.name}</div>
+                                    <div class="text-xs text-gray-500">SKU: ${p.sku || '-'} | คงเหลือ: <span class="font-bold text-gray-700">${p.balance}</span> ${p.unit}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-emerald-600 text-lg">฿${parseFloat(p.price).toLocaleString()}</div>
+                                <div class="text-[10px] text-gray-400 group-hover:text-emerald-500 font-bold uppercase tracking-wider">คลิกเพื่อเลือก</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            $('#swal_product_list').html(html);
+        }
+    });
+}
+
+function addSelectedProduct(p) {
+    addItem({
+        name: p.name,
+        qty: 1,
+        unit: p.unit,
+        price: p.price,
+        discount: 0,
+        image: p.image_url ? '../stock/' + p.image_url : ''
+    });
+    // Optional: show a small toast that item was added
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true
+    });
+    Toast.fire({
+        icon: 'success',
+        title: `เพิ่ม ${p.name} เรียบร้อยแล้ว`
+    });
+}
+
+function convertToSO(id) {
+    Swal.fire({
+        title: 'ยืนยันการแปลงเอกสาร?',
+        text: 'คุณต้องการแปลงใบเสนอราคานี้เป็นใบสั่งขายใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, แปลงเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'กำลังประมวลผล...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            $.ajax({
+                url: 'quotation_action.php',
+                type: 'POST',
+                data: { action: 'convert_to_so', id: id },
+                success: function(response) {
+                    try {
+                        let res = typeof response === 'object' ? response : JSON.parse(response);
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                showCancelButton: true,
+                                confirmButtonText: 'ไปหน้าใบสั่งขาย',
+                                cancelButtonText: 'อยู่ที่เดิม'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'sales_order_form.php?id=' + res.so_id;
+                                }
+                            });
+                        } else {
+                            Swal.fire('ผิดพลาด', res.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการประมวลผล', 'error');
+                    }
+                }
+            });
+        }
+    });
 }
 </script>
 

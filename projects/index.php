@@ -13,6 +13,7 @@ $view = $_GET['view'] ?? 'list';
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -247,14 +248,256 @@ $view = $_GET['view'] ?? 'list';
                                     const profitSign = d.total_profit >= 0 ? '+' : '';
                                     $('#dashProfit').text(profitSign + d.total_profit.toLocaleString() + ' ฿');
                                     
-                                    if (d.total_count > 0) {
-                                        $('#dashContent').html(`
-                                            <div class="text-center">
-                                                <div class="text-5xl mb-4">📈</div>
-                                                <p class="text-xl font-bold text-[#4a3f35]">มีการบันทึกรายการทั้งหมด ${d.total_count} รายการ</p>
-                                                <p class="text-gray-500 mt-2">ไปที่แท็บ "รายการ" เพื่อดูรายละเอียดทั้งหมด</p>
+                                    if (d.total_count >= 0) {
+                                        let expenseHtml = '';
+                                        let expenseLabels = [];
+                                        let expenseData = [];
+                                        let expenseColors = ['#ef4444', '#f87171', '#fca5a5', '#fee2e2', '#7f1d1d'];
+
+                                        if (d.categories_summary.expense.length > 0) {
+                                            d.categories_summary.expense.forEach((c, idx) => {
+                                                expenseLabels.push(c.name);
+                                                expenseData.push(c.total);
+                                                expenseHtml += `
+                                                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-red-50 shadow-sm mb-3">
+                                                        <div class="flex items-center gap-3">
+                                                            <span class="text-xl">${c.icon}</span>
+                                                            <span class="font-bold text-gray-700">${c.name}</span>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <p class="text-xs text-gray-400">รายจ่ายทั้งหมด</p>
+                                                            <p class="font-bold text-red-600">${c.total.toLocaleString()} ฿</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            });
+                                        }
+
+                                        let incomeHtml = '';
+                                        let incomeLabels = [];
+                                        let incomeData = [];
+                                        let incomeColors = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#064e3b'];
+
+                                        if (d.categories_summary.income.length > 0) {
+                                            d.categories_summary.income.forEach((c, idx) => {
+                                                incomeLabels.push(c.name);
+                                                incomeData.push(c.total);
+                                                incomeHtml += `
+                                                    <div class="flex justify-between items-center bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm mb-3">
+                                                        <div class="flex items-center gap-3">
+                                                            <span class="text-xl">${c.icon}</span>
+                                                            <span class="font-bold text-gray-700">${c.name}</span>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <p class="text-xs text-gray-400">รายรับทั้งหมด</p>
+                                                            <p class="font-bold text-emerald-600">${c.total.toLocaleString()} ฿</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                                            });
+                                        }
+
+                                        // Project comparison data
+                                        let projectTableHtml = '';
+                                        let projectLabels = [];
+                                        let projectIncome = [];
+                                        let projectExpense = [];
+                                        let projectProfit = [];
+
+                                        d.project_comparison.forEach(p => {
+                                            projectLabels.push(p.project_name);
+                                            projectIncome.push(p.income);
+                                            projectExpense.push(p.expense);
+                                            projectProfit.push(p.profit);
+                                            
+                                            const profitClass = p.profit >= 0 ? 'text-emerald-600' : 'text-red-600';
+                                            projectTableHtml += `
+                                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition-all">
+                                                    <td class="py-4 px-4 font-medium text-gray-700 text-sm">${p.project_name}</td>
+                                                    <td class="py-4 px-4 text-right text-emerald-600 font-bold text-sm">${p.income.toLocaleString()} ฿</td>
+                                                    <td class="py-4 px-4 text-right text-red-600 font-bold text-sm">${p.expense.toLocaleString()} ฿</td>
+                                                    <td class="py-4 px-4 text-right ${profitClass} font-bold text-sm">${p.profit.toLocaleString()} ฿</td>
+                                                </tr>
+                                            `;
+                                        });
+
+                                        $('#dashContent').removeClass('flex items-center justify-center p-12').addClass('p-6 md:p-10 space-y-10').html(`
+                                            <!-- Row 1: Category Summaries -->
+                                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+                                                <!-- Expenses Column -->
+                                                <div>
+                                                    <h3 class="text-xl font-bold text-red-700 mb-6 flex items-center gap-2 pb-2 border-b-2 border-red-100/50">
+                                                        <span class="bg-red-100 p-2 rounded-lg text-lg">📉</span> สรุปภาพรวมหมวดหมู่รายจ่าย
+                                                    </h3>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                                        <div class="space-y-1">
+                                                            ${expenseHtml || '<div class="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-300 text-gray-400 italic text-sm">ไม่มีข้อมูล</div>'}
+                                                        </div>
+                                                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 flex flex-col items-center">
+                                                            <div class="w-full max-w-[200px]">
+                                                                <canvas id="expenseChart"></canvas>
+                                                            </div>
+                                                            <p class="mt-4 text-xs text-gray-400 font-medium">สัดส่วนรายจ่ายแยกตามหมวดหมู่</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Income Column -->
+                                                <div>
+                                                    <h3 class="text-xl font-bold text-emerald-700 mb-6 flex items-center gap-2 pb-2 border-b-2 border-emerald-100/50">
+                                                        <span class="bg-emerald-100 p-2 rounded-lg text-lg">📈</span> สรุปภาพรวมหมวดหมู่รายรับ
+                                                    </h3>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                                                        <div class="space-y-1">
+                                                            ${incomeHtml || '<div class="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-300 text-gray-400 italic text-sm">ไม่มีข้อมูล</div>'}
+                                                        </div>
+                                                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-50 flex flex-col items-center">
+                                                            <div class="w-full max-w-[200px]">
+                                                                <canvas id="incomeChart"></canvas>
+                                                            </div>
+                                                            <p class="mt-4 text-xs text-gray-400 font-medium">สัดส่วนรายรับแยกตามหมวดหมู่</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Row 2: Monthly Trend & Project Pie -->
+                                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+                                                <div class="lg:col-span-2">
+                                                    <h3 class="text-xl font-bold text-amber-700 mb-6 flex items-center gap-2 pb-2 border-b-2 border-amber-100/50">
+                                                        <span class="bg-amber-100 p-2 rounded-lg text-lg">📅</span> แนวโน้มรายรับ-รายจ่ายรายเดือน
+                                                    </h3>
+                                                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                                                        <canvas id="monthlyChart" height="120"></canvas>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h3 class="text-xl font-bold text-blue-700 mb-6 flex items-center gap-2 pb-2 border-b-2 border-blue-100/50">
+                                                        <span class="bg-blue-100 p-2 rounded-lg text-lg">📊</span> สัดส่วนกำไรรายโครงการ
+                                                    </h3>
+                                                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 h-full flex flex-col items-center justify-center">
+                                                        <div class="w-full max-w-[220px]">
+                                                            <canvas id="projectPieChart"></canvas>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Row 3: Project Comparison Table -->
+                                            <div>
+                                                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 pb-2 border-b-2 border-gray-100">
+                                                    <span class="bg-gray-100 p-2 rounded-lg text-lg">📋</span> ตารางเปรียบเทียบกำไรรายโครงการ
+                                                </h3>
+                                                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                                                    <table class="w-full text-left border-collapse">
+                                                        <thead class="bg-gray-50">
+                                                            <tr>
+                                                                <th class="py-4 px-4 text-sm font-bold text-gray-600">โครงการ</th>
+                                                                <th class="py-4 px-4 text-right text-sm font-bold text-gray-600">รายรับรวม</th>
+                                                                <th class="py-4 px-4 text-right text-sm font-bold text-gray-600">รายจ่ายรวม</th>
+                                                                <th class="py-4 px-4 text-right text-sm font-bold text-gray-600">กำไร/ขาดทุน</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            ${projectTableHtml || '<tr><td colspan="4" class="py-8 text-center text-gray-400 italic">ไม่มีข้อมูล</td></tr>'}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         `);
+
+                                        // Render Expense Pie Chart
+                                        if (expenseData.length > 0) {
+                                            new Chart(document.getElementById('expenseChart'), {
+                                                type: 'pie',
+                                                data: {
+                                                    labels: expenseLabels,
+                                                    datasets: [{
+                                                        data: expenseData,
+                                                        backgroundColor: expenseColors,
+                                                        borderWidth: 0
+                                                    }]
+                                                },
+                                                options: { 
+                                                    plugins: { legend: { display: false } },
+                                                    responsive: true
+                                                }
+                                            });
+                                        }
+
+                                        // Render Income Pie Chart
+                                        if (incomeData.length > 0) {
+                                            new Chart(document.getElementById('incomeChart'), {
+                                                type: 'pie',
+                                                data: {
+                                                    labels: incomeLabels,
+                                                    datasets: [{
+                                                        data: incomeData,
+                                                        backgroundColor: incomeColors,
+                                                        borderWidth: 0
+                                                    }]
+                                                },
+                                                options: { 
+                                                    plugins: { legend: { display: false } },
+                                                    responsive: true
+                                                }
+                                            });
+                                        }
+
+                                        // Render Monthly Trend Chart
+                                        const trendLabels = d.monthly_stats.map(m => m.month);
+                                        const trendIncome = d.monthly_stats.map(m => m.income);
+                                        const trendExpense = d.monthly_stats.map(m => m.expense);
+                                        
+                                        new Chart(document.getElementById('monthlyChart'), {
+                                            type: 'bar',
+                                            data: {
+                                                labels: trendLabels,
+                                                datasets: [
+                                                    {
+                                                        label: 'รายรับ',
+                                                        data: trendIncome,
+                                                        backgroundColor: '#10b981',
+                                                        borderRadius: 6
+                                                    },
+                                                    {
+                                                        label: 'รายจ่าย',
+                                                        data: trendExpense,
+                                                        backgroundColor: '#ef4444',
+                                                        borderRadius: 6
+                                                    }
+                                                ]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                scales: {
+                                                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                                                    x: { grid: { display: false } }
+                                                }
+                                            }
+                                        });
+
+                                        // Render Project Pie Chart
+                                        if (projectLabels.length > 0) {
+                                            new Chart(document.getElementById('projectPieChart'), {
+                                                type: 'doughnut',
+                                                data: {
+                                                    labels: projectLabels,
+                                                    datasets: [{
+                                                        data: projectProfit.map(p => Math.max(0, p)), // Only show profit in pie
+                                                        backgroundColor: ['#3b82f6', '#6366f1', '#8b5cf6', '#a885f1', '#d8b4fe', '#f0abfc'],
+                                                        borderWidth: 0
+                                                    }]
+                                                },
+                                                options: {
+                                                    plugins: { 
+                                                        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } }
+                                                    },
+                                                    cutout: '60%'
+                                                }
+                                            });
+                                        }
+
                                     } else {
                                         $('#dashContent').html('<p class="text-gray-400 italic">ยังไม่มีข้อมูลรายการในขณะนี้</p>');
                                     }
@@ -371,15 +614,21 @@ $view = $_GET['view'] ?? 'list';
                             const res = JSON.parse(response);
                             const title = id ? 'แก้ไขรายการ' : 'เพิ่มรายการใหม่';
                             
-                            let projectOptions = '<option value="">เลือกโครงการ</option>';
+                             let projectOptions = '<option value="">เลือกโครงการ</option>';
                             res.projects.forEach(p => {
                                 projectOptions += `<option value="${p.id}" ${data && data.project_id == p.id ? 'selected' : ''}>${p.project_name}</option>`;
                             });
 
-                            let categoryOptions = '<option value="">เลือกหมวดหมู่</option>';
+                            let expenseOptions = '<option value="">-- เลือกหมวดหมู่รายจ่าย --</option>';
+                            let incomeOptions = '<option value="">-- เลือกหมวดหมู่รายรับ --</option>';
+                            
                             res.categories.forEach(c => {
-                                const dirText = c.direction === 'income' ? '(รายรับ)' : '(รายจ่าย)';
-                                categoryOptions += `<option value="${c.id}" ${data && data.category_id == c.id ? 'selected' : ''}>${c.icon} ${c.name} ${dirText}</option>`;
+                                const option = `<option value="${c.id}" ${data && data.category_id == c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`;
+                                if (c.direction === 'expense') {
+                                    expenseOptions += option;
+                                } else {
+                                    incomeOptions += option;
+                                }
                             });
 
                             Swal.fire({
@@ -400,9 +649,15 @@ $view = $_GET['view'] ?? 'list';
                                             <label class="block text-sm font-medium text-gray-700 mb-1">โครงการ</label>
                                             <select id="tProject" class="swal2-input !m-0 !w-full">${projectOptions}</select>
                                         </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">หมวดหมู่</label>
-                                            <select id="tCategory" class="swal2-input !m-0 !w-full">${categoryOptions}</select>
+                                        <div class="grid grid-cols-1 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-red-600 mb-1 font-bold">หมวดหมู่รายจ่าย</label>
+                                                <select id="tCategoryExpense" class="swal2-input !m-0 !w-full cat-select" onchange="if(this.value) $('#tCategoryIncome').val('')">${expenseOptions}</select>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-emerald-600 mb-1 font-bold">หมวดหมู่รายรับ</label>
+                                                <select id="tCategoryIncome" class="swal2-input !m-0 !w-full cat-select" onchange="if(this.value) $('#tCategoryExpense').val('')">${incomeOptions}</select>
+                                            </div>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
@@ -418,11 +673,11 @@ $view = $_GET['view'] ?? 'list';
                                     const transaction_date = $('#tDate').val();
                                     const amount = $('#tAmount').val();
                                     const project_id = $('#tProject').val();
-                                    const category_id = $('#tCategory').val();
+                                    const category_id = $('#tCategoryExpense').val() || $('#tCategoryIncome').val();
                                     const note = $('#tNote').val();
 
                                     if (!transaction_date || !amount || !project_id || !category_id) {
-                                        Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                                        Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน และเลือกหมวดหมู่');
                                         return false;
                                     }
                                     return { transaction_date, amount, project_id, category_id, note };
@@ -711,15 +966,23 @@ $view = $_GET['view'] ?? 'list';
                         items.forEach(item => {
                             html += `
                                 <div class="category-item group">
-                                    <div class="flex items-center gap-3 flex-1" onclick="editCategory(${item.id}, '${item.name}', '${item.icon}', '${item.direction}')">
+                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="editCategory(${item.id}, '${item.name}', '${item.icon}', '${item.direction}')">
                                         <span class="text-xl">${item.icon}</span>
                                         <span class="font-medium text-[#4a3f35]">${item.name}</span>
                                     </div>
-                                    <button onclick="deleteCategory(${item.id})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                    </button>
+                                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                        <button onclick="moveCategory(${item.id}, 'up', '${item.direction}')" class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="เลื่อนขึ้น">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+                                        </button>
+                                        <button onclick="moveCategory(${item.id}, 'down', '${item.direction}')" class="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="เลื่อนลง">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                        <button onclick="deleteCategory(${item.id})" class="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="ลบ">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-4v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             `;
                         });
@@ -740,7 +1003,7 @@ $view = $_GET['view'] ?? 'list';
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">เลือกไอคอน</label>
                                     <div class="grid grid-cols-6 gap-2 bg-gray-50 p-3 rounded-xl border border-gray-100" id="iconPicker">
-                                        ${['📁', '💰', '💳', '🏦', '🏠', '🏗️', '🛠️', '🪵', '🚚', '🧱', '🎨', '🔌', '🚿', '🌳', '📑', '🛒', '🍽️', '⛽', '🔧', '🧹', '💡', '📱', '📦', '🎁'].map(emoji => `
+                                        ${['👤', '🛋️', '📁', '💰', '💳', '🏦', '🏠', '🏗️', '🛠️', '🪵', '🚚', '🧱', '🎨', '🔌', '🚿', '🌳', '📑', '🛒', '🍽️', '⛽', '🔧', '🧹', '💡', '📱', '📦', '🎁'].map(emoji => `
                                             <button type="button" onclick="$('.icon-btn').removeClass('bg-white shadow-sm scale-110 border-amber-500'); $(this).addClass('bg-white shadow-sm scale-110 border-amber-500'); $('#catIcon').val('${emoji}')" 
                                                 class="icon-btn w-10 h-10 flex items-center justify-center text-xl rounded-lg border border-transparent hover:bg-white hover:shadow-sm transition-all ${emoji === icon ? 'bg-white shadow-sm scale-110 border-amber-500' : ''}">
                                                 ${emoji}
@@ -828,6 +1091,17 @@ $view = $_GET['view'] ?? 'list';
                                     }
                                 }
                             });
+                        }
+                    });
+                }
+
+                function moveCategory(id, move, cat_direction) {
+                    $.ajax({
+                        url: 'category_action.php',
+                        type: 'POST',
+                        data: { action: 'update_order', id: id, move: move, module_type: 1, cat_direction: cat_direction },
+                        success: function(response) {
+                            loadCategories();
                         }
                     });
                 }

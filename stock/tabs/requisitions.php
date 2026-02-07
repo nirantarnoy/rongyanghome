@@ -10,7 +10,10 @@
     <form id="requisitionForm" class="grid-form">
         <div class="form-group">
             <label>เลขที่ใบเบิก *</label>
-            <input type="text" name="req_no" class="form-control" value="REQ-<?= date('YmdHis') ?>" required>
+            <input type="text" name="req_no" class="form-control" value="WH<?php 
+                $ty = date('Y') + 543; 
+                echo substr($ty, -2) . date('mdHis'); 
+            ?>" required>
         </div>
         <div class="form-group">
             <label>วันที่เบิก *</label>
@@ -84,12 +87,78 @@
                     <th style="padding: 1rem; text-align: left;">ลูกค้า</th>
                     <th style="padding: 1rem; text-align: center;">สถานะ</th>
                     <th style="padding: 1rem; text-align: center;">จัดการ</th>
+                    <th style="padding: 1rem; text-align: center; color: #DC2626;">บันทึกรายจ่าย</th>
                 </tr>
             </thead>
             <tbody id="requisitionHistory">
                 <!-- Requisitions will be loaded here via AJAX -->
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal บันทึกค่าใช้จ่ายโครงการ -->
+<div id="projectExpenseModal" class="modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow-y: auto;">
+    <div class="modal-content" style="background-color: #fefefe; margin: 2% auto; padding: 2rem; border-radius: 1.5rem; width: 90%; max-width: 700px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+        <span class="close" onclick="closeExpenseModal()" style="position: absolute; right: 1.5rem; top: 1rem; font-size: 2rem; cursor: pointer; color: #9CA3AF;">&times;</span>
+        
+        <h2 style="margin-top: 0; margin-bottom: 2rem; color: #DC2626; font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i class="fas fa-file-invoice-dollar"></i> บันทึกค่าใช้จ่ายโครงการ
+        </h2>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; background: #F9FAFB; padding: 1.5rem; border-radius: 1rem; border: 1px solid #E5E7EB;">
+            <div>
+                <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">เลขที่ใบเบิก</p>
+                <p style="font-weight: bold; margin: 0.25rem 0;" id="expDispReqNo">-</p>
+            </div>
+            <div>
+                <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">วันที่เบิก</p>
+                <p style="font-weight: bold; margin: 0.25rem 0;" id="expDispDate">-</p>
+            </div>
+            <div>
+                <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">เลขที่ SO / PO</p>
+                <p style="font-weight: bold; margin: 0.25rem 0;" id="expDispRef">-</p>
+            </div>
+            <div>
+                <p style="font-size: 0.85rem; color: #6B7280; margin: 0;">จำนวนรวมราคา</p>
+                <p style="font-weight: bold; margin: 0.25rem 0; color: #DC2626; font-size: 1.25rem;" id="expDispTotal">0 บาท</p>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #374151;">เลือกโครงการ</label>
+            <select id="expProjectSelect" class="form-control" style="width: 100%;">
+                <option value="">-- เลือกโครงการ --</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #374151;">เลือกหมวดหมู่รายจ่าย</label>
+            <select id="expCategorySelect" class="form-control" style="width: 100%;">
+                <option value="">-- เลือกหมวดหมู่ --</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 2rem;">
+            <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #374151;">หมายเหตุ</label>
+            <textarea id="expNote" class="form-control" style="width: 100%;" rows="2"></textarea>
+        </div>
+
+        <div style="border-top: 1px solid #E5E7EB; padding-top: 1.5rem;">
+             <label style="display: block; font-weight: bold; margin-bottom: 0.5rem; color: #374151;">รายการสินค้า</label>
+             <div id="expItemsList" style="max-height: 150px; overflow-y: auto; font-size: 0.9rem;">
+                 <!-- JS -->
+             </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 1rem; margin-top: 2rem;">
+            <button onclick="closeExpenseModal()" style="background: #E5E7EB; color: #374151; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: bold; cursor: pointer;">
+                ปิดหน้าต่าง
+            </button>
+            <button onclick="saveProjectExpense()" style="background: #22C55E; color: white; border: none; padding: 1rem; border-radius: 0.75rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="fas fa-save"></i> กดบันทึกค่าใช้จ่าย
+            </button>
+        </div>
     </div>
 </div>
 
@@ -242,6 +311,15 @@ $(document).ready(function() {
                 if (res.status === 'success') {
                     Swal.fire('สำเร็จ', res.message, 'success');
                     $('#requisitionForm')[0].reset();
+                    const now = new Date();
+                    const ty = (now.getFullYear() + 543).toString().slice(-2);
+                    const dateStr = ty + 
+                                    (now.getMonth() + 1).toString().padStart(2, '0') + 
+                                    now.getDate().toString().padStart(2, '0') + 
+                                    now.getHours().toString().padStart(2, '0') + 
+                                    now.getMinutes().toString().padStart(2, '0') + 
+                                    now.getSeconds().toString().padStart(2, '0');
+                    $('input[name="req_no"]').val('WH' + dateStr);
                     $('#reqItemsContainer').html('');
                     rowCount = 0;
                     addRow();
@@ -324,6 +402,100 @@ function deleteRequisition(id) {
                     }
                 }
             });
+        }
+    });
+}
+
+let activeReqData = null;
+
+function openProjectExpenseModal(id) {
+    $.ajax({
+        url: 'stock_action.php',
+        type: 'GET',
+        data: { action: 'get_requisition_json', id: id },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                activeReqData = response.data;
+                $('#expDispReqNo').text(activeReqData.req_no);
+                $('#expDispDate').text(new Date(activeReqData.requisition_date).toLocaleDateString('th-TH'));
+                $('#expDispRef').text((activeReqData.so_no || '-') + ' / ' + (activeReqData.po_no || '-'));
+                $('#expDispTotal').text(parseFloat(activeReqData.grand_total).toLocaleString() + ' บาท');
+                $('#expNote').val(`บันทึกรายจ่ายจากใบเบิกเลขที่ ${activeReqData.req_no}`);
+                
+                // Render items
+                let itemsHtml = '';
+                activeReqData.items.forEach(it => {
+                    itemsHtml += `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid #EEE; padding: 0.5rem 0;">
+                        <span>${it.product_name}</span>
+                        <span style="font-weight: bold;">${it.qty} ${it.unit}</span>
+                    </div>`;
+                });
+                $('#expItemsList').html(itemsHtml);
+                
+                loadExpenseFormOptions();
+                $('#projectExpenseModal').fadeIn(200);
+            }
+        }
+    });
+}
+
+function loadExpenseFormOptions() {
+    $.ajax({
+        url: '../projects/transaction_action.php',
+        type: 'GET',
+        data: { action: 'get_form_data', module_type: 1 },
+        dataType: 'json',
+        success: function(data) {
+            let pOptions = '<option value="">-- เลือกโครงการ --</option>';
+            data.projects.forEach(p => {
+                pOptions += `<option value="${p.id}">${p.project_name}</option>`;
+            });
+            $('#expProjectSelect').html(pOptions);
+
+            let cOptions = '<option value="">-- เลือกหมวดหมู่ --</option>';
+            data.categories.filter(c => c.direction === 'expense').forEach(c => {
+                cOptions += `<option value="${c.id}">${c.name}</option>`;
+            });
+            $('#expCategorySelect').html(cOptions);
+        }
+    });
+}
+
+function closeExpenseModal() {
+    $('#projectExpenseModal').fadeOut(200);
+}
+
+function saveProjectExpense() {
+    const projectId = $('#expProjectSelect').val();
+    const categoryId = $('#expCategorySelect').val();
+    const note = $('#expNote').val();
+    
+    if (!projectId || !categoryId) {
+        Swal.fire('ผิดพลาด', 'กรุณาเลือกโครงการและหมวดหมู่', 'error');
+        return;
+    }
+    
+    $.ajax({
+        url: '../projects/transaction_action.php',
+        type: 'POST',
+        data: {
+            action: 'save',
+            project_id: projectId,
+            category_id: categoryId,
+            transaction_date: activeReqData.requisition_date,
+            amount: activeReqData.grand_total,
+            note: note,
+            module_type: 1
+        },
+        dataType: 'json',
+        success: function(data) {
+            if (data.status === 'success') {
+                Swal.fire('สำเร็จ', data.message, 'success');
+                closeExpenseModal();
+            } else {
+                Swal.fire('ผิดพลาด', data.message, 'error');
+            }
         }
     });
 }

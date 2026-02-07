@@ -164,6 +164,32 @@ if ($action == 'get_categories') {
     exit;
 }
 
+if ($action == 'get_warehouse_products') {
+    header('Content-Type: application/json');
+    $warehouse_id = $_GET['warehouse_id'] ?? 0;
+    
+    // Get products and their current balance in this warehouse
+    $sql = "SELECT p.*, 
+            (SELECT SUM(CASE WHEN t.type='in' THEN t.qty ELSE -t.qty END) 
+             FROM stock_transactions t 
+             WHERE t.product_id = p.id AND t.warehouse_id = ? AND t.company_id = ?) as balance
+            FROM stock_products p
+            WHERE p.company_id = ?
+            HAVING balance > 0
+            ORDER BY p.name ASC";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "iii", $warehouse_id, $company_id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $products = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        // Return raw image_url
+        $products[] = $row;
+    }
+    echo json_encode($products);
+    exit;
+}
+
 if ($action == 'delete_category') {
     header('Content-Type: application/json');
     $id = $_POST['id'] ?? 0;
@@ -559,7 +585,8 @@ if ($action == 'add_production') {
 
         // Auto-create material requisition if BOM exists
         if (!empty($bom)) {
-            $requisition_no = 'MR-' . date('Ymd') . '-' . str_pad($production_order_id, 4, '0', STR_PAD_LEFT);
+            $ty = date('Y') + 543;
+            $requisition_no = 'WH' . substr($ty, -2) . date('md') . '-' . str_pad($production_order_id, 4, '0', STR_PAD_LEFT);
             $purpose = "เบิกวัสดุสำหรับใบสั่งผลิต: $order_no";
             
             $sql_req = "INSERT INTO material_requisitions (company_id, requisition_no, production_order_id, requisition_date, requested_by, department, purpose, status) 
@@ -804,6 +831,10 @@ if ($action == 'get_productions') {
                         <button onclick="viewProduction('.$row['id'].')" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #6366F1;" title="ดูรายละเอียด">
                             <i class="fas fa-eye"></i>
                         </button>
+                        '.($row['status'] != 'completed' ? '
+                        <button onclick="finishProduction('.$row['id'].')" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #8B5CF6;" title="ผลิตสำเร็จแล้ว">
+                            <i class="fas fa-check-circle"></i> ผลิตสำเร็จ
+                        </button>' : '').'
                         <a href="print_production.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; background: #10B981;" title="พิมพ์">
                             <i class="fas fa-print"></i>
                         </a>
@@ -835,6 +866,113 @@ if ($action == 'update_production_status') {
         echo json_encode(['status' => 'success', 'message' => 'อัปเดตสถานะเรียบร้อยแล้ว']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . mysqli_error($conn)]);
+    }
+    exit;
+}
+
+if ($action == 'complete_production') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    $warehouse_id = $_POST['warehouse_id'] ?? 0;
+    $prod_qty = $_POST['prod_qty'] ?? 0; // Actual qty produced
+    
+    if (!$warehouse_id) {
+        echo json_encode(['status' => 'error', 'message' => 'กรุณาระบุคลังสินค้า']);
+        exit;
+    }
+
+    mysqli_begin_transaction($conn);
+    try {
+        // 1. Get Production Order
+        $sql = "SELECT * FROM stock_production_orders WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        mysqli_stmt_execute($stmt);
+        $order = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        
+        if (!$order) throw new Exception("ไม่พบใบสั่งผลิต");
+        if ($order['status'] == 'completed') throw new Exception("ใบสั่งผลิตนี้สำเร็จไปแล้ว");
+
+        $actual_qty = ($prod_qty > 0) ? $prod_qty : $order['qty'];
+
+        // 2. Update status to completed
+        $sql_up = "UPDATE stock_production_orders SET status = 'completed' WHERE id = ?";
+        $stmt_up = mysqli_prepare($conn, $sql_up);
+        mysqli_stmt_bind_param($stmt_up, "i", $id);
+        mysqli_stmt_execute($stmt_up);
+
+        // 3. Stock IN for finished product
+        $sql_in = "INSERT INTO stock_transactions (company_id, product_id, warehouse_id, type, qty, note, transaction_date) 
+                   VALUES (?, ?, ?, 'in', ?, ?, NOW())";
+        $note_in = "ผลิตสำเร็จตามใบสั่งผลิต: " . $order['order_no'];
+        $stmt_in = mysqli_prepare($conn, $sql_in);
+        mysqli_stmt_bind_param($stmt_in, "iiids", $company_id, $order['product_id'], $warehouse_id, $actual_qty, $note_in);
+        mysqli_stmt_execute($stmt_in);
+
+        // 4. Stock OUT for BOM items (if not already completed via material requisition)
+        // Check associated material requisition
+        $sql_mr = "SELECT id, status FROM material_requisitions WHERE production_order_id = ? AND company_id = ? AND status != 'completed' LIMIT 1";
+        $stmt_mr = mysqli_prepare($conn, $sql_mr);
+        mysqli_stmt_bind_param($stmt_mr, "ii", $id, $company_id);
+        mysqli_stmt_execute($stmt_mr);
+        $res_mr = mysqli_stmt_get_result($stmt_mr);
+        
+        // If material requisition exists and not completed, deduct stock
+        if ($row_mr = mysqli_fetch_assoc($res_mr)) {
+            $mr_id = $row_mr['id'];
+            
+            // Get BOM items from the production order directly to ensure we deduct what was planned
+            $sql_bom = "SELECT * FROM stock_production_bom WHERE production_order_id = ?";
+            $stmt_bom = mysqli_prepare($conn, $sql_bom);
+            mysqli_stmt_bind_param($stmt_bom, "i", $id);
+            mysqli_stmt_execute($stmt_bom);
+            $res_bom = mysqli_stmt_get_result($stmt_bom);
+            
+            while ($bom_item = mysqli_fetch_assoc($res_bom)) {
+                $p_id = $bom_item['product_id'];
+                $b_qty = $bom_item['qty'];
+                
+                // Deduct from warehouses (Auto-find stock if no warehouse specified for BOM)
+                // Use the same logic as approve_material_req
+                $wh_sql = "SELECT w.id, SUM(CASE WHEN t.type='in' THEN t.qty ELSE -t.qty END) as balance
+                           FROM stock_warehouses w
+                           LEFT JOIN stock_transactions t ON w.id = t.warehouse_id AND t.product_id = ?
+                           WHERE w.company_id = ?
+                           GROUP BY w.id HAVING balance > 0 ORDER BY balance DESC";
+                $wh_stmt = mysqli_prepare($conn, $wh_sql);
+                mysqli_stmt_bind_param($wh_stmt, "ii", $p_id, $company_id);
+                mysqli_stmt_execute($wh_stmt);
+                $wh_res = mysqli_stmt_get_result($wh_stmt);
+                
+                $rem = $b_qty;
+                while ($wh = mysqli_fetch_assoc($wh_res)) {
+                    if ($rem <= 0) break;
+                    $deduct = min($rem, $wh['balance']);
+                    
+                    $out_sql = "INSERT INTO stock_transactions (company_id, product_id, warehouse_id, type, qty, note, transaction_date) 
+                                VALUES (?, ?, ?, 'out', ?, ?, NOW())";
+                    $note_out = "ตัดวัสดุตามการผลิตสำเร็จ: " . $order['order_no'];
+                    $out_stmt = mysqli_prepare($conn, $out_sql);
+                    mysqli_stmt_bind_param($out_stmt, "iiids", $company_id, $p_id, $wh['id'], $deduct, $note_out);
+                    mysqli_stmt_execute($out_stmt);
+                    
+                    $rem -= $deduct;
+                }
+            }
+            
+            // Mark requisition as completed
+            $sql_mr_up = "UPDATE material_requisitions SET status = 'completed' WHERE id = ?";
+            $stmt_mr_up = mysqli_prepare($conn, $sql_mr_up);
+            mysqli_stmt_bind_param($stmt_mr_up, "i", $mr_id);
+            mysqli_stmt_execute($stmt_mr_up);
+        }
+
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "ยืนยันการผลิตสำเร็จ: $order[order_no], สินค้าเพิ่มสต็อก $actual_qty", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'ยืนยันการผลิตสำเร็จและอัปเดตสต็อกเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
     }
     exit;
 }
@@ -926,12 +1064,18 @@ if ($action == 'get_requisitions') {
                         <option value="approved" '.($row['status'] == 'approved' ? 'selected' : '').'>อนุมัติ</option>
                         <option value="rejected" '.($row['status'] == 'rejected' ? 'selected' : '').'>ปฏิเสธ</option>
                     </select>
+                    <a href="print_delivery_note.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.4rem; background: #E91E63;" title="ใบส่งสินค้า">
+                        <i class="fas fa-truck"></i>
+                    </a>
                     <button onclick="viewRequisition('.$row['id'].')" class="btn-primary" style="padding: 0.4rem; background: #6366F1;" title="ดูรายละเอียด">
                         <i class="fas fa-eye"></i>
                     </button>
                     <a href="print_requisition.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.4rem; background: #10B981;" title="พิมพ์">
                         <i class="fas fa-print"></i>
                     </a>
+                    <button onclick="openProjectExpenseModal('.$row['id'].')" class="btn-primary" style="padding: 0.4rem 0.8rem; background: #22C55E; color: white; font-weight: bold; font-size: 0.75rem;" title="บันทึกรายจ่าย">
+                        กดเพื่อบันทึก
+                    </button>
                 </div>
             </td>
         </tr>';
@@ -1102,8 +1246,44 @@ if ($action == 'delete_requisition') {
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
     }
     exit;
+    exit;
 }
 
+
+if ($action == 'get_requisition_json') {
+    header('Content-Type: application/json');
+    $id = $_GET['id'] ?? 0;
+    $sql = "SELECT * FROM stock_requisitions WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $req = mysqli_fetch_assoc($res);
+    
+    if ($req) {
+        $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, p.price, w.name as warehouse_name 
+                      FROM stock_requisition_items ri 
+                      JOIN stock_products p ON ri.product_id = p.id 
+                      LEFT JOIN stock_warehouses w ON ri.warehouse_id = w.id
+                      WHERE ri.requisition_id = ?";
+        $stmt_items = mysqli_prepare($conn, $sql_items);
+        mysqli_stmt_bind_param($stmt_items, "i", $id);
+        mysqli_stmt_execute($stmt_items);
+        $res_items = mysqli_stmt_get_result($stmt_items);
+        $req['items'] = [];
+        $grand_total = 0;
+        while ($item = mysqli_fetch_assoc($res_items)) {
+            $item['subtotal'] = $item['qty'] * $item['price'];
+            $grand_total += $item['subtotal'];
+            $req['items'][] = $item;
+        }
+        $req['grand_total'] = $grand_total;
+        echo json_encode(['status' => 'success', 'data' => $req]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูล']);
+    }
+    exit;
+}
 
 if ($action == 'get_production_details') {
     header('Content-Type: text/html');

@@ -11,7 +11,10 @@
         <input type="hidden" name="id" id="production_id">
          <div class="form-group">
             <label>เลขที่ใบสั่งผลิต *</label>
-            <input type="text" name="order_no" class="form-control" value="PO-<?= date('YmdHis') ?>" required>
+            <input type="text" name="order_no" class="form-control" value="WO<?php 
+                $ty = date('Y') + 543; 
+                echo substr($ty, -2) . date('mdHis'); 
+            ?>" required>
         </div>
         <div class="form-group">
             <label>วันที่สั่งผลิต *</label>
@@ -46,9 +49,22 @@
                     $products_data[$prod['id']] = $prod;
                     echo "<option value='{$prod['id']}'>{$prod['name']}</option>";
                 }
+
+                // Fetch warehouses for later use in JS
+                $wh_sql = "SELECT id, name FROM stock_warehouses WHERE company_id = ? ORDER BY name ASC";
+                $wh_stmt = mysqli_prepare($conn, $wh_sql);
+                mysqli_stmt_bind_param($wh_stmt, "i", $company_id);
+                mysqli_stmt_execute($wh_stmt);
+                $wh_res = mysqli_stmt_get_result($wh_stmt);
+                $warehouses = [];
+                while ($wh = mysqli_fetch_assoc($wh_res)) {
+                    $warehouses[] = $wh;
+                }
                 ?>
             </select>
-            <script>const productsData = <?= json_encode($products_data) ?>;</script>
+            <script>
+                const productsData = <?= json_encode($products_data) ?>;
+            </script>
         </div>
 
         <div class="form-group">
@@ -243,7 +259,15 @@ function resetProductionForm() {
     $('#btnCancelProductionEdit').hide();
     $('.content-card h2:first').html('<i class="fas fa-industry" style="color: var(--accent-purple);"></i> สร้างใบสั่งผลิต');
     // Reset order number to default
-    $('input[name="order_no"]').val('PO-' + new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14));
+    const now = new Date();
+    const ty = (now.getFullYear() + 543).toString().slice(-2);
+    const dateStr = ty + 
+                    (now.getMonth() + 1).toString().padStart(2, '0') + 
+                    now.getDate().toString().padStart(2, '0') + 
+                    now.getHours().toString().padStart(2, '0') + 
+                    now.getMinutes().toString().padStart(2, '0') + 
+                    now.getSeconds().toString().padStart(2, '0');
+    $('input[name="order_no"]').val('WO' + dateStr);
 }
 
 function loadProductionOrders() {
@@ -400,6 +424,87 @@ $(window).on('click', function(event) {
         closeProductionModal();
     }
 });
+
+function finishProduction(id) {
+    // 1. Get Production details first to show in confirmation
+    $.ajax({
+        url: 'stock_action.php?action=get_production',
+        type: 'GET',
+        data: { id: id },
+        dataType: 'json',
+        success: function(order) {
+            if (!order) return;
+
+            // 2. Fetch warehouses for the selection
+            const warehouses = <?= json_encode($warehouses ?? []) ?>;
+            let whOptions = "";
+            warehouses.forEach(wh => {
+                whOptions += `<option value="${wh.id}">${wh.name}</option>`;
+            });
+
+            Swal.fire({
+                title: 'ยืนยันการผลิตสำเร็จ',
+                html: `
+                    <div style="text-align: left; background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #e5e7eb;">
+                        <p style="margin: 0;"><strong>เลขที่:</strong> ${order.order_no}</p>
+                        <p style="margin: 0;"><strong>สินค้า:</strong> ${order.product_name || order.sku}</p>
+                    </div>
+                    <div style="text-align: left;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">ระบุจำนวนที่ผลิตได้จริง (${order.unit})</label>
+                        <input type="number" id="finish_qty" class="swal2-input" value="${order.qty}" style="width: 80%; margin: 0 auto 1rem auto; display: block;">
+                        
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">คลังสินค้าที่จะนำหน้าเข้า</label>
+                        <select id="finish_warehouse" class="swal2-input" style="width: 80%; margin: 0 auto; display: block;">
+                            <option value="">-- เลือกคลังสินค้า --</option>
+                            ${whOptions}
+                        </select>
+                        <p style="font-size: 0.8rem; color: #6B7280; margin-top: 1rem; border-top: 1px dashed #ccc; padding-top: 0.5rem;">
+                            * ระบบจะทำการเพิ่มสต็อกสินค้าสำเร็จรูป และตัดสต็อกวัสดุ (BOM) ให้อัตโนมัติ
+                        </p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'ยืนยันเสร็จสิ้น',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const warehouse_id = Swal.getPopup().querySelector('#finish_warehouse').value;
+                    const prod_qty = Swal.getPopup().querySelector('#finish_qty').value;
+                    if (!warehouse_id) {
+                        Swal.showValidationMessage(`กรุณาเลือกคลังสินค้า`);
+                    }
+                    if (!prod_qty || prod_qty <= 0) {
+                        Swal.showValidationMessage(`กรุณาระบุจำนวนที่ถูกต้อง`);
+                    }
+                    return { warehouse_id: warehouse_id, prod_qty: prod_qty };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: 'stock_action.php?action=complete_production',
+                        type: 'POST',
+                        data: { 
+                            id: id, 
+                            warehouse_id: result.value.warehouse_id,
+                            prod_qty: result.value.prod_qty 
+                        },
+                        dataType: 'json',
+                        success: function(res) {
+                            if (res.status === 'success') {
+                                Swal.fire('สำเร็จ', res.message, 'success');
+                                loadProductionOrders();
+                            } else {
+                                Swal.fire('ผิดพลาด', res.message, 'error');
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
 
 function approveMaterialReq(id) {
     Swal.fire({

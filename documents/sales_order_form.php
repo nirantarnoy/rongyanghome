@@ -343,13 +343,25 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="flex gap-4 mt-8">
-            <button onclick="saveSO()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                💾 บันทึก
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-10 pt-8 border-t no-print">
+            <button onclick="saveSO()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-save"></i> บันทึก
             </button>
-            <button onclick="generatePreview()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-all">
-                👁️ ดูตัวอย่าง / พิมพ์
+            <button onclick="generatePreview()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-eye"></i> ดูตัวอย่าง
             </button>
+            
+            <?php if ($edit_id): ?>
+            <button onclick="convertToInvoice(<?= $edit_id ?>)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-file-invoice"></i> ออกใบแจ้งหนี้
+            </button>
+            <button onclick="orderProduction(<?= $edit_id ?>)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-industry"></i> สั่งผลิต
+            </button>
+            <button onclick="requestMaterials(<?= $edit_id ?>)" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-boxes"></i> เบิกสินค้า
+            </button>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -798,6 +810,52 @@ function ThaiBaht(number) {
     else result += convert(satang) + "สตางค์";
 
     return result;
+}
+
+function convertToInvoice(id) {
+    Swal.fire({
+        title: 'ยืนยันการแปลงเอกสาร?',
+        text: 'คุณต้องการแปลงใบสั่งขายนี้เป็นใบแจ้งหนี้ใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'ใช่, แปลงเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'sales_order_action.php',
+                type: 'POST',
+                data: { action: 'convert_to_invoice', id: id },
+                success: function(res) {
+                    if (res.status === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สำเร็จ!',
+                            text: res.message,
+                            showCancelButton: true,
+                            confirmButtonText: 'ไปหน้าใบแจ้งหนี้',
+                            cancelButtonText: 'อยู่ที่เดิม'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = 'invoice_form.php?id=' + res.inv_id;
+                            }
+                        });
+                    } else Swal.fire('ผิดพลาด', res.message, 'error');
+                }
+            });
+        }
+    });
+}
+
+function orderProduction(id) {
+    // Assuming production flow exists
+    window.location.href = '../stock/index.php?tab=production&so_id=' + id;
+}
+
+function requestMaterials(id) {
+    // Assuming requisition flow exists
+    window.location.href = '../stock/index.php?tab=requisition&so_id=' + id;
 }
 
 function exportPDF() {

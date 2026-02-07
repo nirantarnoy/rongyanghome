@@ -115,6 +115,76 @@ try {
         } else {
             throw new Exception("ไม่พบข้อมูลใบเสนอราคา");
         }
+    } elseif ($action == 'convert_to_so') {
+        $id = (int)($_POST['id'] ?? 0);
+        
+        // Fetch quotation data
+        $sql = "SELECT * FROM quotations WHERE id = $id AND company_id = $company_id";
+        $result = mysqli_query($conn, $sql);
+        $q = mysqli_fetch_assoc($result);
+        
+        if (!$q) {
+            throw new Exception("ไม่พบข้อมูลใบเสนอราคา");
+        }
+
+        // Generate SO number
+        $ty = date('Y') + 543;
+        $prefix = "SO" . substr($ty, -2) . date('md');
+        
+        $count_sql = "SELECT COUNT(*) as count FROM sales_orders WHERE doc_number LIKE '$prefix-%' AND company_id = $company_id";
+        $count_res = mysqli_query($conn, $count_sql);
+        $count_row = mysqli_fetch_assoc($count_res);
+        $next_no = str_pad(($count_row['count'] + 1), 3, '0', STR_PAD_LEFT);
+        $so_number = "$prefix-$next_no";
+
+        // Map quotation data to sales_order
+        $issuer_company_id = (int)($q['issuer_company_id'] ?: $company_id);
+        $doc_date = date('Y-m-d');
+        $customer_name = mysqli_real_escape_string($conn, $q['customer_name']);
+        $customer_address = mysqli_real_escape_string($conn, $q['customer_address']);
+        $customer_phone = mysqli_real_escape_string($conn, $q['customer_phone']);
+        $customer_tax_id = mysqli_real_escape_string($conn, $q['customer_tax_id']);
+        $items = mysqli_real_escape_string($conn, $q['items']);
+        $vat_enabled = (int)$q['vat_enabled'];
+        $vat_type = mysqli_real_escape_string($conn, $q['vat_type']);
+        $subtotal = (float)$q['subtotal'];
+        $total_discount = (float)$q['total_discount'];
+        $vat_amount = (float)$q['vat_amount'];
+        $grand_total = (float)$q['grand_total'];
+        $notes = mysqli_real_escape_string($conn, $q['notes']);
+        $conditions = mysqli_real_escape_string($conn, $q['delivery_time'] ? "กำหนดส่ง: " . $q['delivery_time'] : "");
+        $signature1 = mysqli_real_escape_string($conn, $q['signature1']);
+        $signature2 = mysqli_real_escape_string($conn, $q['signature2']);
+        $qr_code_image = mysqli_real_escape_string($conn, $q['qr_code_image']);
+        $header_name = mysqli_real_escape_string($conn, $q['header_name']);
+        $header_address = mysqli_real_escape_string($conn, $q['header_address']);
+        $header_phone = mysqli_real_escape_string($conn, $q['header_phone']);
+        $header_tax_id = mysqli_real_escape_string($conn, $q['header_tax_id']);
+        $header_logo = mysqli_real_escape_string($conn, $q['header_logo']);
+
+        $sql_so = "INSERT INTO sales_orders (
+            company_id, issuer_company_id, year, doc_number, doc_date, 
+            customer_name, customer_address, customer_phone, customer_tax_id, 
+            items, vat_enabled, vat_type, subtotal, total_discount, 
+            vat_amount, grand_total, notes, conditions, signature1, 
+            signature2, qr_code_image, header_name, header_address, 
+            header_phone, header_tax_id, header_logo
+        ) VALUES (
+            $company_id, $issuer_company_id, $active_year, '$so_number', '$doc_date',
+            '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id',
+            '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount,
+            $vat_amount, $grand_total, '$notes', '$conditions', '$signature1',
+            '$signature2', '$qr_code_image', '$header_name', '$header_address',
+            '$header_phone', '$header_tax_id', '$header_logo'
+        )";
+
+        if (mysqli_query($conn, $sql_so)) {
+            $so_id = mysqli_insert_id($conn);
+            logQuotation($conn, "แปลงใบเสนอราคา $q[doc_number] เป็นใบสั่งขาย $so_number", 'convert', $id);
+            $response = ['status' => 'success', 'message' => 'แปลงเป็นใบสั่งขายเรียบร้อยแล้ว', 'so_id' => $so_id];
+        } else {
+            throw new Exception(mysqli_error($conn));
+        }
     } elseif ($action == 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         // ดึงข้อมูลก่อนลบเพื่อทำ log
