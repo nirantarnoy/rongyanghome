@@ -1,6 +1,7 @@
 <?php
 require '../auth_check.php';
 require '../config.php';
+require_once '../file_helper.php';
 
 $company_id = $_SESSION['company_id'];
 $edit_id = $_GET['id'] ?? null;
@@ -30,6 +31,12 @@ if ($edit_id) {
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $receipt_data = mysqli_fetch_assoc($result);
+    if ($receipt_data) {
+        $receipt_data['header_logo'] = getFullPath($receipt_data['header_logo']);
+        $receipt_data['signature1'] = getFullPath($receipt_data['signature1']);
+        $receipt_data['signature2'] = getFullPath($receipt_data['signature2']);
+        processItemsPaths($receipt_data['items']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -42,6 +49,7 @@ if ($edit_id) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Sarabun', sans-serif; }
@@ -202,12 +210,28 @@ if ($edit_id) {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้รับเงิน</label>
-                    <input type="file" id="signature1" accept="image/*" onchange="previewSignature(1)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                    <div class="flex gap-2">
+                        <input type="file" id="signature1" accept="image/*" onchange="previewSignature(1)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                        <button type="button" onclick="openSignaturePad(1)" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-200 transition-all text-xs flex items-center gap-1 h-fit">
+                            <i class="fas fa-pen-nib"></i> เซ็นชื่อ
+                        </button>
+                        <button type="button" onclick="clearSignature(1)" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-all text-xs flex items-center gap-1 h-fit">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
+                    </div>
                     <img id="sig1_preview" src="<?= $receipt_data['signature1'] ?? '' ?>" class="signature-preview mt-2 <?= empty($receipt_data['signature1']) ? 'hidden' : '' ?> border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้อนุมัติ</label>
-                    <input type="file" id="signature2" accept="image/*" onchange="previewSignature(2)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                    <div class="flex gap-2">
+                        <input type="file" id="signature2" accept="image/*" onchange="previewSignature(2)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                        <button type="button" onclick="openSignaturePad(2)" class="bg-purple-100 text-purple-700 px-3 py-1 rounded-lg hover:bg-purple-200 transition-all text-xs flex items-center gap-1 h-fit">
+                            <i class="fas fa-pen-nib"></i> เซ็นชื่อ
+                        </button>
+                        <button type="button" onclick="clearSignature(2)" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-all text-xs flex items-center gap-1 h-fit">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
+                    </div>
                     <img id="sig2_preview" src="<?= $receipt_data['signature2'] ?? '' ?>" class="signature-preview mt-2 <?= empty($receipt_data['signature2']) ? 'hidden' : '' ?> border rounded">
                 </div>
             </div>
@@ -236,6 +260,40 @@ if ($edit_id) {
 </div>
 
 <script>
+function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+        };
+        reader.onerror = reject;
+    });
+}
+
 let itemCount = 0;
 const existingItems = <?= json_encode($receipt_data['items'] ?? '[]') ?>;
 
@@ -259,7 +317,7 @@ function loadCompanyTemplate() {
         
         const logo = selected.data('logo');
         if (logo) {
-            $('#header_logo_preview').attr('src', '../' + logo).removeClass('hidden');
+            $('#header_logo_preview').attr('src', getFullPath(logo)).removeClass('hidden');
             $('#header_logo_placeholder').addClass('hidden');
         } else {
             $('#header_logo_preview').addClass('hidden').attr('src', '');
@@ -273,13 +331,11 @@ function previewHeaderLogo() {
     const preview = document.getElementById('header_logo_preview');
     const placeholder = document.getElementById('header_logo_placeholder');
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
+        compressImage(input.files[0], 500, 500, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
-        };
-        reader.readAsDataURL(input.files[0]);
+        });
     }
 }
 
@@ -332,12 +388,10 @@ function previewSignature(num) {
     const preview = document.getElementById(`sig${num}_preview`);
     
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
+        compressImage(input.files[0], 600, 300, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
             preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(input.files[0]);
+        });
     }
 }
 
@@ -657,6 +711,53 @@ function exportPDF() {
 function printReceipt() {
     generatePreview();
     setTimeout(() => { window.print(); }, 500);
+}
+
+function openSignaturePad(num) {
+    Swal.fire({
+        title: 'เซ็นชื่อ',
+        html: `
+            <div style="border: 1px solid #ccc; background: white; border-radius: 8px; margin-bottom: 10px;">
+                <canvas id="signature-pad-${num}" width="400" height="200" style="touch-action: none; cursor: crosshair;"></canvas>
+            </div>
+            <button type="button" id="clear-signature-${num}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'ตกลง',
+        cancelButtonText: 'ยกเลิก',
+        didOpen: () => {
+            const canvas = document.getElementById(`signature-pad-${num}`);
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgba(255, 255, 255, 0)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+            
+            document.getElementById(`clear-signature-${num}`).addEventListener('click', () => {
+                signaturePad.clear();
+            });
+
+            window[`pad_${num}`] = signaturePad;
+        },
+        preConfirm: () => {
+            const signaturePad = window[`pad_${num}`];
+            if (signaturePad.isEmpty()) {
+                Swal.showValidationMessage('กรุณาเซ็นชื่อก่อนตกลง');
+                return false;
+            }
+            return signaturePad.toDataURL('image/png');
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const dataURL = result.value;
+            $(`#sig${num}_preview`).attr('src', dataURL).removeClass('hidden');
+            delete window[`pad_${num}`];
+        }
+    });
+}
+
+function clearSignature(num) {
+    $(`#sig${num}_preview`).attr('src', '').addClass('hidden');
+    $(`#signature${num}`).val('');
 }
 </script>
 </body>

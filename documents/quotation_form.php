@@ -1,6 +1,7 @@
 <?php
 require '../auth_check.php';
 require '../config.php';
+require_once '../file_helper.php';
 
 $company_id = $_SESSION['company_id'];
 $edit_id = $_GET['id'] ?? null;
@@ -29,7 +30,16 @@ if ($edit_id) {
     mysqli_stmt_bind_param($stmt, "ii", $edit_id, $company_id);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $quotation_data = mysqli_fetch_assoc($result);
+    
+    if ($result && $quotation_data = mysqli_fetch_assoc($result)) {
+        // Resolve paths
+        $quotation_data['header_logo'] = getFullPath($quotation_data['header_logo']);
+        $quotation_data['qr_code_image'] = getFullPath($quotation_data['qr_code_image']);
+        $quotation_data['signature1'] = getFullPath($quotation_data['signature1']);
+        $quotation_data['signature2'] = getFullPath($quotation_data['signature2']);
+        $quotation_data['signature3'] = getFullPath($quotation_data['signature3']);
+        processItemsPaths($quotation_data['items']);
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -41,6 +51,7 @@ if ($edit_id) {
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -246,17 +257,41 @@ if ($edit_id) {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้เสนอราคา</label>
-                    <input type="file" id="signature1" accept="image/*" onchange="previewSignature(1)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    <div class="flex gap-2">
+                        <input type="file" id="signature1" accept="image/*" onchange="previewSignature(1)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <button type="button" onclick="openSignaturePad(1)" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-pen-nib"></i> เซ็นชื่อ
+                        </button>
+                        <button type="button" onclick="clearSignature(1)" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
+                    </div>
                     <img id="sig1_preview" src="<?= $quotation_data['signature1'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature1']) ? 'hidden' : '' ?> border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้อนุมัติ</label>
-                    <input type="file" id="signature2" accept="image/*" onchange="previewSignature(2)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    <div class="flex gap-2">
+                        <input type="file" id="signature2" accept="image/*" onchange="previewSignature(2)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <button type="button" onclick="openSignaturePad(2)" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-pen-nib"></i> เซ็นชื่อ
+                        </button>
+                        <button type="button" onclick="clearSignature(2)" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
+                    </div>
                     <img id="sig2_preview" src="<?= $quotation_data['signature2'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature2']) ? 'hidden' : '' ?> border rounded">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้รับ</label>
-                    <input type="file" id="signature3" accept="image/*" onchange="previewSignature(3)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    <div class="flex gap-2">
+                        <input type="file" id="signature3" accept="image/*" onchange="previewSignature(3)" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                        <button type="button" onclick="openSignaturePad(3)" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-pen-nib"></i> เซ็นชื่อ
+                        </button>
+                        <button type="button" onclick="clearSignature(3)" class="bg-rose-50 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-100 transition-all text-xs flex items-center gap-1">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
+                    </div>
                     <img id="sig3_preview" src="<?= $quotation_data['signature3'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature3']) ? 'hidden' : '' ?> border rounded">
                 </div>
             </div>
@@ -412,13 +447,47 @@ function previewQRCode() {
     const preview = document.getElementById('qr_preview');
     
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
+        compressImage(input.files[0], 500, 500, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
             preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(input.files[0]);
+        });
     }
+}
+
+function compressImage(file, maxWidth, maxHeight, quality) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height *= maxWidth / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width *= maxHeight / height;
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+        };
+        reader.onerror = reject;
+    });
 }
 
 // Manage templates
@@ -687,11 +756,9 @@ function removeItem(id) {
 
 function previewItemImage(input, id) {
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            $(`#item_img_${id}`).attr('src', e.target.result).removeClass('hidden');
-        };
-        reader.readAsDataURL(input.files[0]);
+        compressImage(input.files[0], 600, 600, 0.6).then(compressedBase64 => {
+            $(`#item_img_${id}`).attr('src', compressedBase64).removeClass('hidden');
+        });
     }
 }
 
@@ -700,12 +767,23 @@ function previewSignature(num) {
     const preview = document.getElementById(`sig${num}_preview`);
     
     if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            preview.src = e.target.result;
+        compressImage(input.files[0], 600, 300, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
             preview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(input.files[0]);
+        });
+    }
+}
+
+function previewHeaderLogo() {
+    const input = document.getElementById('header_logo_input');
+    const preview = document.getElementById('header_logo_preview');
+    const placeholder = document.getElementById('header_logo_placeholder');
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], 500, 500, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        });
     }
 }
 
@@ -1068,25 +1146,33 @@ function generatePreview() {
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
                 <div style="width: 180px;">
-                    <img src="../assets/logo/bank_acc.png" style="width: 100%; border: 1px solid #eee;" onerror="this.style.display='none'">
-                    <!-- Placeholder if image not found -->
-                    <div style="border: 1px solid #ccc; padding: 10px; text-align: center; font-size: 10px;" id="bank_placeholder">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=1971292055" style="width: 80px;">
-                        <p style="margin: 5px 0;">ธ.กสิกรไทย<br>1971-292-055</p>
-                    </div>
+                    ${$('#qr_preview').attr('src') ? 
+                        `<img src="${$('#qr_preview').attr('src')}" style="width: 100%; border: 1px solid #eee;">` : 
+                        `<img src="../assets/logo/bank_acc.png" style="width: 100%; border: 1px solid #eee;" onerror="this.style.display='none'">
+                         <div style="border: 1px solid #ccc; padding: 10px; text-align: center; font-size: 10px;" id="bank_placeholder">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=1971292055" style="width: 80px;">
+                            <p style="margin: 5px 0;">ธ.กสิกรไทย<br>1971-292-055</p>
+                         </div>`
+                    }
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
-                    <div style="width: 200px;">
+                    <div style="width: 180px;">
                         <p style="margin-bottom: 40px;">ผู้เสนอราคา</p>
-                        ${sig1 ? `<img src="${sig1}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
-                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;">นางอัจฉริยา บุญปก กรรมการบริษัท</p>
+                        ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
                     </div>
-                    <div style="width: 200px;">
+                    <div style="width: 180px;">
                         <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
-                        ${sig2 ? `<img src="${sig2}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
-                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;">นางอัจฉริยา บุญปก กรรมการบริษัท</p>
+                        ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
+                    </div>
+                    <div style="width: 180px;">
+                        <p style="margin-bottom: 40px;">ผู้รับพัสดุ</p>
+                        ${$('#sig3_preview').attr('src') ? `<img src="${$('#sig3_preview').attr('src')}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
+                        <p style="margin: 5px 0;">วันที่ __________</p>
                     </div>
                 </div>
             </div>
@@ -1212,7 +1298,7 @@ function printQuotation() {
     
     setTimeout(() => {
         window.print();
-    }, 500);
+    }, 1000);
 }
 
 function openStockSelector() {
@@ -1367,6 +1453,53 @@ function convertToSO(id) {
             });
         }
     });
+}
+
+function openSignaturePad(num) {
+    Swal.fire({
+        title: 'เซ็นชื่อ',
+        html: `
+            <div style="border: 1px solid #ccc; background: white; border-radius: 8px; margin-bottom: 10px;">
+                <canvas id="signature-pad-${num}" width="400" height="200" style="touch-action: none; cursor: crosshair;"></canvas>
+            </div>
+            <button type="button" id="clear-signature-${num}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">ล้างค่า</button>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'ตกลง',
+        cancelButtonText: 'ยกเลิก',
+        didOpen: () => {
+            const canvas = document.getElementById(`signature-pad-${num}`);
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgba(255, 255, 255, 0)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+            
+            document.getElementById(`clear-signature-${num}`).addEventListener('click', () => {
+                signaturePad.clear();
+            });
+
+            window[`pad_${num}`] = signaturePad;
+        },
+        preConfirm: () => {
+            const signaturePad = window[`pad_${num}`];
+            if (signaturePad.isEmpty()) {
+                Swal.showValidationMessage('กรุณาเซ็นชื่อก่อนตกลง');
+                return false;
+            }
+            return signaturePad.toDataURL('image/png');
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const dataURL = result.value;
+            $(`#sig${num}_preview`).attr('src', dataURL).removeClass('hidden');
+            delete window[`pad_${num}`];
+        }
+    });
+}
+
+function clearSignature(num) {
+    $(`#sig${num}_preview`).attr('src', '').addClass('hidden');
+    $(`#signature${num}`).val('');
 }
 </script>
 

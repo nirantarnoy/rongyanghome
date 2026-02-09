@@ -661,7 +661,7 @@ $view = $_GET['view'] ?? 'list';
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-                                            <textarea id="tNote" class="swal2-textarea !m-0 !w-full !h-20" placeholder="ระบุรายละเอียดเพิ่มเติม">${data ? data.note : ''}</textarea>
+                                            <textarea id="tNote" class="swal2-textarea !m-0 !w-full !h-20" placeholder="ระบุรายละเอียดเพิ่มเติม">${data ? data.note.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : ''}</textarea>
                                         </div>
                                     </div>
                                 `,
@@ -812,7 +812,7 @@ $view = $_GET['view'] ?? 'list';
                                         <a href="project_details.php?id=${p.id}&module_type=1" class="flex-1 text-center py-2 bg-[#a88c5a] text-white text-sm font-bold rounded-xl hover:bg-[#8e754a] transition-colors">
                                             📊 สรุปโครงการ
                                         </a>
-                                        <button onclick="openProjectModal(${p.id}, '${p.project_name}', '${p.note || ''}')" class="px-3 py-2 border border-[#e1dcc8] text-[#a88c5a] text-sm font-bold rounded-xl hover:bg-[#f6f3e9] transition-colors">
+                                        <button onclick="editProject(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="px-3 py-2 border border-[#e1dcc8] text-[#a88c5a] text-sm font-bold rounded-xl hover:bg-[#f6f3e9] transition-colors">
                                             ✏️ แก้ไข
                                         </button>
                                     </div>
@@ -823,6 +823,10 @@ $view = $_GET['view'] ?? 'list';
                     $('#projectList').html(html);
                 }
 
+                function editProject(project) {
+                    openProjectModal(project.id, project.project_name, project.note);
+                }
+
                 function openProjectModal(id = null, name = '', note = '') {
                     const title = id ? 'แก้ไขโครงการ' : 'เพิ่มโครงการใหม่';
                     Swal.fire({
@@ -831,11 +835,11 @@ $view = $_GET['view'] ?? 'list';
                             <div class="text-left space-y-4 p-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อโครงการ</label>
-                                    <input id="projectName" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อโครงการ" value="${name}">
+                                    <input id="projectName" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อโครงการ" value="${name.replace(/"/g, '&quot;')}">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
-                                    <textarea id="projectNote" class="swal2-textarea !m-0 !w-full !h-24" placeholder="ระบุหมายเหตุ (ถ้ามี)">${note}</textarea>
+                                    <textarea id="projectNote" class="swal2-textarea !m-0 !w-full !h-24" placeholder="ระบุหมายเหตุ (ถ้ามี)">${note.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}</textarea>
                                 </div>
                             </div>
                         `,
@@ -966,7 +970,7 @@ $view = $_GET['view'] ?? 'list';
                         items.forEach(item => {
                             html += `
                                 <div class="category-item group">
-                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="editCategory(${item.id}, '${item.name}', '${item.icon}', '${item.direction}')">
+                                    <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="editCategory(${JSON.stringify(item).replace(/"/g, '&quot;')})">
                                         <span class="text-xl">${item.icon}</span>
                                         <span class="font-medium text-[#4a3f35]">${item.name}</span>
                                     </div>
@@ -998,7 +1002,7 @@ $view = $_GET['view'] ?? 'list';
                             <div class="text-left space-y-4 p-2">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อหมวดหมู่</label>
-                                    <input id="catName" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อหมวดหมู่" value="${name}">
+                                    <input id="catName" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อหมวดหมู่" value="${name.replace(/"/g, '&quot;')}">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">เลือกไอคอน</label>
@@ -1062,8 +1066,8 @@ $view = $_GET['view'] ?? 'list';
                     });
                 }
 
-                function editCategory(id, name, icon, direction) {
-                    openCategoryModal(direction, id, name, icon);
+                function editCategory(category) {
+                    openCategoryModal(category.direction, category.id, category.name, category.icon);
                 }
 
                 function deleteCategory(id) {

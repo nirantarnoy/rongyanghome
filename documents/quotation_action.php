@@ -12,6 +12,7 @@ mysqli_report(MYSQLI_REPORT_OFF);
 require '../auth_check.php';
 include '../config.php';
 require_once '../log_helper.php';
+require_once '../file_helper.php';
 
 $response = ['status' => 'error', 'message' => 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'];
 
@@ -36,7 +37,11 @@ try {
         $customer_tax_id = mysqli_real_escape_string($conn, $_POST['customer_tax_id'] ?? '');
         $delivery_time = mysqli_real_escape_string($conn, $_POST['delivery_time'] ?? '');
         $payment_terms = mysqli_real_escape_string($conn, $_POST['payment_terms'] ?? '');
-        $items = mysqli_real_escape_string($conn, $_POST['items'] ?? '[]');
+        
+        // Handle images
+        $items_raw = $_POST['items'] ?? '[]';
+        $items = mysqli_real_escape_string($conn, processItemsImages($items_raw));
+
         $vat_enabled = (int)($_POST['vat_enabled'] ?? 0);
         $vat_type = mysqli_real_escape_string($conn, $_POST['vat_type'] ?? 'exclude');
         $subtotal = (float)($_POST['subtotal'] ?? 0);
@@ -44,16 +49,17 @@ try {
         $vat_amount = (float)($_POST['vat_amount'] ?? 0);
         $grand_total = (float)($_POST['grand_total'] ?? 0);
         $notes = mysqli_real_escape_string($conn, $_POST['notes'] ?? '');
-        $signature1 = mysqli_real_escape_string($conn, $_POST['signature1'] ?? '');
-        $signature2 = mysqli_real_escape_string($conn, $_POST['signature2'] ?? '');
-        $signature3 = mysqli_real_escape_string($conn, $_POST['signature3'] ?? '');
-        $qr_code_image = mysqli_real_escape_string($conn, $_POST['qr_code_image'] ?? '');
+        
+        $signature1 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature1'] ?? '', 'uploads/signatures'));
+        $signature2 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature2'] ?? '', 'uploads/signatures'));
+        $signature3 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature3'] ?? '', 'uploads/signatures'));
+        $qr_code_image = mysqli_real_escape_string($conn, saveBase64Image($_POST['qr_code_image'] ?? '', 'uploads/qrcodes'));
         
         $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
         $header_address = mysqli_real_escape_string($conn, $_POST['header_address'] ?? '');
         $header_phone = mysqli_real_escape_string($conn, $_POST['header_phone'] ?? '');
         $header_tax_id = mysqli_real_escape_string($conn, $_POST['header_tax_id'] ?? '');
-        $header_logo = mysqli_real_escape_string($conn, $_POST['header_logo'] ?? '');
+        $header_logo = mysqli_real_escape_string($conn, saveBase64Image($_POST['header_logo'] ?? '', 'uploads/logos'));
         
         $issuer_company_id = (int)($_POST['issuer_company_id'] ?? $company_id);
         
