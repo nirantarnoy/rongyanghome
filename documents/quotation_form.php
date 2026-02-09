@@ -1270,7 +1270,7 @@ function exportPDF() {
         }
 
         const opt = {
-            margin: 0,
+            margin: [5, 5],
             filename: `quotation_${$('#doc_number').val() || 'document'}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
@@ -1278,9 +1278,9 @@ function exportPDF() {
                 useCORS: true,
                 letterRendering: true,
                 scrollY: 0,
-                windowWidth: 790
+                scrollX: 0
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
         html2pdf().set(opt).from(element).save().then(() => {

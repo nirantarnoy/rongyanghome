@@ -701,10 +701,29 @@ function ArabicToThaiBaht(numbers) {
 
 function exportPDF() {
     generatePreview();
+    Swal.fire({
+        title: 'กำลังเตรียมไฟล์ PDF...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
     setTimeout(() => {
         const element = document.getElementById('printable-area');
-        const opt = { margin: 0, filename: `receipt_${$('#doc_number').val()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-        html2pdf().set(opt).from(element).save();
+        const opt = { 
+            margin: [5, 5], 
+            filename: `receipt_${$('#doc_number').val() || 'document'}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                letterRendering: true,
+                scrollY: 0,
+                scrollX: 0
+            }, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true } 
+        };
+        html2pdf().set(opt).from(element).save().then(() => {
+            Swal.close();
+        });
     }, 1000);
 }
 
