@@ -891,19 +891,7 @@ function generatePreview() {
         rowNum++;
     });
 
-    for (let i = rowNum; i <= 10; i++) {
-        itemsHTML += `
-            <tr style="border-bottom: 1px solid #000; height: 35px;">
-                <td style="border-right: 1px solid #000;"></td>
-                <td style="border-right: 1px solid #000;"></td>
-                <td style="border-right: 1px solid #000;"></td>
-                <td style="border-right: 1px solid #000;"></td>
-                <td style="border-right: 1px solid #000;"></td>
-                <td style="border-right: 1px solid #000;"></td>
-                <td></td>
-            </tr>
-        `;
-    }
+    // Removed empty rows loop as per user request to show only actual data
     
     const sig1 = $('#sig1_preview').attr('src') || '';
     const sig2 = $('#sig2_preview').attr('src') || '';
@@ -1029,15 +1017,28 @@ function generatePreview() {
         </div>
     `;
     
-    $('#print-area').html(html).removeClass('hidden');
-    $('html, body').animate({ scrollTop: $('#print-area').offset().top - 100 }, 500);
-
-    if ($('#print-btn-container').length === 0) {
-        $('<div id="print-btn-container" class="max-w-5xl mx-auto mt-4 mb-10 flex gap-4 no-print">' +
-          '<button onclick="setTimeout(() => window.print(), 1000)" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"><i class="fas fa-print"></i> พิมพ์เอกสาร (A4)</button>' +
-          '<button onclick="exportPDF()" class="flex-1 bg-rose-500 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-rose-600 transition-all flex items-center justify-center gap-2"><i class="fas fa-file-pdf"></i> บันทึกเป็น PDF</button>' +
-          '</div>').insertAfter('#print-area');
-    }
+    Swal.fire({
+        title: 'ตัวอย่างเอกสาร',
+        html: `
+            <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
+                ${html}
+            </div>
+            <div class="mt-4 flex gap-2 justify-center no-print">
+                <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                    <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
+                </button>
+                <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
+                    <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
+                </button>
+            </div>
+        `,
+        width: '900px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            $('#print-area').html(html).removeClass('hidden');
+        }
+    });
 }
 
 function ArabicToThaiBaht(numbers) {

@@ -91,9 +91,14 @@
                 <!-- BOM items will be added here -->
                 <p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>
             </div>
-            <button type="button" class="btn-primary" style="background: var(--accent-purple); padding: 0.6rem 1.2rem; font-size: 0.9rem;" onclick="addBomRow()">
-                <i class="fas fa-plus"></i> เพิ่มวัสดุจากคลัง
-            </button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" style="background: var(--accent-purple); padding: 0.6rem 1.2rem; font-size: 0.9rem;" onclick="addBomRow()">
+                    <i class="fas fa-plus"></i> เพิ่มวัสดุ
+                </button>
+                <button type="button" class="btn-primary" style="background: #10B981; padding: 0.6rem 1.2rem; font-size: 0.9rem;" onclick="openStockSelector()">
+                    <i class="fas fa-warehouse"></i> ดึงจากคลังสินค้า
+                </button>
+            </div>
         </div>
 
         <div class="form-group" style="grid-column: span 2; margin-top: 1rem;">
@@ -571,5 +576,89 @@ function rejectMaterialReq(id) {
             });
         }
     });
+}
+
+function openStockSelector() {
+    Swal.fire({
+        title: 'เลือกสินค้าจากคลังสินค้า',
+        html: `
+            <div class="text-left space-y-4" style="text-align: left;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">เลือกคลังสินค้า</label>
+                    <select id="swal_warehouse_id" class="form-control" style="width: 100%;" onchange="loadWarehouseProducts(this.value)">
+                        <option value="">-- เลือกคลังสินค้า --</option>
+                    </select>
+                </div>
+                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; rounded: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
+                    <p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>
+                </div>
+            </div>
+        `,
+        width: '700px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            $.ajax({
+                url: 'stock_action.php?action=get_warehouses_json',
+                type: 'GET',
+                success: function(res) {
+                    if (Array.isArray(res)) {
+                        const select = $('#swal_warehouse_id');
+                        res.forEach(wh => {
+                            select.append(`<option value="${wh.id}">${wh.name}</option>`);
+                        });
+                    }
+                }
+            });
+        }
+    });
+}
+
+function loadWarehouseProducts(whId) {
+    if (!whId) {
+        $('#swal_product_list').html('<p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>');
+        return;
+    }
+    
+    $('#swal_product_list').html('<p style="text-align: center; color: #6b7280; padding: 3rem;"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</p>');
+    
+    $.ajax({
+        url: 'stock_action.php?action=get_warehouse_products',
+        type: 'GET',
+        data: { warehouse_id: whId },
+        success: function(res) {
+            let html = '';
+            if (!res || res.length === 0) {
+                html = '<p style="text-align: center; color: #9ca3af; padding: 3rem;">ไม่มีสินค้าในคลังนี้</p>';
+            } else {
+                res.forEach(p => {
+                    const productJson = JSON.stringify(p).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+                    html += `
+                        <div onclick='addSelectedBomProduct(${productJson})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 0.3rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    ${p.image_url ? `<img src="${p.image_url}" style="width: 100%; height: 100%; object-fit: contain;">` : '<i class="fas fa-box" style="color: #d1d5db;"></i>'}
+                                </div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 600; color: #1f2937;">${p.name}</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">SKU: ${p.sku || '-'} | คงเหลือ: <span style="font-weight: 600; color: #374151;">${p.balance}</span> ${p.unit}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: #7C3AED;">฿${parseFloat(p.price).toLocaleString()}</div>
+                                <div style="font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; font-weight: 600;">คลิกเพื่อเลือก</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            $('#swal_product_list').html(html);
+        }
+    });
+}
+
+function addSelectedBomProduct(p) {
+    addBomRowWithData(p.id, 1);
+    Swal.close();
 }
 </script>

@@ -111,6 +111,12 @@ try {
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) { $data[] = $row; }
         $response = ['status' => 'success', 'data' => $data];
+    } elseif ($action == 'get_warehouses') {
+        $sql = "SELECT id, warehouse_code, name FROM stock_warehouses WHERE company_id = $company_id ORDER BY warehouse_code ASC";
+        $result = mysqli_query($conn, $sql);
+        $data = [];
+        while ($row = mysqli_fetch_assoc($result)) { $data[] = $row; }
+        $response = ['status' => 'success', 'data' => $data];
     } elseif ($action == 'get') {
         $id = (int)($_GET['id'] ?? 0);
         $sql = "SELECT * FROM goods_receipts WHERE id = $id AND company_id = $company_id";
@@ -127,6 +133,67 @@ try {
             $response = ['status' => 'success', 'message' => 'ลบใบรับสินค้าเรียบร้อยแล้ว'];
         } else {
             throw new Exception(mysqli_error($conn));
+        }
+    } elseif ($action == 'receive_stock') {
+        $id = (int)($_POST['id'] ?? 0);
+        $warehouse_id = (int)($_POST['warehouse_id'] ?? 1);
+        
+        $sql = "SELECT * FROM goods_receipts WHERE id = $id AND company_id = $company_id";
+        $result = mysqli_query($conn, $sql);
+        $gr = mysqli_fetch_assoc($result);
+        
+        if (!$gr) throw new Exception("ไม่พบข้อมูลใบรับสินค้า");
+        if ($gr['is_stocked'] == 1) throw new Exception("ใบรับสินค้านี้รับเข้าคลังไปแล้ว");
+        
+        $items = json_decode($gr['items'], true);
+        if (!$items) throw new Exception("ไม่มีรายการสินค้าในใบรับนี้");
+        
+        mysqli_begin_transaction($conn);
+        try {
+            foreach ($items as $item) {
+                $item_name = mysqli_real_escape_string($conn, $item['name']);
+                $qty = (float)$item['qty'];
+                
+                $p_sql = "SELECT id FROM stock_products WHERE (name = '$item_name' OR sku = '$item_name') AND company_id = $company_id LIMIT 1";
+                $p_res = mysqli_query($conn, $p_sql);
+                $product = mysqli_fetch_assoc($p_res);
+                
+                if (!$product) {
+                    $unit = mysqli_real_escape_string($conn, $item['unit'] ?? '');
+                    $price = (float)($item['price'] ?? 0);
+                    $ins_p = "INSERT INTO stock_products (company_id, year, name, unit, price) VALUES ($company_id, $active_year, '$item_name', '$unit', $price)";
+                    mysqli_query($conn, $ins_p);
+                    $product_id = mysqli_insert_id($conn);
+                } else {
+                    $product_id = $product['id'];
+                }
+                
+                $inv_sql = "SELECT id, quantity FROM stock_inventory WHERE product_id = $product_id AND warehouse_id = $warehouse_id AND company_id = $company_id";
+                $inv_res = mysqli_query($conn, $inv_sql);
+                $inv = mysqli_fetch_assoc($inv_res);
+                
+                if ($inv) {
+                    $new_qty = $inv['quantity'] + $qty;
+                    $upd_inv = "UPDATE stock_inventory SET quantity = $new_qty WHERE id = " . $inv['id'];
+                } else {
+                    $upd_inv = "INSERT INTO stock_inventory (company_id, product_id, warehouse_id, quantity) VALUES ($company_id, $product_id, $warehouse_id, $qty)";
+                }
+                mysqli_query($conn, $upd_inv);
+                
+                $tx_note = mysqli_real_escape_string($conn, "รับเข้าจากใบรับสินค้าเลขที่ " . $gr['doc_number']);
+                $tx_sql = "INSERT INTO stock_transactions (company_id, year, product_id, warehouse_id, type, qty, note, transaction_date) 
+                          VALUES ($company_id, $active_year, $product_id, $warehouse_id, 'in', $qty, '$tx_note', '{$gr['doc_date']}')";
+                mysqli_query($conn, $tx_sql);
+            }
+            
+            $upd_gr = "UPDATE goods_receipts SET is_stocked = 1 WHERE id = $id";
+            mysqli_query($conn, $upd_gr);
+            
+            mysqli_commit($conn);
+            $response = ['status' => 'success', 'message' => 'รับสินค้าเข้าคลังเรียบร้อยแล้ว'];
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            throw $e;
         }
     } else {
         $response = ['status' => 'error', 'message' => 'Action ไม่ถูกต้อง'];

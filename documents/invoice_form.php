@@ -373,7 +373,7 @@ if ($edit_id) {
             <h3 class="text-lg font-bold text-gray-800 mb-6">ลายเซ็น</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ลายเซ็นผู้เสนอราคา</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ผู้รับเงิน</label>
                     <div class="flex gap-2">
                         <input type="file" id="signature1" accept="image/*" onchange="previewSignature(1)" class="w-full text-sm text-gray-500 mb-2">
                         <button type="button" onclick="openSignaturePad(1)" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-all text-xs flex items-center gap-1 h-fit">
@@ -386,7 +386,7 @@ if ($edit_id) {
                     <img id="sig1_preview" src="<?= $doc_data['signature1'] ?? '' ?>" class="signature-preview <?= empty($doc_data['signature1']) ? 'hidden' : '' ?> border rounded-xl bg-gray-50">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ลายเซ็นผู้อนุมัติ</label>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ผู้อนุมัติ</label>
                     <div class="flex gap-2">
                         <input type="file" id="signature2" accept="image/*" onchange="previewSignature(2)" class="w-full text-sm text-gray-500 mb-2">
                         <button type="button" onclick="openSignaturePad(2)" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-all text-xs flex items-center gap-1 h-fit">
@@ -742,7 +742,7 @@ function generatePreview() {
                 <td style="text-align:right">${t.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
             </tr>`;
     });
-    for(let i=$('.item-row').length; i<10; i++) itemRows += '<tr><td style="height:25px"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+    // Removed empty rows loop as per user request
 
     const title = $('#doc_type').val() === 'tax_invoice' ? 'ใบกำกับภาษี' : 'ใบแจ้งหนี้';
     const amountWords = ThaiBaht(grand);
@@ -790,11 +790,39 @@ function generatePreview() {
         <div class="doc-amount-words">( ${amountWords} )</div>
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
-            <div class="signature-box"><div>ผู้เสนอราคา</div><div class="signature-line">${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}</div></div>
-            <div class="signature-box"><div>ผู้อนุมัติ</div><div class="signature-line">${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}</div></div>
+            <div class="signature-box">
+                <div>ผู้รับเงิน</div>
+                <div class="signature-line">${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}</div>
+                <div style="margin-top: 5px; font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+            </div>
+            <div class="signature-box">
+                <div>ผู้อนุมัติ</div>
+                <div class="signature-line">${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}</div>
+                <div style="margin-top: 5px; font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+            </div>
         </div>`;
-    $('#print-area').html(html).removeClass('hidden');
-    $('html, body').animate({ scrollTop: $("#print-area").offset().top }, 500);
+    Swal.fire({
+        title: 'ตัวอย่างเอกสาร',
+        html: `
+            <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
+                ${html}
+            </div>
+            <div class="mt-4 flex gap-2 justify-center no-print">
+                <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                    <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
+                </button>
+                <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
+                    <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
+                </button>
+            </div>
+        `,
+        width: '900px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            $('#print-area').html(html).removeClass('hidden');
+        }
+    });
 }
 
 function printDoc() { generatePreview(); setTimeout(() => { window.print(); }, 500); }

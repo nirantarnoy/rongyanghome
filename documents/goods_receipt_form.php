@@ -697,11 +697,7 @@ function generatePreview() {
         `;
     });
 
-    const minRows = 10;
-    const currentRows = $('.item-row').length;
-    for (let i = currentRows; i < minRows; i++) {
-        itemsHtml += `<tr><td style="height: 25px;"></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
-    }
+    // Removed empty rows loop as per user request to show only actual data
 
     const amountWords = ThaiBaht(grandTotal);
 
@@ -792,30 +788,40 @@ function generatePreview() {
                 <div class="signature-line">
                     ${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">......................................................</div>
+                <div style="font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
             </div>
             <div class="signature-box">
                 <div>ผู้อนุมัติ</div>
                 <div class="signature-line">
                     ${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">......................................................</div>
+                <div style="font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
             </div>
         </div>
     `;
 
-    $('#print-area').html(html).removeClass('hidden');
-    
-    $('html, body').animate({
-        scrollTop: $("#print-area").offset().top
-    }, 500);
-
-    if ($('#print-btn-container').length === 0) {
-        $('<div id="print-btn-container" class="max-w-5xl mx-auto mt-4 mb-10 flex gap-4 no-print">' +
-          '<button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-blue-700 transition-all">🖨️ พิมพ์เอกสาร (A4)</button>' +
-          '<button onclick="exportPDF()" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold shadow-lg hover:bg-red-700 transition-all">📄 บันทึกเป็น PDF</button>' +
-          '</div>').insertAfter('#print-area');
-    }
+    Swal.fire({
+        title: 'ตัวอย่างเอกสาร',
+        html: `
+            <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
+                ${html}
+            </div>
+            <div class="mt-4 flex gap-2 justify-center no-print">
+                <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                    <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
+                </button>
+                <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
+                    <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
+                </button>
+            </div>
+        `,
+        width: '900px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            $('#print-area').html(html).removeClass('hidden');
+        }
+    });
 }
 
 function ThaiBaht(number) {

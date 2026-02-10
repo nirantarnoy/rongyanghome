@@ -74,6 +74,12 @@ function renderGRList(data) {
                     <td class="px-6 py-4 text-sm text-gray-600">${item.vendor_name || '-'}</td>
                     <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                     <td class="px-6 py-4 text-center space-x-2">
+                        ${item.is_stocked == 1 
+                            ? `<span class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium">✅ รับเข้าคลังแล้ว</span>`
+                            : `<button onclick="receiveStock(${item.id}, '${item.doc_number}')" class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-all text-sm font-medium">
+                                📦 รับสินค้าเข้าคลัง
+                               </button>`
+                        }
                         <a href="goods_receipt_form.php?id=${item.id}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all text-sm font-medium">
                             ✏️ แก้ไข
                         </a>
@@ -114,6 +120,70 @@ function deleteGR(id) {
                     }
                 }
             });
+        }
+    });
+}
+function receiveStock(id, docNumber) {
+    // 1. Fetch warehouses first
+    $.ajax({
+        url: 'goods_receipt_action.php',
+        type: 'GET',
+        data: { action: 'get_warehouses' },
+        success: function(response) {
+            if (response.status === 'success') {
+                let options = '';
+                response.data.forEach(wh => {
+                    options += `<option value="${wh.id}">${wh.warehouse_code} - ${wh.name}</option>`;
+                });
+
+                Swal.fire({
+                    title: 'ยืนยันรับสินค้าเข้าคลัง?',
+                    html: `
+                        <div class="text-left mb-4">ต้องการรับสินค้าจากใบรับเลขที่ <b>${docNumber}</b> เข้าคลังไหน?</div>
+                        <select id="swal_warehouse_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                            ${options}
+                        </select>
+                    `,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'ยืนยันรับเข้าคลัง',
+                    cancelButtonText: 'ยกเลิก',
+                    preConfirm: () => {
+                        return $('#swal_warehouse_id').val();
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const warehouseId = result.value;
+                        Swal.fire({
+                            title: 'กำลังดำเนินการ...',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+                        
+                        $.ajax({
+                            url: 'goods_receipt_action.php',
+                            type: 'POST',
+                            data: { 
+                                action: 'receive_stock', 
+                                id: id, 
+                                warehouse_id: warehouseId 
+                            },
+                            success: function(response) {
+                                if (response.status === 'success') {
+                                    Swal.fire('สำเร็จ', response.message, 'success');
+                                    loadGRs();
+                                } else {
+                                    Swal.fire('ผิดพลาด', response.message, 'error');
+                                }
+                            }
+                        });
+                    }
+                });
+            } else {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถโหลดข้อมูลคลังสินค้าได้', 'error');
+            }
         }
     });
 }
