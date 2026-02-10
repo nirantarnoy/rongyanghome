@@ -58,8 +58,21 @@ if ($edit_id) {
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
+            .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
+                display: none !important; 
+            }
+            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            #print-area { 
+                display: block !important; 
+                border: none !important; 
+                box-shadow: none !important; 
+                width: 210mm;
+                margin: 0 auto;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
         }
         .signature-preview {
             max-width: 150px;
@@ -334,6 +347,9 @@ if ($edit_id) {
         <!-- Content will be generated here -->
     </div>
 </div>
+
+<!-- Print Area -->
+<div id="print-area" class="hidden"></div>
 
 <script>
 let itemCount = 0;
@@ -1171,6 +1187,8 @@ function generatePreview() {
         </div>
     `;
     
+    $('#print-area').html(html);
+
     Swal.fire({
         title: 'ตัวอย่างเอกสาร',
         html: `
@@ -1188,14 +1206,7 @@ function generatePreview() {
         `,
         width: '900px',
         showConfirmButton: false,
-        showCloseButton: true,
-        didOpen: () => {
-            // Also update the hidden print area for window.print()
-            if ($('#print-area').length === 0) {
-                $('body').append('<div id="print-area" class="hidden"></div>');
-            }
-            $('#print-area').html(html);
-        }
+        showCloseButton: true
     });
 }
 
@@ -1309,7 +1320,7 @@ function printQuotation() {
     
     setTimeout(() => {
         window.print();
-    }, 1000);
+    }, 800);
 }
 
 function openStockSelector() {

@@ -54,8 +54,21 @@ if ($edit_id) {
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
+            .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
+                display: none !important; 
+            }
+            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            #print-area { 
+                display: block !important; 
+                border: none !important; 
+                box-shadow: none !important; 
+                width: 210mm;
+                margin: 0 auto;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
         }
         .signature-preview {
             max-width: 150px;
@@ -258,6 +271,8 @@ if ($edit_id) {
         <!-- Content will be generated here -->
     </div>
 </div>
+
+<div id="print-area" class="hidden"></div>
 
 <script>
 function compressImage(file, maxWidth, maxHeight, quality) {
@@ -656,6 +671,8 @@ function generatePreview() {
             <div style="background-color: #92d050; text-align: center; padding: 5px; margin-top: 20px; font-size: 12px; font-weight: bold;">BANSAKTHONG RONGYANG CO., LTD.</div>
         </div>
     `;
+    $('#print-area').html(html);
+
     Swal.fire({
         title: 'ตัวอย่างเอกสาร',
         html: `
@@ -673,14 +690,7 @@ function generatePreview() {
         `,
         width: '900px',
         showConfirmButton: false,
-        showCloseButton: true,
-        didOpen: () => {
-             // Also update the hidden print area for window.print()
-            if ($('#print-area').length === 0) {
-                $('body').append('<div id="print-area" class="hidden"></div>');
-            }
-            $('#print-area').html(html);
-        }
+        showCloseButton: true
     });
 }
 
@@ -751,7 +761,7 @@ function exportPDF() {
 
 function printReceipt() {
     generatePreview();
-    setTimeout(() => { window.print(); }, 500);
+    setTimeout(() => { window.print(); }, 800);
 }
 
 function openSignaturePad(num) {
