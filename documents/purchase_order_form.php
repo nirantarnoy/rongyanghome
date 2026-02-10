@@ -56,29 +56,35 @@ if ($edit_id) {
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
-            .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
-                display: none !important; 
-            }
-            body { 
-                background: white !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            #print-area { 
-                display: block !important; 
-                border: none !important; 
-                box-shadow: none !important; 
-                width: 210mm !important;
-                margin: 0 auto !important;
-                padding: 15mm !important;
-                box-sizing: border-box !important;
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
                 background: white !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area *, #printable-area, #printable-area * {
+                visibility: visible !important;
+            }
+            #print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 210mm !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-sizing: border-box !important;
+                display: block !important;
+                background: white !important;
+                z-index: 9999 !important;
             }
             @page {
                 size: A4;
                 margin: 0;
+            }
+            .swal2-container, .no-print {
+                display: none !important;
             }
         }
         #print-area {
@@ -315,16 +321,27 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">เงื่อนไขการชำระเงิน</label>
-                <input type="text" id="payment_terms" value="<?= htmlspecialchars($po_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?>" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        <div class="mb-6 bg-green-50 p-4 rounded-xl border border-green-100">
+            <div class="flex justify-between items-center mb-3">
+                <label class="block text-sm font-bold text-green-800 flex items-center gap-2">
+                    <i class="fas fa-file-invoice-dollar"></i> เงื่อนไขการชำระเงิน
+                </label>
+                <div class="flex items-center gap-2">
+                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="text-xs px-2 py-1 border border-green-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none min-w-[150px]">
+                        <option value="">-- เลือกเทมเพลต --</option>
+                    </select>
+                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-white text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-100 transition-all">
+                        ⚙️ จัดการ
+                    </button>
+                </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">รูปภาพท้ายเอกสาร (QR Code)</label>
-                <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                <img id="qr_preview" src="<?= $po_data['qr_code_image'] ?? '' ?>" class="mt-2 <?= empty($po_data['qr_code_image']) ? 'hidden' : '' ?> max-w-xs max-h-32 object-contain border rounded">
-            </div>
+            <textarea id="payment_terms" rows="2" placeholder="ระบุเงื่อนไขการชำระเงิน" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none bg-white text-sm"><?= htmlspecialchars($po_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?></textarea>
+        </div>
+        
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">รูปภาพท้ายเอกสาร (QR Code)</label>
+            <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+            <img id="qr_preview" src="<?= $po_data['qr_code_image'] ?? '' ?>" class="mt-2 <?= empty($po_data['qr_code_image']) ? 'hidden' : '' ?> max-w-xs max-h-32 object-contain border rounded">
         </div>
 
         <div class="border-t pt-6 mb-6">
@@ -357,13 +374,34 @@ if ($edit_id) {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
-                <textarea id="notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"><?= htmlspecialchars($po_data['notes'] ?? '') ?></textarea>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-gray-700">หมายเหตุ (Notes)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="notes_template" onchange="loadNotesTemplate()" class="text-xs px-2 py-1 border border-gray-300 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-white text-gray-600 border border-gray-300 px-2 py-1 rounded-lg hover:bg-gray-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <textarea id="notes" rows="4" placeholder="บันทึกหมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none text-sm bg-white"><?= htmlspecialchars($po_data['notes'] ?? '') ?></textarea>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">เงื่อนไข</label>
-                <textarea id="conditions" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"><?= htmlspecialchars($po_data['conditions'] ?? '* ไลน์อีเมลล์ ฟอร์มใบสั่งซื้อ มาที่ Email: rongyanghome@gmail.com, หรือไลน์ OA= @ttgoldenteak') ?></textarea>
+            
+            <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-green-800">เงื่อนไข (Conditions)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="conditions_template" onchange="loadConditionsTemplate()" class="text-xs px-2 py-1 border border-green-200 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('conditions')" type="button" class="text-xs bg-white text-green-600 border border-green-200 px-2 py-1 rounded-lg hover:bg-green-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <textarea id="conditions" rows="4" placeholder="ระบุเงื่อนไขเพิ่มเติมที่ส่วนท้ายเอกสาร" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none text-sm bg-white"><?= htmlspecialchars($po_data['conditions'] ?? '* ไลน์อีเมลล์ ฟอร์มใบสั่งซื้อ มาที่ Email: rongyanghome@gmail.com, หรือไลน์ OA= @ttgoldenteak') ?></textarea>
             </div>
         </div>
 
@@ -417,9 +455,7 @@ if ($edit_id) {
 </div>
 
 <!-- Print Area -->
-<div id="print-area" class="print-container bg-white hidden">
-    <!-- Content will be generated by JS -->
-</div>
+<div id="print-area" style="display: none;"></div>
 
 <script>
 function compressImage(file, maxWidth, maxHeight, quality) {
@@ -471,7 +507,59 @@ $(document).ready(function() {
     } else {
         addItem();
     }
+    loadTemplates();
 });
+
+function loadTemplates() {
+    $.ajax({
+        url: 'template_action.php',
+        type: 'GET',
+        data: { action: 'get_templates' },
+        success: function(response) {
+            const res = JSON.parse(response);
+            if (res.status === 'success') {
+                $('#payment_terms_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'payment_terms').forEach(t => {
+                    $('#payment_terms_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+
+                $('#notes_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'notes').forEach(t => {
+                    $('#notes_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+
+                $('#conditions_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'conditions').forEach(t => {
+                    $('#conditions_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+            }
+        }
+    });
+}
+
+function loadPaymentTermsTemplate() {
+    const selected = $('#payment_terms_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#payment_terms').val(content);
+    }
+}
+
+function loadNotesTemplate() {
+    const selected = $('#notes_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#notes').val(content);
+    }
+}
+
+function loadConditionsTemplate() {
+    const selected = $('#conditions_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#conditions').val(content);
+    }
+}
 
 function addItem(data = null) {
     itemCount++;
@@ -723,7 +811,7 @@ function generatePreview() {
                 <div>เลขที่ : ${docNumber}</div>
                 <div>วันที่สั่งซื้อ : ${docDate}</div>
                 <br>
-                <div>เงื่อนไขการชำระ : ${$('#payment_terms').val()}</div>
+                <div>เงื่อนไขการชำระ : ${$('#payment_terms_template option:selected').val() ? $('#payment_terms_template option:selected').text() : ($('#payment_terms').val() || '-')}</div>
             </div>
         </div>
 
@@ -793,8 +881,7 @@ function generatePreview() {
             </div>
         </div>
     `;
-
-    $('#print-area').html(html).removeClass('hidden');
+    $('#print-area').html(html);
 
     Swal.fire({
         title: 'ตัวอย่างเอกสาร',
@@ -976,6 +1063,223 @@ function openSignaturePad(num) {
 function clearSignature(num) {
     $(`#sig${num}_preview`).attr('src', '').addClass('hidden');
     $(`#signature${num}`).val('');
+}
+
+function manageTemplates(type) {
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
+    
+    Swal.fire({
+        title: `จัดการเทมเพลต${typeLabel}`,
+        html: `
+            <div class="text-left">
+                <div class="mb-4">
+                    <button onclick="addNewTemplate('${type}')" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        + เพิ่มเทมเพลตใหม่
+                    </button>
+                </div>
+                <div id="template-list-${type}" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+        `,
+        width: '600px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            loadTemplateList(type);
+        }
+    });
+}
+
+function loadTemplateList(type) {
+    $.ajax({
+        url: 'template_action.php',
+        type: 'GET',
+        data: { action: 'get_templates', type: type },
+        success: function(response) {
+            const res = JSON.parse(response);
+            if (res.status === 'success') {
+                let html = '';
+                if (res.data.length === 0) {
+                    html = '<p class="text-gray-400 text-center py-4">ยังไม่มีเทมเพลต</p>';
+                } else {
+                    res.data.forEach(t => {
+                        html += `
+                            <div class="border rounded-lg p-3 hover:bg-gray-50">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="font-bold text-gray-800">${t.template_name}</div>
+                                        <div class="text-sm text-gray-600 mt-1">${t.template_content}</div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="editTemplate(${t.id}, '${type}', '${t.template_name.replace(/'/g, "\\'")}', '${t.template_content.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')" class="text-indigo-600 hover:text-indigo-800 text-sm">แก้ไข</button>
+                                        <button onclick="deleteTemplate(${t.id}, '${type}')" class="text-red-600 hover:text-red-800 text-sm">ลบ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                $(`#template-list-${type}`).html(html);
+            }
+        }
+    });
+}
+
+function addNewTemplate(type) {
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
+    
+    Swal.fire({
+        title: `เพิ่มเทมเพลต${typeLabel}ใหม่`,
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ชื่อเทมเพลต</label>
+                    <input id="template_name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อเทมเพลต">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">เนื้อหา</label>
+                    <textarea id="template_content" class="swal2-textarea !m-0 !w-full !h-32" placeholder="ระบุเนื้อหา"></textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+            const name = $('#template_name').val().trim();
+            const content = $('#template_content').val().trim();
+            if (!name || !content) {
+                Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return false;
+            }
+            return { name, content };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: {
+                    action: 'save_template',
+                    template_type: type,
+                    template_name: result.value.name,
+                    template_content: result.value.content
+                },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success').then(() => {
+                            loadTemplates();
+                            manageTemplates(type);
+                        });
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function editTemplate(id, type, name, content) {
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
+    
+    Swal.fire({
+        title: `แก้ไขเทมเพลต${typeLabel}`,
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ชื่อเทมเพลต</label>
+                    <input id="template_name" class="swal2-input !m-0 !w-full" value="${name}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">เนื้อหา</label>
+                    <textarea id="template_content" class="swal2-textarea !m-0 !w-full !h-32">${content}</textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+            const name = $('#template_name').val().trim();
+            const content = $('#template_content').val().trim();
+            if (!name || !content) {
+                Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return false;
+            }
+            return { name, content };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: {
+                    action: 'save_template',
+                    id: id,
+                    template_type: type,
+                    template_name: result.value.name,
+                    template_content: result.value.content
+                },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success').then(() => {
+                            loadTemplates();
+                            manageTemplates(type);
+                        });
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function deleteTemplate(id, type) {
+    Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: 'คุณต้องการลบเทมเพลตนี้ใช่หรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, ลบเลย',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: { action: 'delete_template', id: id },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        loadTemplates();
+                        loadTemplateList(type);
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
 }
 </script>
 

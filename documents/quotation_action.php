@@ -49,6 +49,7 @@ try {
         $vat_amount = (float)($_POST['vat_amount'] ?? 0);
         $grand_total = (float)($_POST['grand_total'] ?? 0);
         $notes = mysqli_real_escape_string($conn, $_POST['notes'] ?? '');
+        $conditions = mysqli_real_escape_string($conn, $_POST['conditions'] ?? '');
         
         $signature1 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature1'] ?? '', 'uploads/signatures'));
         $signature2 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature2'] ?? '', 'uploads/signatures'));
@@ -82,6 +83,7 @@ try {
                     vat_amount = $vat_amount,
                     grand_total = $grand_total,
                     notes = '$notes',
+                    conditions = '$conditions',
                     signature1 = '$signature1',
                     signature2 = '$signature2',
                     signature3 = '$signature3',
@@ -94,8 +96,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO quotations (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, delivery_time, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, signature1, signature2, signature3, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$delivery_time', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$signature1', '$signature2', '$signature3', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
+            $sql = "INSERT INTO quotations (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, delivery_time, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signature3, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$delivery_time', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signature3', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
         }
         
         if (mysqli_query($conn, $sql)) {

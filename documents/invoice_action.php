@@ -128,11 +128,81 @@ try {
         } else {
             throw new Exception(mysqli_error($conn));
         }
-    } elseif ($action == 'convert_to_tax_invoice') {
+    } elseif ($action == 'convert_to_receipt') {
         $id = (int)($_POST['id'] ?? 0);
-        $sql_update = "UPDATE invoices SET type = 'tax_invoice' WHERE id = $id AND company_id = $company_id";
-        if (mysqli_query($conn, $sql_update)) {
-            $response = ['status' => 'success', 'message' => 'ออกใบกำกับภาษีเรียบร้อยแล้ว'];
+        
+        // Auto-migrate receipts table if needed
+        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS payment_terms TEXT AFTER customer_tax_id");
+        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS total_discount DECIMAL(15,2) DEFAULT 0 AFTER subtotal");
+        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS conditions TEXT AFTER notes");
+
+        $sql = "SELECT * FROM invoices WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        mysqli_stmt_execute($stmt);
+        $invoice = mysqli_stmt_get_result($stmt)->fetch_assoc();
+        
+        if (!$invoice) throw new Exception("ไม่พบข้อมูลใบแจ้งหนี้");
+        
+        // Generate document number: RC-YYYYMMDD-XXX
+        $prefix = "RC-" . date('Ymd') . "-";
+        $sql_count = "SELECT COUNT(*) as total FROM receipts WHERE company_id = $company_id AND doc_number LIKE '$prefix%'";
+        $count_res = mysqli_query($conn, $sql_count);
+        $count_row = mysqli_fetch_assoc($count_res);
+        $next_num = ($count_row['total'] ?? 0) + 1;
+        $doc_number = $prefix . sprintf("%03d", $next_num);
+
+        $sql_receipt = "INSERT INTO receipts (
+            company_id, issuer_company_id, year, doc_number, doc_date, 
+            customer_name, customer_address, customer_phone, customer_tax_id, 
+            payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, 
+            vat_amount, grand_total, notes, conditions, signature1, signature2, 
+            header_name, header_address, header_phone, header_tax_id, header_logo
+        ) VALUES (?, ?, ?, ?, CURRENT_DATE, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $c_id = (int)$invoice['company_id'];
+        $i_c_id = (int)$invoice['issuer_company_id'];
+        $y = (int)$invoice['year'];
+        $c_name = $invoice['customer_name'] ?? '';
+        $c_addr = $invoice['customer_address'] ?? '';
+        $c_phone = $invoice['customer_phone'] ?? '';
+        $c_tax = $invoice['customer_tax_id'] ?? '';
+        $p_terms = $invoice['payment_terms'] ?? '';
+        $its = $invoice['items'] ?? '[]';
+        $v_en = (int)($invoice['vat_enabled'] ?? 0);
+        $v_type = $invoice['vat_type'] ?? 'exclude';
+        $sub = (float)($invoice['subtotal'] ?? 0);
+        $disc = (float)($invoice['total_discount'] ?? 0);
+        $v_amt = (float)($invoice['vat_amount'] ?? 0);
+        $g_total = (float)($invoice['grand_total'] ?? 0);
+        $n = $invoice['notes'] ?? '';
+        $cond = $invoice['conditions'] ?? '';
+        $s1 = $invoice['signature1'] ?? '';
+        $s2 = $invoice['signature2'] ?? '';
+        $hn = $invoice['header_name'] ?? '';
+        $ha = $invoice['header_address'] ?? '';
+        $hp = $invoice['header_phone'] ?? '';
+        $ht = $invoice['header_tax_id'] ?? '';
+        $hl = $invoice['header_logo'] ?? '';
+
+        $stmt_receipt = mysqli_prepare($conn, $sql_receipt);
+        if (!$stmt_receipt) {
+            throw new Exception("Prepare failed: " . mysqli_error($conn));
+        }
+
+        $types = "iiisssssssisddddsssssssss";
+        mysqli_stmt_bind_param($stmt_receipt, $types, 
+            $c_id, $i_c_id, $y, $doc_number,
+            $c_name, $c_addr, $c_phone, $c_tax,
+            $p_terms, $its, $v_en, $v_type, 
+            $sub, $disc, $v_amt, $g_total,
+            $n, $cond, $s1, $s2,
+            $hn, $ha, $hp, $ht, $hl
+        );
+        
+        if (mysqli_stmt_execute($stmt_receipt)) {
+            $receipt_id = mysqli_insert_id($conn);
+            $response = ['status' => 'success', 'message' => 'สร้างใบเสร็จรับเงินเลขที่ ' . $doc_number . ' เรียบร้อยแล้ว', 'receipt_id' => $receipt_id];
         } else {
             throw new Exception(mysqli_error($conn));
         }

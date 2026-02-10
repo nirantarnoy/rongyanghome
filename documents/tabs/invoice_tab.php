@@ -72,6 +72,9 @@ function loadInvoices(search = '') {
                                         <a href="invoice_form.php?id=${item.id}" class="w-9 h-9 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="แก้ไข">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <button onclick="issueReceiptFromList(${item.id})" class="w-9 h-9 flex items-center justify-center bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="ออกใบเสร็จ">
+                                            <i class="fas fa-receipt"></i>
+                                        </button>
                                         <button onclick="deleteInvoice(${item.id})" class="w-9 h-9 flex items-center justify-center bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="ลบ">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -107,6 +110,55 @@ function deleteInvoice(id) {
                         Swal.fire('สำเร็จ', res.message, 'success');
                         loadInvoices();
                     } else Swal.fire('ผิดพลาด', res.message, 'error');
+                }
+            });
+        }
+    });
+}
+function issueReceiptFromList(id) {
+    Swal.fire({
+        title: 'ยืนยันการออกใบเสร็จ?',
+        text: 'คุณต้องการสร้างใบเสร็จรับเงินจากใบแจ้งหนี้นี้ใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, สร้างเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'กำลังสร้างใบเสร็จ...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            $.ajax({
+                url: 'invoice_action.php',
+                type: 'POST',
+                data: { action: 'convert_to_receipt', id: id },
+                success: function(response) {
+                    try {
+                        let res = typeof response === 'object' ? response : JSON.parse(response);
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                showCancelButton: true,
+                                confirmButtonText: 'ไปหน้าใบเสร็จ',
+                                cancelButtonText: 'อยู่ที่เดิม'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'receipt_form.php?id=' + res.receipt_id;
+                                }
+                            });
+                        } else {
+                            Swal.fire('ผิดพลาด', res.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการประมวลผล', 'error');
+                    }
                 }
             });
         }

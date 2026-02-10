@@ -60,28 +60,35 @@ if ($edit_id) {
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
-            .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
-                display: none !important; 
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
+                background: white !important;
             }
-            body { 
-                background: white !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
+            body * {
+                visibility: hidden;
             }
-            #print-area { 
-                display: block !important; 
-                border: none !important; 
-                box-shadow: none !important; 
-                width: 210mm;
-                margin: 0 auto !important;
-                padding: 15mm !important;
+            #print-area, #print-area *, #printable-area, #printable-area * {
+                visibility: visible !important;
+            }
+            #print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 210mm !important;
+                margin: 0 !important;
+                padding: 10mm !important;
                 box-sizing: border-box !important;
+                display: block !important;
+                background: white !important;
+                z-index: 9999 !important;
             }
             @page {
                 size: A4;
                 margin: 0;
+            }
+            .swal2-container, .no-print {
+                display: none !important;
             }
         }
         
@@ -218,6 +225,22 @@ if ($edit_id) {
             background-color: #059669;
             transform: scale(1.02);
         }
+        .btn-issue-receipt {
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+        }
+        .btn-issue-receipt:hover {
+            background-color: #2563eb;
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -341,27 +364,30 @@ if ($edit_id) {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium text-gray-700">เงื่อนไขการชำระเงิน</label>
-                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
-                        ⚙️ จัดการเทมเพลต
-                    </button>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+        <div class="mb-6 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+            <div class="flex justify-between items-center mb-3">
+                <label class="block text-sm font-bold text-indigo-800 flex items-center gap-2">
+                    <i class="fas fa-file-invoice-dollar"></i> เงื่อนไขการชำระเงิน
+                </label>
+                <div class="flex items-center gap-2">
+                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="text-xs px-2 py-1 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none min-w-[150px]">
                         <option value="">-- เลือกเทมเพลต --</option>
                     </select>
-                </div>
-                <input type="text" id="payment_terms" value="<?= htmlspecialchars($doc_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?>" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">QR Code สำหรับชำระเงิน</label>
-                <div class="flex items-center gap-4">
-                    <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
-                    <img id="qr_preview" src="<?= $doc_data['qr_code_image'] ?? '' ?>" class="<?= empty($doc_data['qr_code_image']) ? 'hidden' : '' ?> w-16 h-16 object-contain border rounded-xl shadow-sm">
+                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-100 transition-all">
+                        ⚙️ จัดการ
+                    </button>
                 </div>
             </div>
+            <textarea id="payment_terms" rows="2" placeholder="ระบุเงื่อนไขการชำระเงิน" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none bg-white text-sm"><?= htmlspecialchars($doc_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?></textarea>
+        </div>
+
+        <div class="mb-8">
+            <label class="block text-sm font-medium text-gray-700 mb-2">QR Code สำหรับชำระเงิน</label>
+            <div class="flex items-center gap-4">
+                <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
+                <img id="qr_preview" src="<?= $doc_data['qr_code_image'] ?? '' ?>" class="<?= empty($doc_data['qr_code_image']) ? 'hidden' : '' ?> w-16 h-16 object-contain border rounded-xl shadow-sm">
+            </div>
+        </div>
         </div>
 
         <div class="border-t pt-8 mb-8">
@@ -400,23 +426,34 @@ if ($edit_id) {
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium text-gray-700">หมายเหตุ</label>
-                    <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
-                        ⚙️ จัดการเทมเพลต
-                    </button>
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-gray-700">หมายเหตุ (Notes)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="notes_template" onchange="loadNotesTemplate()" class="text-xs px-2 py-1 border border-gray-300 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-white text-gray-600 border border-gray-300 px-2 py-1 rounded-lg hover:bg-gray-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
                 </div>
-                <div class="flex gap-2 mb-2">
-                    <select id="notes_template" onchange="loadNotesTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
-                        <option value="">-- เลือกเทมเพลต --</option>
-                    </select>
-                </div>
-                <textarea id="notes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none"><?= htmlspecialchars($doc_data['notes'] ?? '') ?></textarea>
+                <textarea id="notes" rows="4" placeholder="บันทึกหมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none text-sm bg-white"><?= htmlspecialchars($doc_data['notes'] ?? '') ?></textarea>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">เงื่อนไข</label>
-                <textarea id="conditions" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none"><?= htmlspecialchars($doc_data['conditions'] ?? "") ?></textarea>
+            
+            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-emerald-800">เงื่อนไข (Conditions)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="conditions_template" onchange="loadConditionsTemplate()" class="text-xs px-2 py-1 border border-emerald-200 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('conditions')" type="button" class="text-xs bg-white text-emerald-600 border border-emerald-200 px-2 py-1 rounded-lg hover:bg-emerald-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <textarea id="conditions" rows="4" placeholder="ระบุเงื่อนไขเพิ่มเติมที่ส่วนท้ายเอกสาร" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none text-sm bg-white"><?= htmlspecialchars($doc_data['conditions'] ?? '') ?></textarea>
             </div>
         </div>
 
@@ -467,11 +504,18 @@ if ($edit_id) {
             </button>
         </div>
 
-        <?php if ($edit_id && $type == 'invoice'): ?>
-        <div class="mt-4 flex justify-center no-print border-t pt-8">
-            <button onclick="issueTaxInvoice()" class="btn-issue-tax">
-                <i class="fas fa-file-invoice-dollar text-xl"></i>
-                ออกใบกำกับภาษี
+        <?php if ($edit_id): ?>
+        <div class="mt-4 flex justify-center no-print border-t pt-8 gap-4">
+            <?php if ($type == 'invoice'): ?>
+                <button onclick="issueTaxInvoice()" class="btn-issue-tax">
+                    <i class="fas fa-file-invoice-dollar text-xl"></i>
+                    ออกใบกำกับภาษี
+                </button>
+            <?php endif; ?>
+            
+            <button onclick="issueReceipt()" class="btn-issue-receipt">
+                <i class="fas fa-receipt text-xl"></i>
+                ออกใบเสร็จรับเงิน
             </button>
         </div>
         <?php endif; ?>
@@ -479,9 +523,7 @@ if ($edit_id) {
 </div>
 
 <!-- Print Area -->
-<div id="print-area" class="print-container bg-white hidden">
-    <!-- Content will be generated by JS -->
-</div>
+<div id="print-area" style="display: none;"></div>
 
 <script>
 let itemCount = 0;
@@ -821,7 +863,7 @@ function generatePreview() {
             <div style="text-align:right; font-size:14px">
                 <div style="font-weight:bold; font-size:16px">${title} เลขที่ : ${$('#doc_number').val()}</div>
                 <div>วันที่ : ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
-                <div>เงื่อนไขการชำระ : ${$('#payment_terms').val()}</div>
+                <div>เงื่อนไขการชำระ : ${$('#payment_terms_template option:selected').val() ? $('#payment_terms_template option:selected').text() : ($('#payment_terms').val() || '-')}</div>
             </div>
         </div>
         <table class="doc-table">
@@ -994,11 +1036,17 @@ function loadTemplates() {
             if (res.status === 'success') {
                 $('#payment_terms_template').html('<option value="">-- เลือกเทมเพลต --</option>');
                 res.data.filter(t => t.template_type === 'payment_terms').forEach(t => {
-                    $('#payment_terms_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                    $('#payment_terms_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
                 });
+
                 $('#notes_template').html('<option value="">-- เลือกเทมเพลต --</option>');
                 res.data.filter(t => t.template_type === 'notes').forEach(t => {
-                    $('#notes_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                    $('#notes_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+
+                $('#conditions_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'conditions').forEach(t => {
+                    $('#conditions_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
                 });
             }
         }
@@ -1017,17 +1065,25 @@ function loadNotesTemplate() {
     const selected = $('#notes_template option:selected');
     const content = selected.data('content');
     if (content) {
-        const currentContent = $('#notes').val().trim();
-        if (currentContent) {
-            $('#notes').val(currentContent + '\n' + content);
-        } else {
-            $('#notes').val(content);
-        }
+        $('#notes').val(content);
+    }
+}
+
+function loadConditionsTemplate() {
+    const selected = $('#conditions_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#conditions').val(content);
     }
 }
 
 function manageTemplates(type) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     Swal.fire({
         title: `จัดการเทมเพลต${typeLabel}`,
         html: `
@@ -1085,7 +1141,12 @@ function loadTemplateList(type) {
 }
 
 function addNewTemplate(type) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     Swal.fire({
         title: `เพิ่มเทมเพลต${typeLabel}`,
         html: `
@@ -1140,7 +1201,12 @@ function addNewTemplate(type) {
 }
 
 function editTemplate(id, type, name, content) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     Swal.fire({
         title: `แก้ไขเทมเพลต${typeLabel}`,
         html: `
@@ -1218,6 +1284,56 @@ function deleteTemplate(id, type) {
                         loadTemplateList(type);
                     } else {
                         Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function issueReceipt() {
+    Swal.fire({
+        title: 'ยืนยันการออกใบเสร็จ?',
+        text: 'คุณต้องการสร้างใบเสร็จรับเงินจากใบแจ้งหนี้นี้ใช่หรือไม่?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3b82f6',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, สร้างเลย!',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire({
+                title: 'กำลังสร้างใบเสร็จ...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+            
+            $.ajax({
+                url: 'invoice_action.php',
+                type: 'POST',
+                data: { action: 'convert_to_receipt', id: $('#doc_id').val() },
+                success: function(response) {
+                    try {
+                        let res = typeof response === 'object' ? response : JSON.parse(response);
+                        if (res.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'สำเร็จ!',
+                                text: res.message,
+                                showCancelButton: true,
+                                confirmButtonText: 'ไปหน้าใบเสร็จ',
+                                cancelButtonText: 'อยู่ที่เดิม'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    window.location.href = 'receipt_form.php?id=' + res.receipt_id;
+                                }
+                            });
+                        } else {
+                            Swal.fire('ผิดพลาด', res.message, 'error');
+                        }
+                    } catch (e) {
+                        Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการประมวลผล', 'error');
                     }
                 }
             });

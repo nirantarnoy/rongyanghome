@@ -58,29 +58,35 @@ if ($edit_id) {
     <style>
         body { font-family: 'Sarabun', sans-serif; }
         @media print {
-            .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
-                display: none !important; 
-            }
-            body { 
-                background: white !important; 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-            }
-            #print-area, #printable-area { 
-                display: block !important; 
-                border: none !important; 
-                box-shadow: none !important; 
-                width: 210mm !important;
-                margin: 0 auto !important;
-                padding: 15mm !important;
-                box-sizing: border-box !important;
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
                 background: white !important;
+            }
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area *, #printable-area, #printable-area * {
+                visibility: visible !important;
+            }
+            #print-area {
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 210mm !important;
+                margin: 0 !important;
+                padding: 10mm !important;
+                box-sizing: border-box !important;
+                display: block !important;
+                background: white !important;
+                z-index: 9999 !important;
             }
             @page {
                 size: A4;
                 margin: 0;
+            }
+            .swal2-container, .no-print {
+                display: none !important;
             }
         }
         #print-area {
@@ -108,9 +114,9 @@ if ($edit_id) {
     </div>
 </div>
 
-<div class="max-w-5xl mx-auto p-6">
+<div class="max-w-5xl mx-auto p-6 no-print">
     <!-- Form Section -->
-    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6 no-print">
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">ข้อมูลใบเสนอราคา</h2>
         
         <input type="hidden" id="quotation_id" value="<?= $edit_id ?? '' ?>">
@@ -218,19 +224,21 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="mb-6">
-            <div class="flex justify-between items-center mb-2">
-                <label class="block text-sm font-medium text-gray-700">เงื่อนไขการชำระเงิน</label>
-                <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
-                    ⚙️ จัดการเทมเพลต
-                </button>
+        <div class="mb-6 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+            <div class="flex justify-between items-center mb-3">
+                <label class="block text-sm font-bold text-indigo-800 flex items-center gap-2">
+                    <i class="fas fa-file-invoice-dollar"></i> เงื่อนไขการชำระเงิน
+                </label>
+                <div class="flex items-center gap-2">
+                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="text-xs px-2 py-1 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none min-w-[150px]">
+                        <option value="">-- เลือกเทมเพลต --</option>
+                    </select>
+                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-100 transition-all">
+                        ⚙️ จัดการ
+                    </button>
+                </div>
             </div>
-            <div class="flex gap-2 mb-2">
-                <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">-- เลือกเทมเพลต --</option>
-                </select>
-            </div>
-            <textarea id="payment_terms" rows="3" placeholder="ระบุเงื่อนไขการชำระเงิน" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"><?= htmlspecialchars($quotation_data['payment_terms'] ?? '') ?></textarea>
+            <textarea id="payment_terms" rows="2" placeholder="ระบุเงื่อนไขการชำระเงิน" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none bg-white text-sm"><?= htmlspecialchars($quotation_data['payment_terms'] ?? '') ?></textarea>
         </div>
 
         <div class="border-t pt-6 mb-6">
@@ -268,19 +276,36 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="border-t pt-6 mb-6">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-lg font-bold text-gray-800">หมายเหตุ</h3>
-                <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
-                    ⚙️ จัดการเทมเพลต
-                </button>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-gray-700">หมายเหตุ (Notes)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="notes_template" onchange="loadNotesTemplate()" class="text-xs px-2 py-1 border border-gray-300 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-white text-gray-600 border border-gray-300 px-2 py-1 rounded-lg hover:bg-gray-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <textarea id="notes" rows="4" placeholder="บันทึกหมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none text-sm bg-white"><?= htmlspecialchars($quotation_data['notes'] ?? '') ?></textarea>
             </div>
-            <div class="flex gap-2 mb-2">
-                <select id="notes_template" onchange="loadNotesTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                    <option value="">-- เลือกเทมเพลต --</option>
-                </select>
+            
+            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-sm font-bold text-emerald-800">เงื่อนไข (Conditions)</label>
+                    <div class="flex items-center gap-2">
+                        <select id="conditions_template" onchange="loadConditionsTemplate()" class="text-xs px-2 py-1 border border-emerald-200 rounded-lg outline-none min-w-[150px]">
+                            <option value="">-- เลือกเทมเพลต --</option>
+                        </select>
+                        <button onclick="manageTemplates('conditions')" type="button" class="text-xs bg-white text-emerald-600 border border-emerald-200 px-2 py-1 rounded-lg hover:bg-emerald-100 transition-all">
+                            ⚙️
+                        </button>
+                    </div>
+                </div>
+                <textarea id="conditions" rows="4" placeholder="ระบุเงื่อนไขเพิ่มเติมที่ส่วนท้ายเอกสาร" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none text-sm bg-white"><?= htmlspecialchars($quotation_data['conditions'] ?? '') ?></textarea>
             </div>
-            <textarea id="notes" rows="4" placeholder="บันทึกหมายเหตุเพิ่มเติม (ถ้ามี)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"><?= htmlspecialchars($quotation_data['notes'] ?? '') ?></textarea>
         </div>
 
         <div class="border-t pt-6">
@@ -360,14 +385,11 @@ if ($edit_id) {
             </div>
         </div>
 
-    <!-- Preview Section -->
-    <div id="quotation-preview" class="bg-white rounded-2xl shadow-lg p-8" style="display: none;">
-        <!-- Content will be generated here -->
     </div>
 </div>
 
-<!-- Print Area -->
-<div id="print-area" class="hidden"></div>
+<!-- Print Preview Section -->
+<div id="print-area" style="display: none;"></div>
 
 <script>
 let itemCount = 0;
@@ -434,13 +456,19 @@ function loadTemplates() {
                 // Populate payment terms templates
                 $('#payment_terms_template').html('<option value="">-- เลือกเทมเพลต --</option>');
                 res.data.filter(t => t.template_type === 'payment_terms').forEach(t => {
-                    $('#payment_terms_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                    $('#payment_terms_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
                 });
                 
                 // Populate notes templates
                 $('#notes_template').html('<option value="">-- เลือกเทมเพลต --</option>');
                 res.data.filter(t => t.template_type === 'notes').forEach(t => {
-                    $('#notes_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                    $('#notes_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+
+                // Populate conditions templates
+                $('#conditions_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'conditions').forEach(t => {
+                    $('#conditions_template').append(`<option value="${t.id}" data-name="${t.template_name}" data-content="${t.template_content}">${t.template_name}</option>`);
                 });
             }
         }
@@ -452,12 +480,7 @@ function loadPaymentTermsTemplate() {
     const selected = $('#payment_terms_template option:selected');
     const content = selected.data('content');
     if (content) {
-        const currentContent = $('#payment_terms').val().trim();
-        if (currentContent) {
-            $('#payment_terms').val(currentContent + '\n' + content);
-        } else {
-            $('#payment_terms').val(content);
-        }
+        $('#payment_terms').val(content);
     }
 }
 
@@ -466,12 +489,16 @@ function loadNotesTemplate() {
     const selected = $('#notes_template option:selected');
     const content = selected.data('content');
     if (content) {
-        const currentContent = $('#notes').val().trim();
-        if (currentContent) {
-            $('#notes').val(currentContent + '\n' + content);
-        } else {
-            $('#notes').val(content);
-        }
+        $('#notes').val(content);
+    }
+}
+
+// Load conditions template
+function loadConditionsTemplate() {
+    const selected = $('#conditions_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#conditions').val(content);
     }
 }
 
@@ -526,7 +553,12 @@ function compressImage(file, maxWidth, maxHeight, quality) {
 
 // Manage templates
 function manageTemplates(type) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     
     Swal.fire({
         title: `จัดการเทมเพลต${typeLabel}`,
@@ -589,7 +621,12 @@ function loadTemplateList(type) {
 
 // Add new template
 function addNewTemplate(type) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     
     Swal.fire({
         title: `เพิ่มเทมเพลต${typeLabel}`,
@@ -648,7 +685,12 @@ function addNewTemplate(type) {
 
 // Edit template
 function editTemplate(id, type, name, content) {
-    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    let typeLabel = '';
+    switch(type) {
+        case 'payment_terms': typeLabel = 'เงื่อนไขการชำระเงิน'; break;
+        case 'notes': typeLabel = 'หมายเหตุ'; break;
+        case 'conditions': typeLabel = 'เงื่อนไข'; break;
+    }
     
     Swal.fire({
         title: `แก้ไขเทมเพลต${typeLabel}`,
@@ -942,7 +984,8 @@ function saveQuotation() {
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
         signature3: $('#sig3_preview').attr('src') || '',
-        qr_code_image: $('#qr_preview').attr('src') || ''
+        qr_code_image: $('#qr_preview').attr('src') || '',
+        conditions: $('#conditions').val()
     };
     
     // Show loading
@@ -992,10 +1035,10 @@ function saveQuotation() {
                     icon: 'error',
                     title: 'เกิดข้อผิดพลาดในการบันทึก',
                     html: `<div class="text-left">
-                            <p class="text-sm text-red-600 font-bold mb-2">สาเหตุ: ${e.message}</p>
-                            <p class="text-xs text-gray-500 mb-1">ข้อมูลที่ได้รับจากเซิร์ฟเวอร์:</p>
-                            <div class="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40 border">
-                                ${displayResponse.substring(0, 1000)}
+                            <p class="text-sm text-red-600 font-bold mb-2">สาเหตุ: ไม่ได้รับการตอบกลับที่ถูกต้องจากระบบ (Invalid JSON)</p>
+                            <p class="text-xs text-gray-500 mb-1">ข้อมูลที่เซิร์ฟเวอร์ส่งมา:</p>
+                            <div class="text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40 border font-mono">
+                                ${displayResponse}
                             </div>
                            </div>`,
                 });
@@ -1098,7 +1141,7 @@ function generatePreview() {
                     <p style="margin: 2px 0;"><strong>เลขที่ :</strong> ${$('#doc_number').val()}</p>
                     <p style="margin: 2px 0;"><strong>วันที่ยื่น :</strong> ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
                     <p style="margin: 2px 0;"><strong>ระยะเวลา :</strong> ${$('#delivery_time').val() || '-'}</p>
-                    <p style="margin: 2px 0;"><strong>เงื่อนไขการชำระ :</strong> เงินสด/โอนเงิน</p>
+                    <p style="margin: 2px 0;"><strong>เงื่อนไขการชำระ :</strong> ${$('#payment_terms_template option:selected').val() ? $('#payment_terms_template option:selected').text() : ($('#payment_terms').val() || '-')}</p>
                 </div>
             </div>
 
@@ -1125,10 +1168,7 @@ function generatePreview() {
                 <tr>
                     <td style="width: 65%; padding: 10px; vertical-align: top; border-right: 1px solid #000;">
                         <p style="margin: 0; font-weight: bold;">หมายเหตุ :</p>
-                        <div style="text-align: center; color: red; font-weight: bold; margin-top: 10px;">
-                            <p style="margin: 5px 0;">ชำระมัดจำ 50 % ก่อนผลิต = ${(grandTotal / 2).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท</p>
-                            <p style="margin: 5px 0;">ชำระเมื่อได้รับสินค้าอีก 50 % = ${(grandTotal / 2).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} บาท</p>
-                        </div>
+                        <div style="margin-top: 5px; white-space: pre-wrap; font-size: 13px;">${$('#notes').val() || '-'}</div>
                     </td>
                     <td style="width: 35%; padding: 0; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -1161,8 +1201,7 @@ function generatePreview() {
             <!-- Conditions & Bank Info -->
             <div style="margin-top: 10px; font-size: 13px;">
                 <p style="margin: 2px 0; font-weight: bold; text-decoration: underline;">เงื่อนไข :</p>
-                <p style="margin: 2px 0;">* โอนชำระมัดจำสินค้าก่อนผลิต 50% และเมื่อได้รับสินค้าโอนชำระอีก 50% กับเจ้าหน้าที่ขนส่ง</p>
-                <p style="margin: 2px 0;">* กรุณาชำระเงินโดยการโอนเข้าบัญชี ธ.กสิกรไทย สาขาแพร่ ออมทรัพย์ ชื่อบัญชี บจก.บ้านสักทองร้องแหย่ง เลขที่ 1971292055</p>
+                <div style="white-space: pre-line; line-height: 1.4;">${$('#conditions').val() || '-'}</div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
@@ -1224,7 +1263,10 @@ function generatePreview() {
         `,
         width: '900px',
         showConfirmButton: false,
-        showCloseButton: true
+        showCloseButton: true,
+        didOpen: () => {
+            $('#print-area').html(html).removeClass('hidden');
+        }
     });
 }
 
@@ -1338,7 +1380,7 @@ function printQuotation() {
     
     setTimeout(() => {
         window.print();
-    }, 800);
+    }, 1200);
 }
 
 function openStockSelector() {

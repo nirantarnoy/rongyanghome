@@ -45,6 +45,16 @@ try {
         
         $issuer_company_id = (int)($_POST['issuer_company_id'] ?? $company_id);
         
+        $doc_date = mysqli_real_escape_string($conn, $_POST['doc_date'] ?? date('Y-m-d'));
+        $vat_enabled = (int)($_POST['vat_enabled'] ?? 0);
+        $vat_type = mysqli_real_escape_string($conn, $_POST['vat_type'] ?? 'exclude');
+        $subtotal = (float)($_POST['subtotal'] ?? 0);
+        $total_discount = (float)($_POST['total_discount'] ?? 0);
+        $vat_amount = (float)($_POST['vat_amount'] ?? 0);
+        $grand_total = (float)($_POST['grand_total'] ?? 0);
+        $payment_terms = mysqli_real_escape_string($conn, $_POST['payment_terms'] ?? '');
+        $conditions = mysqli_real_escape_string($conn, $_POST['conditions'] ?? '');
+
         if ($id) {
             $sql = "UPDATE receipts SET 
                     issuer_company_id = $issuer_company_id,
@@ -54,6 +64,7 @@ try {
                     customer_address = '$customer_address',
                     customer_phone = '$customer_phone',
                     customer_tax_id = '$customer_tax_id',
+                    payment_terms = '$payment_terms',
                     items = '$items_escaped',
                     vat_enabled = $vat_enabled,
                     vat_type = '$vat_type',
@@ -62,6 +73,7 @@ try {
                     vat_amount = $vat_amount,
                     grand_total = $grand_total,
                     notes = '$notes',
+                    conditions = '$conditions',
                     signature1 = '$signature1_escaped',
                     signature2 = '$signature2_escaped',
                     header_name = '$header_name',
@@ -72,8 +84,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO receipts (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, signature1, signature2, header_name, header_address, header_phone, header_tax_id, header_logo)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$items_escaped', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$signature1_escaped', '$signature2_escaped', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo_escaped')";
+            $sql = "INSERT INTO receipts (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$payment_terms', '$items_escaped', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1_escaped', '$signature2_escaped', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo_escaped')";
         }
         
         if (mysqli_query($conn, $sql)) {
