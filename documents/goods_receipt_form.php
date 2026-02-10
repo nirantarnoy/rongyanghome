@@ -59,18 +59,36 @@ if ($edit_id) {
             .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
                 display: none !important; 
             }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            body { 
+                background: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
             #print-area { 
                 display: block !important; 
                 border: none !important; 
                 box-shadow: none !important; 
-                width: 210mm;
-                margin: 0 auto;
+                width: 210mm !important;
+                margin: 0 auto !important;
+                padding: 15mm !important;
+                box-sizing: border-box !important;
+                background: white !important;
             }
             @page {
                 size: A4;
                 margin: 0;
             }
+        }
+        #print-area {
+            background: white;
+            padding: 20mm;
+            width: 210mm;
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            border-radius: 4px;
         }
         
         .gr-header {

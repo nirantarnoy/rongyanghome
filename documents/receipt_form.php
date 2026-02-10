@@ -57,18 +57,36 @@ if ($edit_id) {
             .no-print, .swal2-container, .swal2-backdrop, .swal2-center { 
                 display: none !important; 
             }
-            body { background: white !important; margin: 0 !important; padding: 0 !important; }
-            #print-area { 
+            body { 
+                background: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            #print-area, #printable-area { 
                 display: block !important; 
                 border: none !important; 
                 box-shadow: none !important; 
-                width: 210mm;
-                margin: 0 auto;
+                width: 210mm !important;
+                margin: 0 auto !important;
+                padding: 15mm !important;
+                box-sizing: border-box !important;
+                background: white !important;
             }
             @page {
                 size: A4;
                 margin: 0;
             }
+        }
+        #print-area {
+            background: white;
+            padding: 20mm;
+            width: 210mm;
+            margin: 20px auto;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            border-radius: 4px;
         }
         .signature-preview {
             max-width: 150px;
@@ -580,7 +598,7 @@ function generatePreview() {
     const thaiAmount = ArabicToThaiBaht(grandTotal);
 
     const html = `
-        <div style="width: 800px; margin: 0 auto; background: white; padding: 20px; font-family: 'Sarabun', sans-serif; color: #000;" id="printable-area">
+        <div style="width: 100%; max-width: 210mm; background: white; font-family: 'Sarabun', sans-serif; color: #000; position: relative; box-sizing: border-box;" id="printable-area">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                 <div style="width: 150px;"><img src="${$('#header_logo_preview').attr('src')}" style="width: 120px;" onerror="this.style.display='none'"></div>
                 <div style="flex: 1; text-align: center;">
