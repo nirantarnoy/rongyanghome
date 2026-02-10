@@ -40,67 +40,67 @@
     </div>
 </div>
 
-<!-- Modal บันทึกรายรับโครงการ -->
-<div id="projectLinkModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<!-- Modal บันทึกรายรับ/รายจ่ายโครงการ -->
+<div id="projectLinkModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 text-left">
     <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl">
         <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
-            <h3 class="text-xl font-bold text-gray-800" id="modalTitle">บันทึกรายรับโครงการ</h3>
+            <h3 class="text-xl font-bold text-gray-800">บันทึกรายจ่ายโครงการ</h3>
             <button onclick="closeProjectModal()" class="text-gray-400 hover:text-gray-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        <div class="p-6 space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
                 <div>
-                    <p class="text-sm text-gray-500">เลขที่ใบสั่งซื้อ</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">เลขที่ใบสั่งซื้อ</p>
                     <p class="font-bold text-gray-800" id="dispDocNumber">-</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">เลขที่ SO</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">เลขที่ SO</p>
                     <p class="font-bold text-gray-800" id="dispSONumber">-</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">วันที่</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">วันที่</p>
                     <p class="font-bold text-gray-800" id="dispDocDate">-</p>
                 </div>
                 <div>
-                    <p class="text-sm text-gray-500">ยอดรวม</p>
-                    <p class="font-bold text-green-600 text-lg" id="dispGrandTotal">0 ฿</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase">ยอดรวม</p>
+                    <p class="font-bold text-emerald-600 text-lg" id="dispGrandTotal">0 ฿</p>
                 </div>
             </div>
 
-            <div class="space-y-3 pt-4 border-t">
+            <div class="space-y-3">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">เลือกโครงการ</label>
-                    <select id="projectSelect" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                    <select id="projectSelect" onchange="loadFormOptions()" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 shadow-sm">
                         <option value="">-- เลือกโครงการ --</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-1">เลือกหมวดหมู่รายรับ</label>
-                    <select id="categorySelect" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                        <option value="">-- เลือกหมวดหมู่ --</option>
+                    <label id="categoryLabel" class="block text-sm font-bold text-gray-700 mb-1">เลือกหมวดหมู่รายจ่าย</label>
+                    <select id="categorySelect" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 shadow-sm">
+                        <option value="">-- เลือกโครงการก่อน --</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-1">หมายเหตุ</label>
-                    <textarea id="transactionNote" class="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500" rows="2"></textarea>
+                    <textarea id="transactionNote" class="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-rose-500 shadow-sm" rows="2"></textarea>
                 </div>
             </div>
 
             <div class="pt-4 border-t">
-                <label class="block text-sm font-bold text-gray-700 mb-2">รายการสินค้า</label>
-                <div class="max-h-40 overflow-y-auto bg-gray-50 rounded-lg border p-2 text-sm" id="itemsList">
-                    <!-- Items will be listed here -->
+                <label class="block text-sm font-bold text-gray-700 mb-2">รายการสินค้า (ระบุคลังที่ต้องการเก็บ)</label>
+                <div class="space-y-2" id="itemsList">
+                    <!-- Items with warehouse select will be here -->
                 </div>
             </div>
         </div>
-        <div class="bg-gray-50 px-6 py-4 flex justify-between items-center gap-3">
-            <button onclick="closeProjectModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl transition-all">
+        <div class="bg-gray-50 px-6 py-4 flex gap-3">
+            <button onclick="closeProjectModal()" class="flex-1 bg-white border border-gray-200 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-50 transition-all">
                 ปิดหน้าต่าง
             </button>
-            <button onclick="saveProjectTransaction()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg transition-all" id="btnSaveTransaction">
-                กดบันทึกรายรับ
+            <button onclick="saveProjectTransaction()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-rose-200 transition-all" id="btnSaveTransaction">
+                กดบันทึกรายจ่าย
             </button>
         </div>
     </div>
@@ -162,8 +162,36 @@ function renderPOList(data) {
 }
 
 let activePOData = null;
+const currentTransactionType = 'expense';
+let warehousesCache = [];
 
 function openProjectLinkModal(id) {
+    // Reset selections and show loading state
+    $('#projectSelect').html('<option value="">-- กำลังโหลดโครงการ... --</option>');
+    $('#categorySelect').html('<option value="">-- เลือกโครงการก่อน --</option>');
+    $('#transactionNote').val('');
+    $('#itemsList').html('<div class="text-center py-4 text-gray-400">กำลังโหลดรายการสินค้า...</div>');
+    
+    // Load projects and categories first
+    fetchBaseData();
+    
+    // Load warehouses
+    $.ajax({
+        url: '../stock/stock_action.php',
+        type: 'GET',
+        data: { action: 'get_warehouses_json' },
+        success: function(res) {
+            warehousesCache = res;
+            loadPOData(id);
+        },
+        error: function() {
+            warehousesCache = [];
+            loadPOData(id);
+        }
+    });
+}
+
+function loadPOData(id) {
     $.ajax({
         url: 'purchase_order_action.php',
         type: 'GET',
@@ -176,38 +204,80 @@ function openProjectLinkModal(id) {
                 $('#dispDocDate').text(new Date(activePOData.doc_date).toLocaleDateString('th-TH'));
                 $('#dispSONumber').text(activePOData.so_number || '-');
                 $('#dispGrandTotal').text(parseFloat(activePOData.grand_total).toLocaleString() + ' ฿');
-                $('#transactionNote').val(`บันทึกรายรับจากใบสั่งซื้อเลขที่ ${activePOData.doc_number}`);
+                $('#transactionNote').val(`บันทึก${currentTransactionType === 'expense' ? 'รายจ่าย' : 'รายรับ'}จากใบสั่งซื้อเลขที่ ${activePOData.doc_number}`);
                 
-                // Render items
-                let itemsHtml = '';
+                // Render items with warehouse selection
+                let itemsListHtml = '';
                 const items = JSON.parse(activePOData.items || '[]');
-                items.forEach(it => {
-                    itemsHtml += `<div class="flex justify-between border-b py-1"><span>${it.name}</span> <span class="font-bold">${it.qty} ${it.unit}</span></div>`;
+                items.forEach((it, idx) => {
+                    let whOptions = '<option value="">-- เลือกคลังสินค้า --</option>';
+                    warehousesCache.forEach(wh => {
+                        whOptions += `<option value="${wh.id}">${wh.name}</option>`;
+                    });
+
+                    itemsListHtml += `
+                        <div class="bg-white border border-gray-100 rounded-xl p-3 shadow-sm mb-2 text-left">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-gray-700">${it.name}</span>
+                                <span class="text-sm bg-gray-100 text-gray-600 px-2 py-0.5 rounded font-bold">${parseFloat(it.qty).toLocaleString()} ${it.unit}</span>
+                            </div>
+                            <select class="wh-select w-full p-2 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:ring-1 focus:ring-rose-500" 
+                                data-item-idx="${idx}" 
+                                data-item-name="${it.name}" 
+                                data-item-qty="${it.qty}" 
+                                data-item-unit="${it.unit}">
+                                ${whOptions}
+                            </select>
+                        </div>`;
                 });
-                $('#itemsList').html(itemsHtml);
+                $('#itemsList').html(itemsListHtml);
                 
-                loadFormOptions();
+                fetchBaseData();
                 $('#projectLinkModal').removeClass('hidden');
             }
         }
     });
 }
 
-function loadFormOptions() {
+function fetchBaseData() {
     $.ajax({
         url: '../projects/transaction_action.php',
         type: 'GET',
-        data: { action: 'get_form_data', module_type: 1 },
+        data: { action: 'get_all_projects_and_categories', type: currentTransactionType },
         dataType: 'json',
         success: function(data) {
             let pOptions = '<option value="">-- เลือกโครงการ --</option>';
-            data.projects.forEach(p => {
-                pOptions += `<option value="${p.id}">${p.project_name}</option>`;
-            });
+            if (data.projects_module1 && data.projects_module1.length > 0) {
+                pOptions += '<optgroup label="🏠 โปรเจคบ้าน & เฟอร์นิเจอร์">';
+                data.projects_module1.forEach(p => { pOptions += `<option value="${p.id}" data-module="1">${p.project_name}</option>`; });
+                pOptions += '</optgroup>';
+            }
+            if (data.projects_module2 && data.projects_module2.length > 0) {
+                pOptions += '<optgroup label="⚙️ รายรับรายจ่ายบ้านสักทอง (โรงงาน)">';
+                data.projects_module2.forEach(p => { pOptions += `<option value="${p.id}" data-module="2">${p.project_name}</option>`; });
+                pOptions += '</optgroup>';
+            }
             $('#projectSelect').html(pOptions);
+        }
+    });
+}
 
-            let cOptions = '<option value="">-- เลือกหมวดหมู่ --</option>';
-            data.categories.filter(c => c.direction === 'income').forEach(c => {
+function loadFormOptions() {
+    const selectedProj = $('#projectSelect option:selected');
+    const moduleType = selectedProj.data('module');
+    if (!moduleType) {
+        $('#categorySelect').html('<option value="">-- เลือกโครงการก่อน --</option>');
+        return;
+    }
+
+    $.ajax({
+        url: '../projects/transaction_action.php',
+        type: 'GET',
+        data: { action: 'get_form_data', module_type: moduleType },
+        dataType: 'json',
+        success: function(data) {
+            let cOptions = `<option value="">-- เลือกหมวดหมู่${currentTransactionType === 'income' ? 'รายรับ' : 'รายจ่าย'} --</option>`;
+            data.categories.filter(c => c.direction === currentTransactionType).forEach(c => {
                 cOptions += `<option value="${c.id}">${c.name}</option>`;
             });
             $('#categorySelect').html(cOptions);
@@ -220,12 +290,33 @@ function closeProjectModal() {
 }
 
 function saveProjectTransaction() {
-    const projectId = $('#projectSelect').val();
+    const selectedProj = $('#projectSelect option:selected');
+    const projectId = selectedProj.val();
+    const moduleType = selectedProj.data('module');
     const categoryId = $('#categorySelect').val();
     const note = $('#transactionNote').val();
     
     if (!projectId || !categoryId) {
         Swal.fire('ผิดพลาด', 'กรุณาเลือกโครงการและหมวดหมู่', 'error');
+        return;
+    }
+
+    // Collect warehouse assignments
+    const itemStockData = [];
+    let allWhSelected = true;
+    $('.wh-select').each(function() {
+        const whId = $(this).val();
+        if (!whId) allWhSelected = false;
+        itemStockData.push({
+            name: $(this).data('item-name'),
+            qty: $(this).data('item-qty'),
+            unit: $(this).data('item-unit'),
+            warehouse_id: whId
+        });
+    });
+
+    if (!allWhSelected) {
+        Swal.fire('แจ้งเตือน', 'กรุณาระบุคลังสินค้าสำหรับทุกรายการ', 'warning');
         return;
     }
     
@@ -239,13 +330,16 @@ function saveProjectTransaction() {
             transaction_date: activePOData.doc_date,
             amount: activePOData.grand_total,
             note: note,
-            module_type: 1
+            module_type: moduleType,
+            stock_data: JSON.stringify(itemStockData),
+            po_id: activePOData.id
         },
         dataType: 'json',
         success: function(data) {
             if (data.status === 'success') {
-                Swal.fire('สำเร็จ', data.message, 'success');
+                Swal.fire('สำเร็จ', 'บันทึกรายจ่ายและรับของเข้าสต็อกเรียบร้อยแล้ว', 'success');
                 closeProjectModal();
+                loadPOs();
             } else {
                 Swal.fire('ผิดพลาด', data.message, 'error');
             }

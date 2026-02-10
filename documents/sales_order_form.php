@@ -919,13 +919,12 @@ function generatePreview() {
                 <div style="width: 60%;">
                     <p style="margin: 2px 0;"><strong>ชื่อ :</strong> ${$('#customer_name').val() || '-'}</p>
                     <p style="margin: 2px 0;"><strong>ที่อยู่ :</strong> ${$('#customer_address').val() || '-'}</p>
-                    <p style="margin: 10px 0 2px 0;"><strong>โทรศัพท์ :</strong> ${$('#customer_phone').val() || '-'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>อีเมลล์ :</strong> ${$('#customer_email').val() || '-'}</p>
-                    <p style="margin: 2px 0;"><strong>รหัสผู้เสียภาษี :</strong> ${$('#customer_tax_id').val() || '-'}</p>
+                    <p style="margin: 10px 0 2px 0;"><strong>โทรศัพท์ :</strong> ${$('#customer_phone').val() || '-'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>อีเมล :</strong> ${$('#customer_email').val() || '-'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>รหัสผู้เสียภาษี :</strong> ${$('#customer_tax_id').val() || '-'}</p>
                 </div>
-                <div style="width: 35%; text-align: right;">
+            <div style="width: 35%; text-align: right;">
                     <p style="margin: 2px 0;"><strong>เลขที่ :</strong> ${$('#doc_number').val()}</p>
                     <p style="margin: 2px 0;"><strong>วันที่ :</strong> ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
-                    <p style="margin: 2px 0;"><strong>เงื่อนไขการชำระ :</strong> ${$('#payment_terms').val() || '-'}</p>
+                    <p style="margin: 2px 0;"><strong>เงื่อนไขการชำระ :</strong> เงินสด/โอนเงิน</p>
                 </div>
             </div>
 
@@ -982,7 +981,7 @@ function generatePreview() {
 
             <div style="margin-top: 10px; font-size: 13px;">
                 <p style="margin: 2px 0; font-weight: bold; text-decoration: underline;">เงื่อนไข :</p>
-                <div style="white-space: pre-line;">${$('#conditions').val()}</div>
+                <div style="white-space: pre-line; line-height: 1.5;">${$('#conditions').val()}</div>
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">

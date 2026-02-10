@@ -115,6 +115,37 @@ if ($action == 'delete') {
     exit;
 }
 
+if ($action == 'get_all_projects_and_categories') {
+    $type = $_GET['type'] ?? 'income';
+    $target_company_id = $_SESSION['company_id'] ?? 0;
+    
+    // Get projects from Module 1
+    $p1_sql = "SELECT id, project_name FROM projects_list WHERE module_type = 1 AND company_id = $target_company_id ORDER BY project_name ASC";
+    $p1_res = mysqli_query($conn, $p1_sql);
+    $p1 = [];
+    while($row = mysqli_fetch_assoc($p1_res)) $p1[] = $row;
+
+    // Get projects from Module 2
+    $p2_sql = "SELECT id, project_name FROM projects_list WHERE module_type = 2 AND company_id = $target_company_id ORDER BY project_name ASC";
+    $p2_res = mysqli_query($conn, $p2_sql);
+    $p2 = [];
+    while($row = mysqli_fetch_assoc($p2_res)) $p2[] = $row;
+    
+    // Get categories based on type
+    $c_sql = "SELECT id, name FROM categories WHERE direction = '$type' ORDER BY name ASC";
+    $c_res = mysqli_query($conn, $c_sql);
+    $categories = [];
+    while($row = mysqli_fetch_assoc($c_res)) $categories[] = $row;
+    
+    ob_clean();
+    echo json_encode([
+        'projects_module1' => $p1,
+        'projects_module2' => $p2,
+        'categories' => $categories
+    ]);
+    exit;
+}
+
 if ($action == 'get_form_data') {
     $module_type = (int)$_GET['module_type'];
     

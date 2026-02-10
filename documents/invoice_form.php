@@ -312,7 +312,17 @@ if ($edit_id) {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">เงื่อไขการชำระเงิน</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">เงื่อนไขการชำระเงิน</label>
+                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
+                        ⚙️ จัดการเทมเพลต
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                        <option value="">-- เลือกเทมเพลต --</option>
+                    </select>
+                </div>
                 <input type="text" id="payment_terms" value="<?= htmlspecialchars($doc_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?>" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500">
             </div>
             <div>
@@ -361,12 +371,22 @@ if ($edit_id) {
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">หมายเหตุ</label>
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-gray-700">หมายเหตุ</label>
+                    <button onclick="manageTemplates('notes')" type="button" class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg hover:bg-indigo-200 transition-all">
+                        ⚙️ จัดการเทมเพลต
+                    </button>
+                </div>
+                <div class="flex gap-2 mb-2">
+                    <select id="notes_template" onchange="loadNotesTemplate()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                        <option value="">-- เลือกเทมเพลต --</option>
+                    </select>
+                </div>
                 <textarea id="notes" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none"><?= htmlspecialchars($doc_data['notes'] ?? '') ?></textarea>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">เงื่อนไข</label>
-                <textarea id="conditions" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none"><?= htmlspecialchars($doc_data['conditions'] ?? "") ?></textarea>
+                <textarea id="conditions" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 resize-none"><?= htmlspecialchars($doc_data['conditions'] ?? "") ?></textarea>
             </div>
         </div>
 
@@ -448,6 +468,9 @@ $(document).ready(function() {
     } else {
         addItem();
     }
+    
+    // Load templates
+    loadTemplates();
 });
 
 function addItem(data = null) {
@@ -754,7 +777,7 @@ function generatePreview() {
             <div class="doc-company-info">
                 <div style="font-weight:bold; font-size:18px">${$('#header_name').val()}</div>
                 <div style="font-size:13px">${$('#header_address').val()}</div>
-                <div style="font-size:13px">โทร. ${$('#header_phone').val()} เลประจำตัวผู้เสียภาษี ${$('#header_tax_id').val()}</div>
+                <div style="font-size:13px">โทร. ${$('#header_phone').val()} เลขประจำตัวผู้เสียภาษี ${$('#header_tax_id').val()}</div>
             </div>
             <div class="doc-title">${title}</div>
         </div>
@@ -763,10 +786,10 @@ function generatePreview() {
                 <div>รหัส : ${$('#customer_code').val()}</div>
                 <div>ชื่อ : ${$('#customer_name').val()}</div>
                 <div>ที่อยู่ : ${$('#customer_address').val()}</div>
-                <div>โทรศัทพ์ : ${$('#customer_phone').val()} รหัสผู้เสียภาษี : ${$('#customer_tax_id').val()}</div>
+                <div>โทรศัพท์ : ${$('#customer_phone').val()} รหัสผู้เสียภาษี : ${$('#customer_tax_id').val()}</div>
             </div>
             <div style="text-align:right; font-size:14px">
-                <div style="font-weight:bold; font-size:16px">${title}เลขที่ : ${$('#doc_number').val()}</div>
+                <div style="font-weight:bold; font-size:16px">${title} เลขที่ : ${$('#doc_number').val()}</div>
                 <div>วันที่ : ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
                 <div>เงื่อนไขการชำระ : ${$('#payment_terms').val()}</div>
             </div>
@@ -928,6 +951,248 @@ function openSignaturePad(num) {
 function clearSignature(num) {
     $(`#sig${num}_preview`).attr('src', '').addClass('hidden');
     $(`#signature${num}`).val('');
+}
+
+// Template Management
+function loadTemplates() {
+    $.ajax({
+        url: 'template_action.php',
+        type: 'GET',
+        data: { action: 'get_templates' },
+        success: function(response) {
+            const res = JSON.parse(response);
+            if (res.status === 'success') {
+                $('#payment_terms_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'payment_terms').forEach(t => {
+                    $('#payment_terms_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+                $('#notes_template').html('<option value="">-- เลือกเทมเพลต --</option>');
+                res.data.filter(t => t.template_type === 'notes').forEach(t => {
+                    $('#notes_template').append(`<option value="${t.id}" data-content="${t.template_content}">${t.template_name}</option>`);
+                });
+            }
+        }
+    });
+}
+
+function loadPaymentTermsTemplate() {
+    const selected = $('#payment_terms_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        $('#payment_terms').val(content);
+    }
+}
+
+function loadNotesTemplate() {
+    const selected = $('#notes_template option:selected');
+    const content = selected.data('content');
+    if (content) {
+        const currentContent = $('#notes').val().trim();
+        if (currentContent) {
+            $('#notes').val(currentContent + '\n' + content);
+        } else {
+            $('#notes').val(content);
+        }
+    }
+}
+
+function manageTemplates(type) {
+    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    Swal.fire({
+        title: `จัดการเทมเพลต${typeLabel}`,
+        html: `
+            <div class="text-left">
+                <div class="mb-4">
+                    <button onclick="addNewTemplate('${type}')" class="w-full bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700">
+                        + เพิ่มเทมเพลตใหม่
+                    </button>
+                </div>
+                <div id="template-list-${type}" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+        `,
+        width: '600px',
+        showConfirmButton: false,
+        showCloseButton: true,
+        didOpen: () => {
+            loadTemplateList(type);
+        }
+    });
+}
+
+function loadTemplateList(type) {
+    $.ajax({
+        url: 'template_action.php',
+        type: 'GET',
+        data: { action: 'get_templates', type: type },
+        success: function(response) {
+            const res = JSON.parse(response);
+            if (res.status === 'success') {
+                let html = '';
+                if (res.data.length === 0) {
+                    html = '<p class="text-gray-400 text-center py-4">ยังไม่มีเทมเพลต</p>';
+                } else {
+                    res.data.forEach(t => {
+                        html += `
+                            <div class="border rounded-lg p-3 hover:bg-gray-50">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="font-bold text-gray-800">${t.template_name}</div>
+                                        <div class="text-sm text-gray-600 mt-1">${t.template_content}</div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="editTemplate(${t.id}, '${type}', '${t.template_name.replace(/'/g, "\\'")}', '${t.template_content.replace(/'/g, "\\'").replace(/\n/g, '\\n')}')" class="text-indigo-600 hover:text-indigo-800 text-sm">แก้ไข</button>
+                                        <button onclick="deleteTemplate(${t.id}, '${type}')" class="text-red-600 hover:text-red-800 text-sm">ลบ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                $(`#template-list-${type}`).html(html);
+            }
+        }
+    });
+}
+
+function addNewTemplate(type) {
+    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    Swal.fire({
+        title: `เพิ่มเทมเพลต${typeLabel}`,
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ชื่อเทมเพลต</label>
+                    <input id="template_name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อเทมเพลต">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">เนื้อหา</label>
+                    <textarea id="template_content" class="swal2-textarea !m-0 !w-full !h-32" placeholder="ระบุเนื้อหา"></textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+            const name = $('#template_name').val().trim();
+            const content = $('#template_content').val().trim();
+            if (!name || !content) {
+                Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return false;
+            }
+            return { name, content };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: {
+                    action: 'save_template',
+                    template_type: type,
+                    template_name: result.value.name,
+                    template_content: result.value.content
+                },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success').then(() => {
+                            loadTemplates();
+                            manageTemplates(type);
+                        });
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function editTemplate(id, type, name, content) {
+    const typeLabel = type === 'payment_terms' ? 'เงื่อนไขการชำระเงิน' : 'หมายเหตุ';
+    Swal.fire({
+        title: `แก้ไขเทมเพลต${typeLabel}`,
+        html: `
+            <div class="text-left space-y-3">
+                <div>
+                    <label class="block text-sm font-medium mb-1">ชื่อเทมเพลต</label>
+                    <input id="template_name" class="swal2-input !m-0 !w-full" value="${name}">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">เนื้อหา</label>
+                    <textarea id="template_content" class="swal2-textarea !m-0 !w-full !h-32">${content}</textarea>
+                </div>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'บันทึก',
+        cancelButtonText: 'ยกเลิก',
+        preConfirm: () => {
+            const name = $('#template_name').val().trim();
+            const content = $('#template_content').val().trim();
+            if (!name || !content) {
+                Swal.showValidationMessage('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return false;
+            }
+            return { name, content };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: {
+                    action: 'save_template',
+                    id: id,
+                    template_type: type,
+                    template_name: result.value.name,
+                    template_content: result.value.content
+                },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        Swal.fire('สำเร็จ', res.message, 'success').then(() => {
+                            loadTemplates();
+                            manageTemplates(type);
+                        });
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
+}
+
+function deleteTemplate(id, type) {
+    Swal.fire({
+        title: 'ยืนยันการลบ?',
+        text: 'คุณต้องการลบเทมเพลตนี้ใช่หรือไม่?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, ลบเลย',
+        cancelButtonText: 'ยกเลิก'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: 'template_action.php',
+                type: 'POST',
+                data: { action: 'delete_template', id: id },
+                success: function(response) {
+                    const res = JSON.parse(response);
+                    if (res.status === 'success') {
+                        loadTemplates();
+                        loadTemplateList(type);
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                }
+            });
+        }
+    });
 }
 </script>
 </body>
