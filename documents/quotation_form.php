@@ -323,6 +323,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig1_preview" src="<?= $quotation_data['signature1'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature1']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name1" value="<?= htmlspecialchars($quotation_data['signer_name1'] ?? '') ?>" placeholder="ชื่อผู้เสนอราคา (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้อนุมัติ</label>
@@ -336,6 +337,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig2_preview" src="<?= $quotation_data['signature2'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature2']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name2" value="<?= htmlspecialchars($quotation_data['signer_name2'] ?? '') ?>" placeholder="ชื่อผู้อนุมัติ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้รับ</label>
@@ -349,6 +351,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig3_preview" src="<?= $quotation_data['signature3'] ?? '' ?>" class="signature-preview mt-2 <?= empty($quotation_data['signature3']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name3" value="<?= htmlspecialchars($quotation_data['signer_name3'] ?? '') ?>" placeholder="ชื่อผู้รับ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
             </div>
         </div>
@@ -984,6 +987,9 @@ function saveQuotation() {
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
         signature3: $('#sig3_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val(),
+        signer_name3: $('#signer_name3').val(),
         qr_code_image: $('#qr_preview').attr('src') || '',
         conditions: $('#conditions').val()
     };
@@ -1220,20 +1226,15 @@ function generatePreview() {
                         <p style="margin-bottom: 40px;">ผู้เสนอราคา</p>
                         ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
+                        <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 180px;">
                         <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
                         ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
+                        <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
                     </div>
-                    <div style="width: 180px;">
-                        <p style="margin-bottom: 40px;">ผู้รับพัสดุ</p>
-                        ${$('#sig3_preview').attr('src') ? `<img src="${$('#sig3_preview').attr('src')}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
-                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">วันที่ __________</p>
-                    </div>
+
                 </div>
             </div>
 

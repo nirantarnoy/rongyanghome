@@ -49,6 +49,8 @@ try {
         $conditions = mysqli_real_escape_string($conn, $_POST['conditions'] ?? '');
         $signature1 = mysqli_real_escape_string($conn, $signature1_raw);
         $signature2 = mysqli_real_escape_string($conn, $signature2_raw);
+        $signer_name1 = mysqli_real_escape_string($conn, $_POST['signer_name1'] ?? '');
+        $signer_name2 = mysqli_real_escape_string($conn, $_POST['signer_name2'] ?? '');
         $qr_code_image = mysqli_real_escape_string($conn, $qr_code_image_raw);
         
         $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
@@ -82,6 +84,8 @@ try {
                     conditions = '$conditions',
                     signature1 = '$signature1',
                     signature2 = '$signature2',
+                    signer_name1 = '$signer_name1',
+                    signer_name2 = '$signer_name2',
                     qr_code_image = '$qr_code_image',
                     header_name = '$header_name',
                     header_address = '$header_address',
@@ -91,8 +95,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO purchase_orders (company_id, issuer_company_id, year, doc_number, doc_date, vendor_code, vendor_name, vendor_address, vendor_phone, vendor_email, vendor_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$vendor_code', '$vendor_name', '$vendor_address', '$vendor_phone', '$vendor_email', '$vendor_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
+            $sql = "INSERT INTO purchase_orders (company_id, issuer_company_id, year, doc_number, doc_date, vendor_code, vendor_name, vendor_address, vendor_phone, vendor_email, vendor_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signer_name1, signer_name2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$vendor_code', '$vendor_name', '$vendor_address', '$vendor_phone', '$vendor_email', '$vendor_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signer_name1', '$signer_name2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
         }
         
         if (mysqli_query($conn, $sql)) {

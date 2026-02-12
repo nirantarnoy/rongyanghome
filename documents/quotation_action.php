@@ -54,6 +54,9 @@ try {
         $signature1 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature1'] ?? '', 'uploads/signatures'));
         $signature2 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature2'] ?? '', 'uploads/signatures'));
         $signature3 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature3'] ?? '', 'uploads/signatures'));
+        $signer_name1 = mysqli_real_escape_string($conn, $_POST['signer_name1'] ?? '');
+        $signer_name2 = mysqli_real_escape_string($conn, $_POST['signer_name2'] ?? '');
+        $signer_name3 = mysqli_real_escape_string($conn, $_POST['signer_name3'] ?? '');
         $qr_code_image = mysqli_real_escape_string($conn, saveBase64Image($_POST['qr_code_image'] ?? '', 'uploads/qrcodes'));
         
         $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
@@ -87,6 +90,9 @@ try {
                     signature1 = '$signature1',
                     signature2 = '$signature2',
                     signature3 = '$signature3',
+                    signer_name1 = '$signer_name1',
+                    signer_name2 = '$signer_name2',
+                    signer_name3 = '$signer_name3',
                     qr_code_image = '$qr_code_image',
                     header_name = '$header_name',
                     header_address = '$header_address',
@@ -96,8 +102,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO quotations (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, delivery_time, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signature3, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$delivery_time', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signature3', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
+            $sql = "INSERT INTO quotations (company_id, issuer_company_id, year, doc_number, doc_date, customer_name, customer_address, customer_phone, customer_tax_id, delivery_time, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signature3, signer_name1, signer_name2, signer_name3, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id', '$delivery_time', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signature3', '$signer_name1', '$signer_name2', '$signer_name3', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
         }
         
         if (mysqli_query($conn, $sql)) {
@@ -163,6 +169,8 @@ try {
         $conditions = mysqli_real_escape_string($conn, $q['delivery_time'] ? "กำหนดส่ง: " . $q['delivery_time'] : "");
         $signature1 = mysqli_real_escape_string($conn, $q['signature1']);
         $signature2 = mysqli_real_escape_string($conn, $q['signature2']);
+        $signer_name1 = mysqli_real_escape_string($conn, $q['signer_name1']);
+        $signer_name2 = mysqli_real_escape_string($conn, $q['signer_name2']);
         $qr_code_image = mysqli_real_escape_string($conn, $q['qr_code_image']);
         $header_name = mysqli_real_escape_string($conn, $q['header_name']);
         $header_address = mysqli_real_escape_string($conn, $q['header_address']);
@@ -175,14 +183,14 @@ try {
             customer_name, customer_address, customer_phone, customer_tax_id, 
             items, vat_enabled, vat_type, subtotal, total_discount, 
             vat_amount, grand_total, notes, conditions, signature1, 
-            signature2, qr_code_image, header_name, header_address, 
+            signature2, signer_name1, signer_name2, qr_code_image, header_name, header_address, 
             header_phone, header_tax_id, header_logo
         ) VALUES (
             $company_id, $issuer_company_id, $active_year, '$so_number', '$doc_date',
             '$customer_name', '$customer_address', '$customer_phone', '$customer_tax_id',
             '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount,
             $vat_amount, $grand_total, '$notes', '$conditions', '$signature1',
-            '$signature2', '$qr_code_image', '$header_name', '$header_address',
+            '$signature2', '$signer_name1', '$signer_name2', '$qr_code_image', '$header_name', '$header_address',
             '$header_phone', '$header_tax_id', '$header_logo'
         )";
 

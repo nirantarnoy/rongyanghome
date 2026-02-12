@@ -406,6 +406,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig1_preview" src="<?= $gr_data['signature1'] ?? '' ?>" class="signature-preview mt-2 <?= empty($gr_data['signature1']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name1" value="<?= htmlspecialchars($gr_data['signer_name1'] ?? '') ?>" placeholder="ชื่อผู้รับสินค้า (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้อนุมัติ</label>
@@ -419,6 +420,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig2_preview" src="<?= $gr_data['signature2'] ?? '' ?>" class="signature-preview mt-2 <?= empty($gr_data['signature2']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name2" value="<?= htmlspecialchars($gr_data['signer_name2'] ?? '') ?>" placeholder="ชื่อผู้อนุมัติ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-emerald-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
             </div>
         </div>
@@ -946,6 +948,8 @@ function saveGR() {
         header_logo: $('#header_logo_preview').attr('src') || '',
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val(),
         qr_code_image: $('#qr_preview').attr('src') || ''
     };
     
@@ -1111,14 +1115,14 @@ function generatePreview() {
                 <div class="signature-line">
                     ${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+                <div style="font-size: 12px;">${$('#signer_name1').val()}</div>
             </div>
             <div class="signature-box">
                 <div>ผู้อนุมัติ</div>
                 <div class="signature-line">
                     ${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+                <div style="font-size: 12px;">${$('#signer_name2').val()}</div>
             </div>
         </div>
     `;

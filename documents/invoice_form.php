@@ -363,31 +363,21 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="mb-6 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+        <div class="mb-8 bg-indigo-50 p-5 rounded-2xl border border-indigo-100 shadow-sm">
             <div class="flex justify-between items-center mb-3">
                 <label class="block text-sm font-bold text-indigo-800 flex items-center gap-2">
-                    <i class="fas fa-file-invoice-dollar"></i> เงื่อนไขการชำระเงิน
+                    <i class="fas fa-file-invoice-dollar text-lg"></i> เงื่อนไขการชำระเงิน
                 </label>
                 <div class="flex items-center gap-2">
-                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="text-xs px-2 py-1 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none min-w-[150px]">
+                    <select id="payment_terms_template" onchange="loadPaymentTermsTemplate()" class="text-xs px-3 py-1.5 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none min-w-[180px] bg-white">
                         <option value="">-- เลือกเทมเพลต --</option>
                     </select>
-                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-white text-indigo-600 border border-indigo-200 px-2 py-1 rounded-lg hover:bg-indigo-100 transition-all">
-                        ⚙️ จัดการ
+                    <button onclick="manageTemplates('payment_terms')" type="button" class="text-xs bg-white text-indigo-600 border border-indigo-200 px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-all font-medium">
+                        <i class="fas fa-cog"></i> จัดการ
                     </button>
                 </div>
             </div>
-            <textarea id="payment_terms" rows="2" placeholder="ระบุเงื่อนไขการชำระเงิน" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none bg-white text-sm"><?= htmlspecialchars($doc_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?></textarea>
-        </div>
-
-        <div class="mb-8">
-            <label class="block text-sm font-medium text-gray-700 mb-2">QR Code สำหรับชำระเงิน</label>
-            <div class="flex items-center gap-4">
-                <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700">
-                <img id="qr_preview" src="<?= $doc_data['qr_code_image'] ?? '' ?>" class="<?= empty($doc_data['qr_code_image']) ? 'hidden' : '' ?> w-16 h-16 object-contain border rounded-xl shadow-sm">
-            </div>
-        </div>
+            <textarea id="payment_terms" rows="2" placeholder="ระบุเงื่อนไขการชำระเงิน..." class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none bg-white text-sm shadow-sm"><?= htmlspecialchars($doc_data['payment_terms'] ?? 'เงินสด/โอนเงิน') ?></textarea>
         </div>
 
         <div class="border-t pt-8 mb-8">
@@ -407,21 +397,76 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="border-t pt-8 mb-8 space-y-4">
-            <div class="flex items-center gap-4">
-                <input type="checkbox" id="vat_enabled" <?= ($doc_data['vat_enabled'] ?? 1) ? 'checked' : '' ?> class="w-5 h-5 text-emerald-600 rounded">
-                <label for="vat_enabled" class="text-sm font-bold text-gray-700">คิด VAT 7%</label>
-            </div>
+        <div class="border-t pt-8 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- VAT Section -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-1 h-6 bg-emerald-500 rounded-full"></div>
+                        <h3 class="font-bold text-gray-800 text-lg">การคำนวณภาษี (VAT)</h3>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
+                        <div class="flex items-center gap-4">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" id="vat_enabled" <?= ($doc_data['vat_enabled'] ?? 1) ? 'checked' : '' ?> class="peer h-6 w-6 cursor-pointer appearance-none rounded-md border-2 border-slate-300 transition-all checked:border-emerald-500 checked:bg-emerald-500 hover:border-emerald-400">
+                                <i class="fas fa-check absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-xs opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity"></i>
+                            </div>
+                            <label for="vat_enabled" class="text-base font-bold text-gray-700 cursor-pointer select-none">คิดภาษีมูลค่าเพิ่ม (VAT 7%)</label>
+                        </div>
 
-            <div class="flex items-center gap-6">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="vat_type" value="exclude" <?= ($doc_data['vat_type'] ?? 'exclude') == 'exclude' ? 'checked' : '' ?> class="w-4 h-4 text-emerald-600">
-                    <span class="text-sm text-gray-700">ราคายังไม่รวม VAT</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="vat_type" value="include" <?= ($doc_data['vat_type'] ?? 'exclude') == 'include' ? 'checked' : '' ?> class="w-4 h-4 text-emerald-600">
-                    <span class="text-sm text-gray-700">ราคารวม VAT แล้ว</span>
-                </label>
+                        <div class="pl-10 space-y-3">
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <div class="relative flex items-center">
+                                    <input type="radio" name="vat_type" value="exclude" <?= ($doc_data['vat_type'] ?? 'exclude') == 'exclude' ? 'checked' : '' ?> class="peer h-5 w-5 appearance-none rounded-full border-2 border-slate-300 checked:border-emerald-500 checked:bg-white transition-all">
+                                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                </div>
+                                <span class="text-sm text-gray-600 group-hover:text-emerald-700 transition-colors">ราคาดังกล่าวยังไม่รวม VAT (Exclude)</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <div class="relative flex items-center">
+                                    <input type="radio" name="vat_type" value="include" <?= ($doc_data['vat_type'] ?? 'exclude') == 'include' ? 'checked' : '' ?> class="peer h-5 w-5 appearance-none rounded-full border-2 border-slate-300 checked:border-emerald-500 checked:bg-white transition-all">
+                                    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-emerald-500 opacity-0 peer-checked:opacity-100 transition-opacity"></div>
+                                </div>
+                                <span class="text-sm text-gray-600 group-hover:text-emerald-700 transition-colors">ราคาดังกล่าวรวม VAT แล้ว (Include)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QR Code Section (Moved) -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-1 h-6 bg-indigo-500 rounded-full"></div>
+                        <h3 class="font-bold text-gray-800 text-lg">แนบ QR Code ชำระเงิน</h3>
+                    </div>
+
+                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
+                        <div class="flex items-start gap-5">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="hidden">
+                                    <label for="qr_code" class="flex flex-col items-center justify-center w-full h-32 border-2 border-indigo-300 border-dashed rounded-xl cursor-pointer bg-white hover:bg-indigo-50 hover:border-indigo-400 transition-all group">
+                                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <i class="fas fa-qrcode text-3xl text-indigo-400 mb-2 group-hover:scale-110 transition-transform"></i>
+                                            <p class="mb-1 text-sm text-gray-500 font-medium group-hover:text-indigo-600">คลิกเพื่ออัพโหลด QR Code</p>
+                                            <p class="text-xs text-gray-400">PNG, JPG (ไม่เกิน 5MB)</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="w-32 h-32 rounded-xl border-2 border-white shadow-md bg-white overflow-hidden flex items-center justify-center relative">
+                                    <img id="qr_preview" src="<?= $doc_data['qr_code_image'] ?? '' ?>" class="<?= empty($doc_data['qr_code_image']) ? 'hidden' : '' ?> w-full h-full object-contain">
+                                    <div id="qr_placeholder" class="<?= !empty($doc_data['qr_code_image']) ? 'hidden' : '' ?> text-center p-2">
+                                        <i class="fas fa-image text-gray-300 text-2xl mb-1"></i>
+                                        <div class="text-[10px] text-gray-400">ตัวอย่าง</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -472,6 +517,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig1_preview" src="<?= $doc_data['signature1'] ?? '' ?>" class="signature-preview <?= empty($doc_data['signature1']) ? 'hidden' : '' ?> border rounded-xl bg-gray-50">
+                    <input type="text" id="signer_name1" value="<?= htmlspecialchars($doc_data['signer_name1'] ?? '') ?>" placeholder="ชื่อผู้อนุมัติ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-2">ผู้อนุมัติ</label>
@@ -485,6 +531,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig2_preview" src="<?= $doc_data['signature2'] ?? '' ?>" class="signature-preview <?= empty($doc_data['signature2']) ? 'hidden' : '' ?> border rounded-xl bg-gray-50">
+                    <input type="text" id="signer_name2" value="<?= htmlspecialchars($doc_data['signer_name2'] ?? '') ?>" placeholder="ชื่อผู้อนุมัติ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
                 </div>
             </div>
         </div>
@@ -688,10 +735,12 @@ function loadCompanyTemplate() {
 function previewQRCode() {
     const input = document.getElementById('qr_code');
     const preview = document.getElementById('qr_preview');
+    const placeholder = document.getElementById('qr_placeholder');
     if (input.files && input.files[0]) {
         compressImage(input.files[0], 500, 500, 0.7).then(compressedBase64 => {
             preview.src = compressedBase64;
             preview.classList.remove('hidden');
+            if(placeholder) placeholder.classList.add('hidden');
         });
     }
 }
@@ -756,6 +805,8 @@ function saveDoc() {
         header_logo: $('#header_logo_preview').attr('src') || '',
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val(),
         qr_code_image: $('#qr_preview').attr('src') || ''
     };
 
@@ -840,7 +891,9 @@ function generatePreview() {
     });
     // Removed empty rows loop as per user request
 
-    const title = $('#doc_type').val() === 'tax_invoice' ? 'ใบกำกับภาษี' : 'ใบแจ้งหนี้';
+    const isTaxInvoice = $('#doc_type').val() === 'tax_invoice';
+    const title = isTaxInvoice ? '<span style="font-size: 0.6em; color: black; font-weight: normal;">ใบเสร็จรับเงิน/</span>ใบกำกับภาษี' : 'ใบแจ้งหนี้';
+    const cleanTitle = isTaxInvoice ? 'ใบเสร็จรับเงิน/ใบกำกับภาษี' : 'ใบแจ้งหนี้';
     const amountWords = ThaiBaht(grand);
 
     const html = `
@@ -861,7 +914,7 @@ function generatePreview() {
                 <div>โทรศัพท์ : ${$('#customer_phone').val()} รหัสผู้เสียภาษี : ${$('#customer_tax_id').val()}</div>
             </div>
             <div style="text-align:right; font-size:14px">
-                <div style="font-weight:bold; font-size:16px">${title} เลขที่ : ${$('#doc_number').val()}</div>
+                <div style="font-weight:bold; font-size:16px">${cleanTitle} เลขที่ : ${$('#doc_number').val()}</div>
                 <div>วันที่ : ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
                 <div>เงื่อนไขการชำระ : ${$('#payment_terms_template option:selected').val() ? $('#payment_terms_template option:selected').text() : ($('#payment_terms').val() || '-')}</div>
             </div>
@@ -887,14 +940,14 @@ function generatePreview() {
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
             <div class="signature-box">
-                <div>ผู้รับเงิน</div>
+                <div>ผู้รับใบแจ้งหนี้</div>
                 <div class="signature-line">${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}</div>
-                <div style="margin-top: 5px; font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+                <div style="margin-top: 5px; font-size: 12px;">${$('#signer_name1').val()}</div>
             </div>
             <div class="signature-box">
                 <div>ผู้อนุมัติ</div>
                 <div class="signature-line">${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}</div>
-                <div style="margin-top: 5px; font-size: 12px;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</div>
+                <div style="margin-top: 5px; font-size: 12px;">${$('#signer_name2').val()}</div>
             </div>
         </div>`;
     $('#print-area').html(html).removeClass('hidden');

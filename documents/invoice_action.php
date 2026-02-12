@@ -48,6 +48,8 @@ try {
         
         $signature1 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature1'] ?? '', 'uploads/signatures'));
         $signature2 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature2'] ?? '', 'uploads/signatures'));
+        $signer_name1 = mysqli_real_escape_string($conn, $_POST['signer_name1'] ?? '');
+        $signer_name2 = mysqli_real_escape_string($conn, $_POST['signer_name2'] ?? '');
         $qr_code_image = mysqli_real_escape_string($conn, saveBase64Image($_POST['qr_code_image'] ?? '', 'uploads/qrcodes'));
         
         $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
@@ -82,6 +84,8 @@ try {
                     conditions = '$conditions',
                     signature1 = '$signature1',
                     signature2 = '$signature2',
+                    signer_name1 = '$signer_name1',
+                    signer_name2 = '$signer_name2',
                     qr_code_image = '$qr_code_image',
                     header_name = '$header_name',
                     header_address = '$header_address',
@@ -92,8 +96,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO invoices (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo, type)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_code', '$customer_name', '$customer_address', '$customer_phone', '$customer_email', '$customer_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo', '$type')";
+            $sql = "INSERT INTO invoices (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signer_name1, signer_name2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo, type)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_code', '$customer_name', '$customer_address', '$customer_phone', '$customer_email', '$customer_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signer_name1', '$signer_name2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo', '$type')";
         }
         
         if (mysqli_query($conn, $sql)) {
@@ -131,16 +135,9 @@ try {
     } elseif ($action == 'convert_to_receipt') {
         $id = (int)($_POST['id'] ?? 0);
         
-        // Auto-migrate receipts table if needed
-        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS payment_terms TEXT AFTER customer_tax_id");
-        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS total_discount DECIMAL(15,2) DEFAULT 0 AFTER subtotal");
-        mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS conditions TEXT AFTER notes");
-
-        $sql = "SELECT * FROM invoices WHERE id = ? AND company_id = ?";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
-        mysqli_stmt_execute($stmt);
-        $invoice = mysqli_stmt_get_result($stmt)->fetch_assoc();
+        $sql = "SELECT * FROM invoices WHERE id = $id AND company_id = $company_id";
+        $result = mysqli_query($conn, $sql);
+        $invoice = mysqli_fetch_assoc($result);
         
         if (!$invoice) throw new Exception("ไม่พบข้อมูลใบแจ้งหนี้");
         
@@ -152,55 +149,47 @@ try {
         $next_num = ($count_row['total'] ?? 0) + 1;
         $doc_number = $prefix . sprintf("%03d", $next_num);
 
-        $sql_receipt = "INSERT INTO receipts (
-            company_id, issuer_company_id, year, doc_number, doc_date, 
-            customer_name, customer_address, customer_phone, customer_tax_id, 
-            payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, 
-            vat_amount, grand_total, notes, conditions, signature1, signature2, 
-            header_name, header_address, header_phone, header_tax_id, header_logo
-        ) VALUES (?, ?, ?, ?, CURRENT_DATE, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        
-        $c_id = (int)$invoice['company_id'];
-        $i_c_id = (int)$invoice['issuer_company_id'];
-        $y = (int)$invoice['year'];
-        $c_name = $invoice['customer_name'] ?? '';
-        $c_addr = $invoice['customer_address'] ?? '';
-        $c_phone = $invoice['customer_phone'] ?? '';
-        $c_tax = $invoice['customer_tax_id'] ?? '';
-        $p_terms = $invoice['payment_terms'] ?? '';
-        $its = $invoice['items'] ?? '[]';
+        $date = date('Y-m-d');
+        $c_name = mysqli_real_escape_string($conn, $invoice['customer_name'] ?? '');
+        $c_addr = mysqli_real_escape_string($conn, $invoice['customer_address'] ?? '');
+        $c_phone = mysqli_real_escape_string($conn, $invoice['customer_phone'] ?? '');
+        $c_tax = mysqli_real_escape_string($conn, $invoice['customer_tax_id'] ?? '');
+        $p_terms = mysqli_real_escape_string($conn, $invoice['payment_terms'] ?? '');
+        $items = mysqli_real_escape_string($conn, $invoice['items'] ?? '[]');
         $v_en = (int)($invoice['vat_enabled'] ?? 0);
-        $v_type = $invoice['vat_type'] ?? 'exclude';
+        $v_type = mysqli_real_escape_string($conn, $invoice['vat_type'] ?? 'exclude');
         $sub = (float)($invoice['subtotal'] ?? 0);
         $disc = (float)($invoice['total_discount'] ?? 0);
         $v_amt = (float)($invoice['vat_amount'] ?? 0);
         $g_total = (float)($invoice['grand_total'] ?? 0);
-        $n = $invoice['notes'] ?? '';
-        $cond = $invoice['conditions'] ?? '';
-        $s1 = $invoice['signature1'] ?? '';
-        $s2 = $invoice['signature2'] ?? '';
-        $hn = $invoice['header_name'] ?? '';
-        $ha = $invoice['header_address'] ?? '';
-        $hp = $invoice['header_phone'] ?? '';
-        $ht = $invoice['header_tax_id'] ?? '';
-        $hl = $invoice['header_logo'] ?? '';
+        $n = mysqli_real_escape_string($conn, $invoice['notes'] ?? '');
+        $cond = mysqli_real_escape_string($conn, $invoice['conditions'] ?? '');
+        $s1 = mysqli_real_escape_string($conn, $invoice['signature1'] ?? '');
+        $s2 = mysqli_real_escape_string($conn, $invoice['signature2'] ?? '');
+        $sn1 = mysqli_real_escape_string($conn, $invoice['signer_name1'] ?? '');
+        $sn2 = mysqli_real_escape_string($conn, $invoice['signer_name2'] ?? '');
+        $hn = mysqli_real_escape_string($conn, $invoice['header_name'] ?? '');
+        $ha = mysqli_real_escape_string($conn, $invoice['header_address'] ?? '');
+        $hp = mysqli_real_escape_string($conn, $invoice['header_phone'] ?? '');
+        $ht = mysqli_real_escape_string($conn, $invoice['header_tax_id'] ?? '');
+        $hl = mysqli_real_escape_string($conn, $invoice['header_logo'] ?? '');
+        $issuer_id = (int)($invoice['issuer_company_id'] ?? $company_id);
 
-        $stmt_receipt = mysqli_prepare($conn, $sql_receipt);
-        if (!$stmt_receipt) {
-            throw new Exception("Prepare failed: " . mysqli_error($conn));
-        }
-
-        $types = "iiisssssssisddddsssssssss";
-        mysqli_stmt_bind_param($stmt_receipt, $types, 
-            $c_id, $i_c_id, $y, $doc_number,
-            $c_name, $c_addr, $c_phone, $c_tax,
-            $p_terms, $its, $v_en, $v_type, 
-            $sub, $disc, $v_amt, $g_total,
-            $n, $cond, $s1, $s2,
-            $hn, $ha, $hp, $ht, $hl
-        );
+        $sql_receipt = "INSERT INTO receipts (
+            company_id, issuer_company_id, year, doc_number, doc_date, 
+            customer_name, customer_address, customer_phone, customer_tax_id, 
+            payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, 
+            vat_amount, grand_total, notes, conditions, signature1, signature2, signer_name1, signer_name2,
+            header_name, header_address, header_phone, header_tax_id, header_logo
+        ) VALUES (
+            $company_id, $issuer_id, $active_year, '$doc_number', '$date', 
+            '$c_name', '$c_addr', '$c_phone', '$c_tax', 
+            '$p_terms', '$items', $v_en, '$v_type', $sub, $disc, 
+            $v_amt, $g_total, '$n', '$cond', '$s1', '$s2', '$sn1', '$sn2',
+            '$hn', '$ha', '$hp', '$ht', '$hl'
+        )";
         
-        if (mysqli_stmt_execute($stmt_receipt)) {
+        if (mysqli_query($conn, $sql_receipt)) {
             $receipt_id = mysqli_insert_id($conn);
             $response = ['status' => 'success', 'message' => 'สร้างใบเสร็จรับเงินเลขที่ ' . $doc_number . ' เรียบร้อยแล้ว', 'receipt_id' => $receipt_id];
         } else {

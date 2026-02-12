@@ -48,6 +48,8 @@ try {
         
         $signature1 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature1'] ?? '', 'uploads/signatures'));
         $signature2 = mysqli_real_escape_string($conn, saveBase64Image($_POST['signature2'] ?? '', 'uploads/signatures'));
+        $signer_name1 = mysqli_real_escape_string($conn, $_POST['signer_name1'] ?? '');
+        $signer_name2 = mysqli_real_escape_string($conn, $_POST['signer_name2'] ?? '');
         $qr_code_image = mysqli_real_escape_string($conn, saveBase64Image($_POST['qr_code_image'] ?? '', 'uploads/qrcodes'));
         
         $header_name = mysqli_real_escape_string($conn, $_POST['header_name'] ?? '');
@@ -81,6 +83,8 @@ try {
                     conditions = '$conditions',
                     signature1 = '$signature1',
                     signature2 = '$signature2',
+                    signer_name1 = '$signer_name1',
+                    signer_name2 = '$signer_name2',
                     qr_code_image = '$qr_code_image',
                     header_name = '$header_name',
                     header_address = '$header_address',
@@ -90,8 +94,8 @@ try {
                     year = $active_year
                     WHERE id = $id AND company_id = $company_id";
         } else {
-            $sql = "INSERT INTO sales_orders (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
-                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_code', '$customer_name', '$customer_address', '$customer_phone', '$customer_email', '$customer_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
+            $sql = "INSERT INTO sales_orders (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signer_name1, signer_name2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo)
+                    VALUES ($company_id, $issuer_company_id, $active_year, '$doc_number', '$doc_date', '$customer_code', '$customer_name', '$customer_address', '$customer_phone', '$customer_email', '$customer_tax_id', '$payment_terms', '$items', $vat_enabled, '$vat_type', $subtotal, $total_discount, $vat_amount, $grand_total, '$notes', '$conditions', '$signature1', '$signature2', '$signer_name1', '$signer_name2', '$qr_code_image', '$header_name', '$header_address', '$header_phone', '$header_tax_id', '$header_logo')";
         }
         
         if (mysqli_query($conn, $sql)) {
@@ -127,8 +131,8 @@ try {
         if (!$so) throw new Exception("ไม่พบข้อมูลใบสั่งขาย");
 
         $doc_number = "INV" . date('Ymd') . "-" . sprintf("%03d", rand(1, 999));
-        $sql_inv = "INSERT INTO invoices (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo, type)
-                    VALUES ($company_id, $so[issuer_company_id], $active_year, '$doc_number', CURDATE(), '$so[customer_code]', '$so[customer_name]', '$so[customer_address]', '$so[customer_phone]', '$so[customer_email]', '$so[customer_tax_id]', '$so[payment_terms]', '$so[items]', $so[vat_enabled], '$so[vat_type]', $so[subtotal], $so[total_discount], $so[vat_amount], $so[grand_total], '$so[notes]', '$so[conditions]', '$so[signature1]', '$so[signature2]', '$so[qr_code_image]', '$so[header_name]', '$so[header_address]', '$so[header_phone]', '$so[header_tax_id]', '$so[header_logo]', 'invoice')";
+        $sql_inv = "INSERT INTO invoices (company_id, issuer_company_id, year, doc_number, doc_date, customer_code, customer_name, customer_address, customer_phone, customer_email, customer_tax_id, payment_terms, items, vat_enabled, vat_type, subtotal, total_discount, vat_amount, grand_total, notes, conditions, signature1, signature2, signer_name1, signer_name2, qr_code_image, header_name, header_address, header_phone, header_tax_id, header_logo, type)
+                    VALUES ($company_id, $so[issuer_company_id], $active_year, '$doc_number', CURDATE(), '$so[customer_code]', '$so[customer_name]', '$so[customer_address]', '$so[customer_phone]', '$so[customer_email]', '$so[customer_tax_id]', '$so[payment_terms]', '$so[items]', $so[vat_enabled], '$so[vat_type]', $so[subtotal], $so[total_discount], $so[vat_amount], $so[grand_total], '$so[notes]', '$so[conditions]', '$so[signature1]', '$so[signature2]', '$so[signer_name1]', '$so[signer_name2]', '$so[qr_code_image]', '$so[header_name]', '$so[header_address]', '$so[header_phone]', '$so[header_tax_id]', '$so[header_logo]', 'invoice')";
         
         if (mysqli_query($conn, $sql_inv)) {
             $inv_id = mysqli_insert_id($conn);

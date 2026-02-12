@@ -298,6 +298,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig1_preview" src="<?= $receipt_data['signature1'] ?? '' ?>" class="signature-preview mt-2 <?= empty($receipt_data['signature1']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name1" value="<?= htmlspecialchars($receipt_data['signer_name1'] ?? '') ?>" placeholder="ชื่อผู้รับเงิน (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">ลายเซ็นผู้อนุมัติ</label>
@@ -311,6 +312,7 @@ if ($edit_id) {
                         </button>
                     </div>
                     <img id="sig2_preview" src="<?= $receipt_data['signature2'] ?? '' ?>" class="signature-preview mt-2 <?= empty($receipt_data['signature2']) ? 'hidden' : '' ?> border rounded">
+                    <input type="text" id="signer_name2" value="<?= htmlspecialchars($receipt_data['signer_name2'] ?? '') ?>" placeholder="ชื่อผู้อนุมัติ (ถ้ามี)" class="w-full px-3 py-2 mt-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500">
                 </div>
             </div>
         </div>
@@ -845,7 +847,9 @@ function saveReceipt() {
         header_tax_id: $('#header_tax_id').val(),
         header_logo: $('#header_logo_preview').attr('src') || '',
         signature1: $('#sig1_preview').attr('src') || '',
-        signature2: $('#sig2_preview').attr('src') || ''
+        signature2: $('#sig2_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val()
     };
     
     Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
@@ -933,7 +937,7 @@ function generatePreview() {
                     <p style="font-size: 14px; margin: 2px 0;">เลขที่ประจำตัวผู้เสียภาษี ${$('#header_tax_id').val()}</p>
                 </div>
                 <div style="width: 180px; text-align: right;">
-                    <h2 style="font-size: 18px; font-weight: bold; margin: 0;">ใบเสร็จรับเงิน/ใบกำกับภาษี</h2>
+                    <h2 style="font-size: 18px; font-weight: bold; margin: 0;">ใบเสร็จรับเงิน</h2>
                 </div>
             </div>
 
@@ -1000,14 +1004,14 @@ function generatePreview() {
                     <div style="width: 200px;">
                         <p style="margin-bottom: 40px;">ผู้รับเงิน</p>
                         ${sig1 ? `<img src="${sig1}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
-                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;">นางอัจฉริยา บุญปก กรรมการบริษัท</p>
-                        <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
+                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
+                        <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 200px;">
                         <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
                         ${sig2 ? `<img src="${sig2}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
-                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;">นางอัจฉริยา บุญปก กรรมการบริษัท</p>
-                        <p style="margin: 5px 0;">วันที่ ${new Date($('#doc_date').val()).toLocaleDateString('th-TH')}</p>
+                        <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
+                        <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
                     </div>
                 </div>
             </div>
