@@ -923,6 +923,14 @@ function previewHeaderLogo() {
     }
 }
 
+function getFullPath(path) {
+    if (!path) return '';
+    if (path.indexOf('data:image') === 0) return path;
+    if (path.indexOf('http') === 0) return path;
+    if (path.indexOf('../') === 0) return path;
+    return '../' + path;
+}
+
 function loadCompanyTemplate() {
     const selected = $('#issuer_company_id option:selected');
     if (selected.val()) {

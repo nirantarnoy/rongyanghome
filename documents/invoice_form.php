@@ -694,6 +694,14 @@ function compressImage(file, maxWidth, maxHeight, quality) {
     });
 }
 
+function getFullPath(path) {
+    if (!path) return '';
+    if (path.indexOf('data:image') === 0) return path;
+    if (path.indexOf('http') === 0) return path;
+    if (path.indexOf('../') === 0) return path;
+    return '../' + path;
+}
+
 function previewSignature(num) {
     const input = document.getElementById(`signature${num}`);
     const preview = document.getElementById(`sig${num}_preview`);
@@ -725,9 +733,13 @@ function loadCompanyTemplate() {
         $('#header_address').val(s.data('address'));
         $('#header_phone').val(s.data('phone'));
         $('#header_tax_id').val(s.data('taxid'));
-        if (s.data('logo')) {
-            $('#header_logo_preview').attr('src', '../' + s.data('logo')).removeClass('hidden');
+        const logo = s.data('logo');
+        if (logo) {
+            $('#header_logo_preview').attr('src', getFullPath(logo)).removeClass('hidden');
             $('#header_logo_placeholder').addClass('hidden');
+        } else {
+            $('#header_logo_preview').addClass('hidden').attr('src', '');
+            $('#header_logo_placeholder').removeClass('hidden');
         }
     }
 }

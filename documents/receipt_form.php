@@ -377,6 +377,14 @@ function compressImage(file, maxWidth, maxHeight, quality) {
     });
 }
 
+function getFullPath(path) {
+    if (!path) return '';
+    if (path.indexOf('data:image') === 0) return path;
+    if (path.indexOf('http') === 0) return path;
+    if (path.indexOf('../') === 0) return path;
+    return '../' + path;
+}
+
 let itemCount = 0;
 const existingItems = <?= json_encode($receipt_data['items'] ?? '[]') ?>;
 
