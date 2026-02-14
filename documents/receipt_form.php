@@ -16,7 +16,7 @@ $company_res = mysqli_stmt_get_result($company_stmt);
 $company = mysqli_fetch_assoc($company_res);
 
 // Get all companies for selection
-$all_companies_sql = "SELECT id, company_name, address, phone, tax_id FROM company ORDER BY company_name ASC";
+$all_companies_sql = "SELECT id, company_name, address, phone, tax_id, logo FROM company ORDER BY company_name ASC";
 $all_companies_res = mysqli_query($conn, $all_companies_sql);
 $all_companies = [];
 while ($row = mysqli_fetch_assoc($all_companies_res)) {
