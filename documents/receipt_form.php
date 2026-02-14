@@ -35,6 +35,7 @@ if ($edit_id) {
         $receipt_data['header_logo'] = getFullPath($receipt_data['header_logo']);
         $receipt_data['signature1'] = getFullPath($receipt_data['signature1']);
         $receipt_data['signature2'] = getFullPath($receipt_data['signature2']);
+        $receipt_data['qr_code_image'] = getFullPath($receipt_data['qr_code_image'] ?? '');
         processItemsPaths($receipt_data['items']);
     }
 }
@@ -280,6 +281,17 @@ if ($edit_id) {
                     </div>
                 </div>
                 <textarea id="conditions" rows="4" placeholder="ระบุเงื่อนไขการรับประกัน หรือเงื่อนไขอื่นๆ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"><?= htmlspecialchars($receipt_data['conditions'] ?? '* กรุณาโทรแจ้งการชำระเงิน 088-923-5426 หรือทักไลน์ OA = @ttgoldenteak เพื่อรับเอกสารใบกำกับภาษี') ?></textarea>
+            </div>
+        </div>
+
+        <div class="border-t pt-6 mb-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">รูปภาพเพิ่มเติม</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">QR Code ท้ายเอกสาร (เช่น พร้อมเพย์)</label>
+                    <input type="file" id="qr_code" accept="image/*" onchange="previewQRCode()" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                    <img id="qr_preview" src="<?= $receipt_data['qr_code_image'] ?? '' ?>" class="mt-2 <?= empty($receipt_data['qr_code_image']) ? 'hidden' : '' ?> max-w-xs max-h-32 object-contain border rounded">
+                </div>
             </div>
         </div>
 
@@ -692,6 +704,17 @@ function loadCompanyTemplate() {
     }
 }
 
+function previewQRCode() {
+    const input = document.getElementById('qr_code');
+    const preview = document.getElementById('qr_preview');
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], 500, 500, 0.7).then(compressedBase64 => {
+            preview.src = compressedBase64;
+            preview.classList.remove('hidden');
+        });
+    }
+}
+
 function previewHeaderLogo() {
     const input = document.getElementById('header_logo_input');
     const preview = document.getElementById('header_logo_preview');
@@ -854,6 +877,7 @@ function saveReceipt() {
         header_phone: $('#header_phone').val(),
         header_tax_id: $('#header_tax_id').val(),
         header_logo: $('#header_logo_preview').attr('src') || '',
+        qr_code_image: $('#qr_preview').attr('src') || '',
         signature1: $('#sig1_preview').attr('src') || '',
         signature2: $('#sig2_preview').attr('src') || '',
         signer_name1: $('#signer_name1').val(),
@@ -1004,8 +1028,8 @@ function generatePreview() {
             <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
                 <div style="width: 150px; text-align: center;">
                     <div style="border: 1px solid #ccc; padding: 5px;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@ttgoldenteak" style="width: 100px;">
-                        <p style="font-size: 10px; margin: 5px 0;">Scan Line OA</p>
+                        ${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width: 100px;">` : `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@ttgoldenteak" style="width: 100px;">`}
+                        <p style="font-size: 10px; margin: 5px 0;">${$('#qr_preview').attr('src') ? 'ชำระเงินผ่าน QR Code' : 'Scan Line OA'}</p>
                     </div>
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
