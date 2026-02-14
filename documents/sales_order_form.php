@@ -1005,7 +1005,7 @@ function generatePreview() {
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 13px; margin-bottom: 0;">
                 <thead>
                     <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000;">
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 50px;">ลำดับ</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
                         <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">จำนวน</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">หน่วยนับ</th>

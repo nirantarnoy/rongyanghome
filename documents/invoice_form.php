@@ -893,7 +893,7 @@ function generatePreview() {
 
     const isTaxInvoice = $('#doc_type').val() === 'tax_invoice';
     const title = isTaxInvoice ? '<span style="font-size: 0.6em; color: black; font-weight: normal;">ใบเสร็จรับเงิน/</span>ใบกำกับภาษี' : 'ใบแจ้งหนี้';
-    const cleanTitle = isTaxInvoice ? 'ใบเสร็จรับเงิน/ใบกำกับภาษี' : 'ใบแจ้งหนี้';
+    const cleanTitle = ''; // isTaxInvoice ? 'ใบเสร็จรับเงิน/ใบกำกับภาษี' : 'ใบแจ้งหนี้';
     const amountWords = ThaiBaht(grand);
 
     const html = `
@@ -920,13 +920,12 @@ function generatePreview() {
             </div>
         </div>
         <table class="doc-table">
-            <thead><tr><th style="width:50px">ลำดับ</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:80px">หน่วย</th><th style="width:100px">ราคา</th><th style="width:80px">ส่วนลด</th><th style="width:120px">รวมเงิน</th></tr></thead>
+            <thead><tr><th style="width:50px; white-space: nowrap;">ลำดับ</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:80px">หน่วย</th><th style="width:100px">ราคา</th><th style="width:80px">ส่วนลด</th><th style="width:120px">รวมเงิน</th></tr></thead>
             <tbody>${itemRows}</tbody>
         </table>
         <div class="doc-footer">
             <div class="doc-footer-left">
                 <div style="font-size:12px; margin-bottom:10px">หมายเหตุ: <span style="white-space:pre-line">${$('#notes').val()}</span></div>
-                <div style="font-size:11px; white-space:pre-line">${$('#conditions').val()}</div>
             </div>
             <div class="doc-footer-right">
                 <table>
@@ -937,6 +936,7 @@ function generatePreview() {
             </div>
         </div>
         <div class="doc-amount-words">( ${amountWords} )</div>
+        <div style="margin-top: 10px; font-size: 11px; white-space: pre-line;">${$('#conditions').val()}</div>
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
             <div class="signature-box">

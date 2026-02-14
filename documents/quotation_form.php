@@ -1108,6 +1108,7 @@ function generatePreview() {
     
     const sig1 = $('#sig1_preview').attr('src') || '';
     const sig2 = $('#sig2_preview').attr('src') || '';
+    const sig3 = $('#sig3_preview').attr('src') || '';
     
     const issuer = $('#issuer_company_id option:selected');
     const issuerName = issuer.data('name');
@@ -1155,7 +1156,7 @@ function generatePreview() {
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 13px; margin-bottom: 0;">
                 <thead>
                     <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000;">
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 50px;">ลำดับ</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
                         <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">จำนวน</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">หน่วยนับ</th>
@@ -1222,19 +1223,24 @@ function generatePreview() {
                     }
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
-                    <div style="width: 180px;">
+                    <div style="width: 170px;">
                         <p style="margin-bottom: 40px;">ผู้เสนอราคา</p>
                         ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
                     </div>
-                    <div style="width: 180px;">
+                    <div style="width: 170px;">
                         <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
                         ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
                     </div>
-
+                    <div style="width: 170px;">
+                        <p style="margin-bottom: 40px;">ผู้รับ</p>
+                        ${sig3 ? `<img src="${sig3}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
+                        <p style="margin: 5px 0;">${$('#signer_name3').val()}</p>
+                    </div>
                 </div>
             </div>
 

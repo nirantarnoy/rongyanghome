@@ -1063,7 +1063,7 @@ function generatePreview() {
         <table class="gr-table">
             <thead>
                 <tr>
-                    <th style="width: 50px;">ลำดับ</th>
+                    <th style="width: 50px; white-space: nowrap;">ลำดับ</th>
                     <th>รายการ</th>
                     <th style="width: 80px;">จำนวน</th>
                     <th style="width: 80px;">หน่วยนับ</th>
@@ -1080,8 +1080,6 @@ function generatePreview() {
         <div class="gr-footer">
             <div class="gr-footer-left">
                 <div style="font-size: 12px;">หมายเหตุ : ${$('#notes').val()}</div>
-                <div style="margin-top: 20px; font-size: 12px; font-weight: bold;">เงื่อนไข :</div>
-                <div style="font-size: 11px; white-space: pre-line;">${$('#conditions').val()}</div>
             </div>
             <div class="gr-footer-right">
                 <table>
@@ -1105,6 +1103,10 @@ function generatePreview() {
             </div>
         </div>
         <div class="gr-amount-words">( ${amountWords} )</div>
+        <div style="margin-top: 10px; font-size: 13px;">
+            <p style="margin: 2px 0; font-weight: bold; text-decoration: underline;">เงื่อนไข :</p>
+            <div style="white-space: pre-line; line-height: 1.5;">${$('#conditions').val()}</div>
+        </div>
 
         <div class="gr-signatures">
             <div style="width: 150px;">
