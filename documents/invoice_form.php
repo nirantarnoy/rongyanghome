@@ -952,7 +952,7 @@ function generatePreview() {
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
             <div class="signature-box">
-                <div>ผู้รับใบแจ้งหนี้</div>
+                <div>ผู้รับเงิน</div>
                 <div class="signature-line">${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}</div>
                 <div style="margin-top: 5px; font-size: 12px;">${$('#signer_name1').val()}</div>
             </div>
