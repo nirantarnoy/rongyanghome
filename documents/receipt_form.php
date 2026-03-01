@@ -1033,14 +1033,14 @@ function generatePreview() {
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
                     <div style="width: 200px;">
-                        <p style="margin-bottom: 40px;">ผู้รับเงิน</p>
-                        ${sig1 ? `<img src="${sig1}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
+                        <p style="margin-bottom: 60px;">ผู้รับเงิน</p>
+                        ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
                         <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 200px;">
-                        <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
-                        ${sig2 ? `<img src="${sig2}" style="height: 40px; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 40px;"></div>'}
+                        <p style="margin-bottom: 60px;">ผู้อนุมัติ</p>
+                        ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
                         <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
                     </div>

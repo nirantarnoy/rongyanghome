@@ -1226,20 +1226,20 @@ function generatePreview() {
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 40px;">ผู้เสนอราคา</p>
-                        ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <p style="margin-bottom: 60px;">ผู้เสนอราคา</p>
+                        ${sig1 ? `<img src="${sig1}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 40px;">ผู้อนุมัติ</p>
-                        ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <p style="margin-bottom: 60px;">ผู้อนุมัติ</p>
+                        ${sig2 ? `<img src="${sig2}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
                     </div>
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 40px;">ผู้รับ</p>
-                        ${sig3 ? `<img src="${sig3}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
+                        <p style="margin-bottom: 60px;">ผู้รับ</p>
+                        ${sig3 ? `<img src="${sig3}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
                         <p style="margin: 5px 0;">${$('#signer_name3').val()}</p>
                     </div>

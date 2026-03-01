@@ -132,6 +132,15 @@ try {
         } else {
             throw new Exception(mysqli_error($conn));
         }
+    } elseif ($action == 'convert_to_tax_invoice') {
+        $id = (int)($_POST['id'] ?? 0);
+        $sql = "UPDATE invoices SET type = 'tax_invoice' WHERE id = $id AND company_id = $company_id";
+        if (mysqli_query($conn, $sql)) {
+            logAction($conn, "เปลี่ยนเป็นใบกำกับภาษี รหัส: $id", 'update', $id);
+            $response = ['status' => 'success', 'message' => 'เปลี่ยนเป็นใบกำกับภาษีเรียบร้อยแล้ว'];
+        } else {
+            throw new Exception(mysqli_error($conn));
+        }
     } elseif ($action == 'convert_to_receipt') {
         $id = (int)($_POST['id'] ?? 0);
         

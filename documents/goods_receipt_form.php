@@ -179,10 +179,10 @@ if ($edit_id) {
         }
         .signature-line {
             border-bottom: 1px solid #000;
-            margin-bottom: 5px;
-            height: 60px;
+            margin: 20px auto 10px;
+            height: 80px;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
         }
         .signature-preview {

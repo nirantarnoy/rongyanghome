@@ -190,11 +190,11 @@ if ($edit_id) {
         }
         .signature-line {
             border-bottom: 1px dashed #374151;
-            margin: 10px auto 5px;
+            margin: 25px auto 5px;
             width: 80%;
-            min-height: 60px;
+            min-height: 80px;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
         }
         .signature-preview {
