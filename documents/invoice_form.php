@@ -920,7 +920,6 @@ function generatePreview() {
         </div>
         <div class="doc-info-grid">
             <div style="font-size:14px">
-                <div>รหัส : ${$('#customer_code').val()}</div>
                 <div>ชื่อ : ${$('#customer_name').val()}</div>
                 <div>ที่อยู่ : ${$('#customer_address').val()}</div>
                 <div>โทรศัพท์ : ${$('#customer_phone').val()} รหัสผู้เสียภาษี : ${$('#customer_tax_id').val()}</div>

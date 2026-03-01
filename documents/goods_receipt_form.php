@@ -1050,7 +1050,6 @@ function generatePreview() {
 
         <div class="gr-info-grid">
             <div style="font-size: 14px;">
-                <div>รหัส : ${$('#vendor_code').val()}</div>
                 <div>ชื่อ : ${$('#vendor_name').val()}</div>
                 <div>ที่อยู่ : ${$('#vendor_address').val()}</div>
                 <br>
@@ -1099,10 +1098,7 @@ function generatePreview() {
                         <td style="font-weight: bold;">ภาษีมูลค่าเพิ่ม(VAT)</td>
                         <td style="text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     </tr>
-                    <tr>
-                        <td style="font-weight: bold;">ส่วนลด</td>
-                        <td style="text-align: right;">${discount > 0 ? discount.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
-                    </tr>
+
                     <tr style="background-color: #76b852;">
                         <td style="font-weight: bold;">ยอดเงินสุทธิ</td>
                         <td style="text-align: right; font-weight: bold;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>

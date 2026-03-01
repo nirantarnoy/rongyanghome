@@ -1134,7 +1134,7 @@ function generatePreview() {
                 <div style="flex: 1; text-align: center; padding: 0 10px;">
                     <h1 style="font-size: 18px; font-weight: bold; margin: 0;">${$('#header_name').val()}</h1>
                     <p style="font-size: 14px; margin: 2px 0;">${$('#header_address').val()}</p>
-                    <p style="font-size: 14px; margin: 2px 0;">โทร. ${$('#header_phone').val()} ไลน์ OA= @ttgoldenteak</p>
+                    <p style="font-size: 14px; margin: 2px 0;">โทร. ${$('#header_phone').val()}</p>
                     <p style="font-size: 14px; margin: 2px 0;">เลขที่ประจำตัวผู้เสียภาษี ${$('#header_tax_id').val()}</p>
                 </div>
                 <div style="width: 150px; text-align: right;">
@@ -1145,7 +1145,6 @@ function generatePreview() {
             <!-- Info Section -->
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px;">
                 <div style="width: 60%;">
-                    <p style="margin: 2px 0;"><strong>รหัส :</strong> RY-001</p>
                     <p style="margin: 2px 0;"><strong>ชื่อ :</strong> ${$('#customer_name').val() || '-'}</p>
                     <p style="margin: 2px 0;"><strong>ที่อยู่ :</strong> ${$('#customer_address').val() || '-'}</p>
                     <p style="margin: 10px 0 2px 0;"><strong>โทรศัพท์ :</strong> ${$('#customer_phone').val() || '-'} &nbsp;&nbsp;&nbsp;&nbsp; <strong>อีเมลล์ :</strong> - &nbsp;&nbsp;&nbsp;&nbsp; <strong>รหัสผู้เสียภาษี :</strong> ${$('#customer_tax_id').val() || '-'}</p>
@@ -1193,10 +1192,7 @@ function generatePreview() {
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม(VAT)</td>
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
-                            <tr style="background-color: #92d050;">
-                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ส่วนลด</td>
-                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">-</td>
-                            </tr>
+
                             <tr style="background-color: #92d050; font-weight: bold;">
                                 <td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td>
                                 <td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
