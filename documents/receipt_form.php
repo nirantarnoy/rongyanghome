@@ -1028,7 +1028,7 @@ function generatePreview() {
                 <div style="width: 150px; text-align: center;">
                     <div style="border: 1px solid #ccc; padding: 5px;">
                         ${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width: 100px;">` : `<img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@ttgoldenteak" style="width: 100px;">`}
-                        <p style="font-size: 10px; margin: 5px 0;">${$('#qr_preview').attr('src') ? 'ชำระเงินผ่าน QR Code' : 'Scan Line OA'}</p>
+                        ${$('#qr_preview').attr('src') ? '' : '<p style="font-size: 10px; margin: 5px 0; font-weight: bold;">Scan Line OA</p>'}
                     </div>
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">

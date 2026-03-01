@@ -40,6 +40,27 @@ if ($edit_id) {
         processItemsPaths($gr_data['items']);
     }
 }
+
+// Load PO data if converting from PO
+$po_id = $_GET['po_id'] ?? null;
+if ($po_id && !$edit_id) {
+    $sql = "SELECT * FROM purchase_orders WHERE id = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $po_id, $company_id);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $gr_data = mysqli_fetch_assoc($result);
+    if ($gr_data) {
+        $gr_data['id'] = null; // Don't use PO ID as GR ID
+        $gr_data['doc_number'] = ''; // Clear for new GR number
+        $gr_data['doc_date'] = date('Y-m-d');
+        $gr_data['header_logo'] = getFullPath($gr_data['header_logo']);
+        $gr_data['qr_code_image'] = getFullPath($gr_data['qr_code_image']);
+        $gr_data['signature1'] = getFullPath($gr_data['signature1'] ?? '');
+        $gr_data['signature2'] = getFullPath($gr_data['signature2'] ?? '');
+        processItemsPaths($gr_data['items']);
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
