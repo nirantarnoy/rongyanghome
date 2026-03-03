@@ -133,7 +133,7 @@ function receiveStock(id, docNumber) {
             if (response.status === 'success') {
                 let options = '';
                 response.data.forEach(wh => {
-                    options += `<option value="${wh.id}">${wh.warehouse_code} - ${wh.name}</option>`;
+                    options += `<option value="${wh.id}">${wh.name}</option>`;
                 });
 
                 Swal.fire({

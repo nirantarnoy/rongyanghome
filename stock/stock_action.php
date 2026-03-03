@@ -1076,6 +1076,9 @@ if ($action == 'get_requisitions') {
                     <button onclick="openProjectExpenseModal('.$row['id'].')" class="btn-primary" style="padding: 0.4rem 0.8rem; background: #22C55E; color: white; font-weight: bold; font-size: 0.75rem;" title="บันทึกรายจ่าย">
                         กดเพื่อบันทึก
                     </button>
+                    <button onclick="deleteRequisition('.$row['id'].')" class="btn-primary" style="padding: 0.4rem; background: #EF4444;" title="ลบ">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
             </td>
         </tr>';

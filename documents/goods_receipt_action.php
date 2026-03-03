@@ -116,8 +116,9 @@ try {
         while ($row = mysqli_fetch_assoc($result)) { $data[] = $row; }
         $response = ['status' => 'success', 'data' => $data];
     } elseif ($action == 'get_warehouses') {
-        $sql = "SELECT id, warehouse_code, name FROM stock_warehouses WHERE company_id = $company_id ORDER BY warehouse_code ASC";
+        $sql = "SELECT id, name FROM stock_warehouses WHERE company_id = $company_id ORDER BY name ASC";
         $result = mysqli_query($conn, $sql);
+        if (!$result) throw new Exception(mysqli_error($conn));
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) { $data[] = $row; }
         $response = ['status' => 'success', 'data' => $data];
@@ -158,7 +159,7 @@ try {
                 $item_name = mysqli_real_escape_string($conn, $item['name']);
                 $qty = (float)$item['qty'];
                 
-                $p_sql = "SELECT id FROM stock_products WHERE (name = '$item_name' OR sku = '$item_name') AND company_id = $company_id LIMIT 1";
+                $p_sql = "SELECT id FROM stock_products WHERE name = '$item_name' AND company_id = $company_id LIMIT 1";
                 $p_res = mysqli_query($conn, $p_sql);
                 $product = mysqli_fetch_assoc($p_res);
                 
