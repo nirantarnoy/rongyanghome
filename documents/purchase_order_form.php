@@ -795,8 +795,8 @@ function generatePreview() {
                 <td style="padding: 5px; text-align: center; border-right: 1px solid #000;">
                     ${image ? `<img src="${image}" style="max-height: 40px; border: 1px solid #eee;">` : ''}
                 </td>
-                <td style="padding: 8px; border-right: 1px solid #000;">
-                    <div style="font-weight: bold;">${name || '-'}</div>
+                <td style="padding: 5px; border-right: 1px solid #000;">
+                    <div>${name || '-'}</div>
                 </td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
@@ -842,16 +842,16 @@ function generatePreview() {
             </div>
         </div>
 
-        <table class="po-table">
+        <table class="po-table" style="font-size: 11px;">
             <thead>
-                <tr>
-                    <th style="width: 50px; white-space: nowrap;">ลำดับ</th>
-                    <th style="width: 60px;">รูป</th>
-                    <th>รายการ</th>
-                    <th style="width: 80px;">จำนวน</th>
-                    <th style="width: 80px;">หน่วยนับ</th>
-                    <th style="width: 100px;">ราคา</th>
-                    <th style="width: 120px;">รวมเป็นเงิน</th>
+                <tr style="font-size: 12px;">
+                    <th style="width: 50px; white-space: nowrap; padding: 5px;">ลำดับ</th>
+                    <th style="width: 60px; padding: 5px;">รูป</th>
+                    <th style="padding: 5px;">รายการ</th>
+                    <th style="width: 80px; padding: 5px;">จำนวน</th>
+                    <th style="width: 80px; padding: 5px;">หน่วยนับ</th>
+                    <th style="width: 100px; padding: 5px;">ราคา</th>
+                    <th style="width: 120px; padding: 5px;">รวมเป็นเงิน</th>
                 </tr>
             </thead>
             <tbody>

@@ -1102,8 +1102,8 @@ function generatePreview() {
                 <td style="padding: 5px; text-align: center; border-right: 1px solid #000;">
                     ${itemImg ? `<img src="${itemImg}" style="max-height: 50px; border: 1px solid #eee;">` : ''}
                 </td>
-                <td style="padding: 8px; border-right: 1px solid #000;">
-                    <div style="font-weight: bold;">${name || '-'}</div>
+                <td style="padding: 5px; border-right: 1px solid #000;">
+                    <div>${name || '-'}</div>
                 </td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
@@ -1162,16 +1162,16 @@ function generatePreview() {
             </div>
 
             <!-- Items Table -->
-            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 13px; margin-bottom: 0;">
+            <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 11px; margin-bottom: 0;">
                 <thead>
-                    <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000;">
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 60px;">รูปภาพ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">จำนวน</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">หน่วยนับ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 100px;">ราคา</th>
-                        <th style="padding: 8px; width: 130px;">รวมเป็นเงิน</th>
+                    <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000; font-size: 12px;">
+                        <th style="border-right: 1px solid #000; padding: 5px; width: 50px; white-space: nowrap;">ลำดับ</th>
+                        <th style="border-right: 1px solid #000; padding: 5px; width: 60px;">รูปภาพ</th>
+                        <th style="border-right: 1px solid #000; padding: 5px;">รายการ</th>
+                        <th style="border-right: 1px solid #000; padding: 5px; width: 80px;">จำนวน</th>
+                        <th style="border-right: 1px solid #000; padding: 5px; width: 80px;">หน่วยนับ</th>
+                        <th style="border-right: 1px solid #000; padding: 5px; width: 100px;">ราคา</th>
+                        <th style="padding: 5px; width: 130px;">รวมเป็นเงิน</th>
                     </tr>
                 </thead>
                 <tbody>

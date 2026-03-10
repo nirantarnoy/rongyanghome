@@ -142,16 +142,16 @@ if ($edit_id) {
             background-color: #f3f4f6;
             color: #1f2937;
             border: 1px solid #1f2937;
-            padding: 10px 8px;
+            padding: 8px 5px;
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
+            font-size: 12px;
         }
         .doc-table td {
             border: 1px solid #1f2937;
-            padding: 8px;
+            padding: 5px;
             vertical-align: middle;
-            font-size: 14px;
+            font-size: 11px;
             word-wrap: break-word;
         }
         .doc-footer {
