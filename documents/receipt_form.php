@@ -761,10 +761,25 @@ function addItem(data = null) {
                     <button onclick="removeItem(${itemCount})" class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm">ลบ</button>
                 </div>
             </div>
+            <div class="mt-2 flex items-center gap-4">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">รูปสินค้า (ถ้ามี)</label>
+                    <input type="file" accept="image/*" class="item-image w-full text-xs" onchange="previewItemImage(this, ${itemCount})">
+                </div>
+                <img id="item_img_${itemCount}" src="${data?.image || ''}" class="${data?.image ? '' : 'hidden'} max-w-xs max-h-16 object-contain border rounded bg-white">
+            </div>
         </div>
     `;
     $('#items-container').append(html);
     calculateTotal();
+}
+
+function previewItemImage(input, id) {
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], 400, 400, 0.7).then(compressedBase64 => {
+            $(`#item_img_${id}`).attr('src', compressedBase64).removeClass('hidden');
+        });
+    }
 }
 
 function removeItem(id) {
@@ -821,9 +836,10 @@ function saveReceipt() {
         const unit = $(this).find('.item-unit').val().trim();
         const price = $(this).find('.item-price').val();
         const discount = $(this).find('.item-discount').val();
+        const image = $(this).find('img[id^="item_img_"]').attr('src') || '';
         
         if (!name) { hasError = true; return false; }
-        items.push({ name, qty, unit, price, discount });
+        items.push({ name, qty, unit, price, discount, image });
     });
     
     if (items.length === 0 || hasError) {
@@ -933,14 +949,20 @@ function generatePreview() {
             qty: parseFloat($(this).find('.item-qty').val()) || 0,
             unit: $(this).find('.item-unit').val() || '',
             price: parseFloat($(this).find('.item-price').val()) || 0,
-            discount: parseFloat($(this).find('.item-discount').val()) || 0
+            discount: parseFloat($(this).find('.item-discount').val()) || 0,
+            image: $(this).find('img[id^="item_img_"]').attr('src') || ''
         };
     }).get()))).forEach(item => {
         const total = (item.qty * item.price) - item.discount;
         itemsHTML += `
             <tr style="border-bottom: 1px solid #000;">
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${rowNum}</td>
-                <td style="padding: 8px; border-right: 1px solid #000;">${item.name || '-'}</td>
+                <td style="padding: 5px; text-align: center; border-right: 1px solid #000;">
+                    ${item.image ? `<img src="${item.image}" style="max-height: 40px; border: 1px solid #eee;">` : ''}
+                </td>
+                <td style="padding: 8px; border-right: 1px solid #000;">
+                    <div style="font-weight: bold;">${item.name || '-'}</div>
+                </td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${item.qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${item.unit}</td>
                 <td style="padding: 8px; text-align: right; border-right: 1px solid #000;">${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -989,6 +1011,7 @@ function generatePreview() {
                 <thead>
                     <tr style="background-color: #92d050; border-bottom: 1px solid #000;">
                         <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 60px;">รูป</th>
                         <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">จำนวน</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">หน่วยนับ</th>

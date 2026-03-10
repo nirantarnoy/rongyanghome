@@ -823,10 +823,25 @@ function addItem(data = null) {
                     <button onclick="removeItem(${itemCount})" class="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded text-sm">ลบ</button>
                 </div>
             </div>
+            <div class="mt-2 flex items-center gap-4">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-600 mb-1">รูปสินค้า (ถ้ามี)</label>
+                    <input type="file" accept="image/*" class="item-image w-full text-xs" onchange="previewItemImage(this, ${itemCount})">
+                </div>
+                <img id="item_img_${itemCount}" src="${data?.image || ''}" class="${data?.image ? '' : 'hidden'} max-w-xs max-h-16 object-contain border rounded bg-white">
+            </div>
         </div>
     `;
     $('#items-container').append(html);
     calculateTotal();
+}
+
+function previewItemImage(input, id) {
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], 400, 400, 0.7).then(compressedBase64 => {
+            $(`#item_img_${id}`).attr('src', compressedBase64).removeClass('hidden');
+        });
+    }
 }
 
 function removeItem(id) {
@@ -927,8 +942,10 @@ function saveGR() {
         const unit = $(this).find('.item-unit').val().trim();
         const price = $(this).find('.item-price').val();
         const discount = $(this).find('.item-discount').val();
+        const image = $(this).find('img[id^="item_img_"]').attr('src') || '';
+        
         if (name) {
-            items.push({ name, qty, unit, price, discount });
+            items.push({ name, qty, unit, price, discount, image });
         }
     });
 
@@ -1032,24 +1049,32 @@ function generatePreview() {
     }
 
     let itemsHtml = '';
+    let rowNum = 1;
     $('.item-row').each(function(index) {
         const name = $(this).find('.item-name').val();
         const qty = parseFloat($(this).find('.item-qty').val()) || 0;
         const unit = $(this).find('.item-unit').val();
         const price = parseFloat($(this).find('.item-price').val()) || 0;
         const disc = parseFloat($(this).find('.item-discount').val()) || 0;
+        const image = $(this).find('img[id^="item_img_"]').attr('src') || '';
         const total = (qty * price) - disc;
         
         itemsHtml += `
-            <tr>
-                <td style="text-align: center;">${index + 1}</td>
-                <td>${name}</td>
-                <td style="text-align: right;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                <td style="text-align: center;">${unit}</td>
-                <td style="text-align: right;">${price > 0 ? price.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
-                <td style="text-align: right;">${total.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <tr style="border-bottom: 1px solid #000;">
+                <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${rowNum}</td>
+                <td style="padding: 5px; text-align: center; border-right: 1px solid #000;">
+                    ${image ? `<img src="${image}" style="max-height: 40px; border: 1px solid #eee;">` : ''}
+                </td>
+                <td style="padding: 8px; border-right: 1px solid #000;">
+                    <div style="font-weight: bold;">${name || '-'}</div>
+                </td>
+                <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
+                <td style="padding: 8px; text-align: right; border-right: 1px solid #000;">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td style="padding: 8px; text-align: right;">${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             </tr>
         `;
+        rowNum++;
     });
 
     // Removed empty rows loop as per user request to show only actual data
@@ -1087,15 +1112,16 @@ function generatePreview() {
             </div>
         </div>
 
-        <table class="gr-table">
+        <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 13px;">
             <thead>
-                <tr>
-                    <th style="width: 50px; white-space: nowrap;">ลำดับ</th>
-                    <th>รายการ</th>
-                    <th style="width: 100px;">จำนวน</th>
-                    <th style="width: 100px;">หน่วยนับ</th>
-                    <th style="width: 120px;">ราคา</th>
-                    <th style="width: 150px;">รวมเป็นเงิน</th>
+                <tr style="background-color: #92d050; border-bottom: 1px solid #000;">
+                    <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
+                    <th style="border-right: 1px solid #000; padding: 8px; width: 60px;">รูป</th>
+                    <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
+                    <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">จำนวน</th>
+                    <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">หน่วยนับ</th>
+                    <th style="border-right: 1px solid #000; padding: 8px; width: 100px;">ราคา</th>
+                    <th style="padding: 8px; width: 130px;">รวมเป็นเงิน</th>
                 </tr>
             </thead>
             <tbody>

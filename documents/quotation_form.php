@@ -1099,9 +1099,11 @@ function generatePreview() {
         itemsHTML += `
             <tr style="border-bottom: 1px solid #000;">
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${rowNum}</td>
+                <td style="padding: 5px; text-align: center; border-right: 1px solid #000;">
+                    ${itemImg ? `<img src="${itemImg}" style="max-height: 50px; border: 1px solid #eee;">` : ''}
+                </td>
                 <td style="padding: 8px; border-right: 1px solid #000;">
                     <div style="font-weight: bold;">${name || '-'}</div>
-                    ${itemImg ? `<img src="${itemImg}" style="max-height: 50px; margin-top: 5px; border: 1px solid #eee;">` : ''}
                 </td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
@@ -1164,6 +1166,7 @@ function generatePreview() {
                 <thead>
                     <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000;">
                         <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 60px;">รูปภาพ</th>
                         <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">จำนวน</th>
                         <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">หน่วยนับ</th>

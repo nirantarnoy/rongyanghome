@@ -600,6 +600,10 @@ function addItem(data = null) {
                 <div class="col-span-12 md:col-span-4">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">รายการ</label>
                     <input type="text" class="item-name w-full px-3 py-2 border border-gray-200 rounded-xl text-sm" value="${data?.name || ''}">
+                    <div class="mt-2 flex items-center gap-2">
+                        <input type="file" accept="image/*" class="item-image text-[10px]" onchange="previewItemImage(this, ${itemCount})">
+                        <img id="item_img_${itemCount}" src="${data?.image || ''}" class="${data?.image ? '' : 'hidden'} h-10 w-10 object-contain border rounded bg-white">
+                    </div>
                 </div>
                 <div class="col-span-3 md:col-span-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">จำนวน</label>
@@ -757,7 +761,15 @@ function previewQRCode() {
     }
 }
 
-function saveDoc() {
+function previewItemImage(input, id) {
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], 400, 400, 0.7).then(compressedBase64 => {
+            $(`#item_img_${id}`).attr('src', compressedBase64).removeClass('hidden');
+        });
+    }
+}
+
+function saveInvoice() {
     const items = [];
     $('.item-row').each(function() {
         const n = $(this).find('.item-name').val().trim();
@@ -894,9 +906,13 @@ function generatePreview() {
         const p = parseFloat($(el).find('.item-price').val()) || 0;
         const d = parseFloat($(el).find('.item-discount').val()) || 0;
         const t = (q * p) - d;
+        const itemImg = $(el).find('img[id^="item_img_"]').attr('src') || '';
         itemRows += `
             <tr>
                 <td style="text-align:center">${i+1}</td>
+                <td style="text-align:center; padding: 5px;">
+                    ${itemImg ? `<img src="${itemImg}" style="max-height: 40px; border: 1px solid #eee;">` : ''}
+                </td>
                 <td>${$(el).find('.item-name').val()}</td>
                 <td style="text-align:right">${q.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
                 <td style="text-align:center">${$(el).find('.item-unit').val()}</td>
@@ -934,7 +950,7 @@ function generatePreview() {
             </div>
         </div>
         <table class="doc-table">
-            <thead><tr><th style="width:50px; white-space: nowrap;">ลำดับ</th><th>รายการ</th><th style="width:100px">จำนวน</th><th style="width:100px">หน่วย</th><th style="width:120px">ราคา</th><th style="width:150px">รวมเงิน</th></tr></thead>
+            <thead><tr><th style="width:40px; white-space: nowrap;">ลำดับ</th><th style="width:60px">รูป</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:60px">หน่วย</th><th style="width:100px">ราคา</th><th style="width:120px">รวมเงิน</th></tr></thead>
             <tbody>${itemRows}</tbody>
         </table>
         <div class="doc-footer" style="display: block; border: 1px solid #000; border-top: none;">
