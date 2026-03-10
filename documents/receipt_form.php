@@ -1009,7 +1009,7 @@ function generatePreview() {
                     </td>
                     <td style="width: 35%; padding: 0; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse;">
-                            <tr style="background-color: #92d050;"><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${netSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
+                            <tr style="background-color: #92d050;"><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
                             <tr style="background-color: #92d050;"><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม(VAT)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
 
                             <tr style="background-color: #92d050; font-weight: bold;"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>

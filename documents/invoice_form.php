@@ -783,7 +783,7 @@ function saveDoc() {
             vatAmount = net * 0.07;
             net += vatAmount;
         } else {
-            vatAmount = net - (net / 1.07);
+            vatAmount = net * 7 / 107;
         }
     }
 
@@ -880,8 +880,12 @@ function generatePreview() {
     let grand = net;
     
     if (vatEnabled) {
-        if (vatType === 'exclude') { vat = net * 0.07; grand += vat; }
-        else { vat = net - (net / 1.07); }
+        if (vatType === 'exclude') {
+            vat = net * 0.07;
+            grand += vat;
+        } else {
+            vat = net * 7 / 107;
+        }
     }
 
     let itemRows = '';
@@ -940,7 +944,7 @@ function generatePreview() {
             </div>
             <div class="doc-footer-right">
                 <table>
-                    <tr><td>มูลค่าก่อนภาษี</td><td style="text-align:right">${(net - (vatType === 'include' ? vat : 0)).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    <tr><td>มูลค่าก่อนภาษี</td><td style="text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
                     <tr><td>ภาษีมูลค่าเพิ่ม (7%)</td><td style="text-align:right">${vat.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
                     <tr style="background:#92d050; font-weight:bold"><td>ยอดเงินสุทธิ</td><td style="text-align:right">${grand.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
                 </table>

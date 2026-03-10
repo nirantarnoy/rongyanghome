@@ -944,7 +944,7 @@ function saveGR() {
             vatAmount = grandTotal * 0.07;
             grandTotal += vatAmount;
         } else {
-            vatAmount = grandTotal - (grandTotal / 1.07);
+            vatAmount = grandTotal * 7 / 107;
         }
     }
     
@@ -1026,8 +1026,8 @@ function generatePreview() {
             vatAmount = netBeforeVat * 0.07;
             grandTotal = netBeforeVat + vatAmount;
         } else {
-            vatAmount = netBeforeVat - (netBeforeVat / 1.07);
-            netBeforeVat = netBeforeVat - vatAmount;
+            grandTotal = netBeforeVat;
+            vatAmount = netBeforeVat * 7 / 107;
         }
     }
 
@@ -1112,8 +1112,8 @@ function generatePreview() {
             <div class="gr-footer-right">
                 <table>
                     <tr>
-                        <td style="font-weight: bold;">มูลค่ารวมก่อนเสียภาษี</td>
-                        <td style="text-align: right;">${netBeforeVat.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                        <td style="font-weight: bold; padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td>
+                        <td style="text-align: right; padding: 5px 10px; border-bottom: 1px solid #000;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                     </tr>
                     <tr>
                         <td style="font-weight: bold;">ภาษีมูลค่าเพิ่ม(VAT)</td>

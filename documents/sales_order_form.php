@@ -860,7 +860,7 @@ function saveSO() {
             vatAmount = grandTotal * 0.07;
             grandTotal += vatAmount;
         } else {
-            vatAmount = grandTotal - (grandTotal / 1.07);
+            vatAmount = grandTotal * 7 / 107;
         }
     }
     
@@ -940,7 +940,7 @@ function generatePreview() {
             grandTotal = netSubtotal + vatAmount;
         } else {
             grandTotal = netSubtotal;
-            vatAmount = netSubtotal - (netSubtotal / 1.07);
+            vatAmount = netSubtotal * 7 / 107;
         }
     }
     
@@ -1037,7 +1037,7 @@ function generatePreview() {
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr style="background-color: #92d050;">
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td>
-                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${netSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
                             <tr style="background-color: #92d050;">
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม(VAT)</td>

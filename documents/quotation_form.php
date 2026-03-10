@@ -959,7 +959,7 @@ function saveQuotation() {
             grandTotal = netSubtotal + vatAmount;
         } else {
             grandTotal = netSubtotal;
-            vatAmount = netSubtotal - (netSubtotal / 1.07);
+            vatAmount = netSubtotal * 7 / 107;
         }
     } else {
         grandTotal = netSubtotal;
@@ -1080,8 +1080,7 @@ function generatePreview() {
             grandTotal = netSubtotal + vatAmount;
         } else {
             grandTotal = netSubtotal;
-            vatAmount = netSubtotal - (netSubtotal / 1.07);
-            subtotal = subtotal / 1.07; // This is a bit tricky with discounts, but let's keep it simple
+            vatAmount = netSubtotal * 7 / 107;
         }
     }
     
@@ -1095,11 +1094,15 @@ function generatePreview() {
         const price = parseFloat($(this).find('.item-price').val()) || 0;
         const discount = parseFloat($(this).find('.item-discount').val()) || 0;
         const total = (qty * price) - discount;
+        const itemImg = $(this).find('img').attr('src') || '';
         
         itemsHTML += `
             <tr style="border-bottom: 1px solid #000;">
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${rowNum}</td>
-                <td style="padding: 8px; border-right: 1px solid #000;">${name || '-'}</td>
+                <td style="padding: 8px; border-right: 1px solid #000;">
+                    <div style="font-weight: bold;">${name || '-'}</div>
+                    ${itemImg ? `<img src="${itemImg}" style="max-height: 50px; margin-top: 5px; border: 1px solid #eee;">` : ''}
+                </td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
                 <td style="padding: 8px; text-align: right; border-right: 1px solid #000;">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -1186,7 +1189,7 @@ function generatePreview() {
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr style="background-color: #92d050;">
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td>
-                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${netSubtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
                             <tr style="background-color: #92d050;">
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม(VAT)</td>
