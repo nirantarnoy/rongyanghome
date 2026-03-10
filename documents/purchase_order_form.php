@@ -849,9 +849,9 @@ function generatePreview() {
             </div>
         </div>
         <div class="po-amount-words">( ${amountWords} )</div>
-        <div style="margin-top: 10px; font-size: 13px;">
-            <p style="margin: 2px 0; font-weight: bold; text-decoration: underline;">เงื่อนไข :</p>
-            <div style="white-space: pre-line; line-height: 1.5;">${$('#conditions').val()}</div>
+        <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
+            <span style="font-weight: bold; text-decoration: underline; white-space: nowrap;">เงื่อนไข:</span>
+            <div style="white-space: pre-line; line-height: 1.2;">${$('#conditions').val() || '-'}</div>
         </div>
 
         <div class="po-signatures">

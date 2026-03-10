@@ -953,7 +953,10 @@ function generatePreview() {
             </div>
         </div>
         <div class="doc-amount-words">( ${amountWords} )</div>
-        <div style="margin-top: 10px; font-size: 11px; white-space: pre-line;">${$('#conditions').val()}</div>
+        <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
+            <span style="font-weight: bold; text-decoration: underline; white-space: nowrap;">เงื่อนไข:</span>
+            <div style="white-space: pre-line; line-height: 1.2;">${$('#conditions').val() || '-'}</div>
+        </div>
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
             <div class="signature-box">
