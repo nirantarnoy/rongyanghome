@@ -1182,7 +1182,11 @@ function generatePreview() {
             <!-- Footer Summary -->
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; border-top: none; font-size: 14px;">
                 <tr>
-                    <td style="width: 60%; border-right: 1px solid #000;"></td>
+                    <td style="width: 60%; border-right: 1px solid #000; padding: 5px; vertical-align: top; font-size: 11px;">
+                        <div style="font-weight: bold;">หมายเหตุ:</div>
+                        <div style="white-space: pre-line; line-height: 1.2;">${$('#notes').val() || '-'}</div>
+                        <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: 13px;">( ${thaiAmount} )</div>
+                    </td>
                     <td style="width: 40%; padding: 0; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr style="background-color: #92d050;">
@@ -1201,15 +1205,6 @@ function generatePreview() {
                     </td>
                 </tr>
             </table>
-
-            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 10px; box-sizing: border-box; font-size: 14px;">
-                <p style="margin: 0; font-weight: bold;">หมายเหตุ :</p>
-                <div style="margin-top: 5px; white-space: pre-wrap; font-size: 13px;">${$('#notes').val() || '-'}</div>
-            </div>
-
-            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 5px 10px; text-align: center; font-weight: bold; background-color: #f2f2f2; box-sizing: border-box; font-size: 14px;">
-                ( ${thaiAmount} )
-            </div>
 
             <!-- Conditions & Bank Info -->
             <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
@@ -1230,22 +1225,22 @@ function generatePreview() {
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 60px;">ผู้เสนอราคา</p>
+                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้เสนอราคา</p>
                         ${sig1 ? `<img src="${sig1}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
+                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 60px;">ผู้อนุมัติ</p>
+                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้อนุมัติ</p>
                         ${sig2 ? `<img src="${sig2}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
+                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name2').val()}</p>
                     </div>
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 60px;">ผู้รับ</p>
+                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้รับ</p>
                         ${sig3 ? `<img src="${sig3}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0;">${$('#signer_name3').val()}</p>
+                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name3').val()}</p>
                     </div>
                 </div>
             </div>

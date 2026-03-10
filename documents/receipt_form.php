@@ -1024,7 +1024,11 @@ function generatePreview() {
 
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; border-top: none; font-size: 14px;">
                 <tr>
-                    <td style="width: 60%; border-right: 1px solid #000;"></td>
+                    <td style="width: 60%; border-right: 1px solid #000; padding: 5px; vertical-align: top; font-size: 11px;">
+                        <div style="font-weight: bold;">หมายเหตุ:</div>
+                        <div style="white-space: pre-line; line-height: 1.2;">${$('#notes').val() || '-'}</div>
+                        <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: 13px;">( ${thaiAmount} )</div>
+                    </td>
                     <td style="width: 40%; padding: 0; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr style="background-color: #92d050;"><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
@@ -1034,15 +1038,6 @@ function generatePreview() {
                     </td>
                 </tr>
             </table>
-
-            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 10px; box-sizing: border-box; font-size: 14px;">
-                <p style="margin: 0; font-weight: bold;">หมายเหตุ :</p>
-                <p style="margin: 5px 0; white-space: pre-wrap;">${$('#notes').val()}</p>
-            </div>
-
-            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 5px 10px; text-align: center; font-weight: bold; background-color: #f2f2f2; box-sizing: border-box; font-size: 14px;">
-                ( ${thaiAmount} )
-            </div>
 
             <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
                 <span style="font-weight: bold; text-decoration: underline; white-space: nowrap;">เงื่อนไข:</span>
@@ -1058,16 +1053,16 @@ function generatePreview() {
                 </div>
                 <div style="flex: 1; display: flex; justify-content: space-around; text-align: center;">
                     <div style="width: 200px;">
-                        <p style="margin-bottom: 60px;">ผู้รับเงิน</p>
+                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้รับเงิน</p>
                         ${sig1 ? `<img src="${sig1}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
-                        <p style="margin: 5px 0;">${$('#signer_name1').val()}</p>
+                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 200px;">
-                        <p style="margin-bottom: 60px;">ผู้อนุมัติ</p>
+                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้อนุมัติ</p>
                         ${sig2 ? `<img src="${sig2}" style="height: 50px; object-fit: contain; margin-bottom: -10px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 50px;"></div>'}
                         <p style="margin: 0; border-bottom: 1px dotted #000; display: inline-block; min-width: 150px;"></p>
-                        <p style="margin: 5px 0;">${$('#signer_name2').val()}</p>
+                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name2').val()}</p>
                     </div>
                 </div>
             </div>

@@ -861,7 +861,11 @@ function generatePreview() {
 
         <div class="po-footer" style="display: block; border: 1px solid #000; border-top: none; margin-bottom: 0;">
             <div style="display: flex; width: 100%;">
-                <div style="flex: 1; border-right: 1px solid #000;"></div>
+                <div style="flex: 1; border-right: 1px solid #000; padding: 5px; vertical-align: top; font-size: 11px;">
+                    <div style="font-weight: bold;">หมายเหตุ:</div>
+                    <div style="white-space: pre-line; line-height: 1.2;">${$('#notes').val() || '-'}</div>
+                    <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: 13px;">( ${amountWords} )</div>
+                </div>
                 <div style="width: 300px; padding: 0;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
@@ -870,11 +874,7 @@ function generatePreview() {
                     </table>
                 </div>
             </div>
-            <div style="width: 100%; padding: 10px; border-top: 1px solid #000; box-sizing: border-box;">
-                <div style="font-size: 12px; font-weight: bold;">หมายเหตุ : ${$('#notes').val()}</div>
-            </div>
         </div>
-        <div class="po-amount-words">( ${amountWords} )</div>
         <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
             <span style="font-weight: bold; text-decoration: underline; white-space: nowrap;">เงื่อนไข:</span>
             <div style="white-space: pre-line; line-height: 1.2;">${$('#conditions').val() || '-'}</div>
@@ -885,18 +885,18 @@ function generatePreview() {
                 ${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width: 100%; object-fit: contain;">` : ''}
             </div>
             <div class="signature-box">
-                <div>ผู้สั่งซื้อ</div>
+                <div style="font-size: 11px;">ผู้สั่งซื้อ</div>
                 <div class="signature-line">
                     ${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">${$('#signer_name1').val()}</div>
+                <div style="font-size: 10px;">${$('#signer_name1').val()}</div>
             </div>
             <div class="signature-box">
-                <div>ผู้อนุมัติ</div>
+                <div style="font-size: 11px;">ผู้อนุมัติ</div>
                 <div class="signature-line">
                     ${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}
                 </div>
-                <div style="font-size: 12px;">${$('#signer_name2').val()}</div>
+                <div style="font-size: 10px;">${$('#signer_name2').val()}</div>
             </div>
         </div>
     `;

@@ -955,7 +955,11 @@ function generatePreview() {
         </table>
         <div class="doc-footer" style="display: block; border: 1px solid #000; border-top: none;">
             <div style="display: flex; width: 100%;">
-                <div style="flex: 1; border-right: 1px solid #000;"></div>
+                <div style="flex: 1; border-right: 1px solid #000; padding: 5px; font-size: 11px; vertical-align: top;">
+                    <div style="font-weight: bold;">หมายเหตุ:</div>
+                    <div style="white-space: pre-line; line-height: 1.2;">${$('#notes').val() || '-'}</div>
+                    <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: 13px;">( ${amountWords} )</div>
+                </div>
                 <div style="width: 300px; padding: 0;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่าก่อนภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
@@ -964,11 +968,7 @@ function generatePreview() {
                     </table>
                 </div>
             </div>
-            <div style="width: 100%; padding: 10px; border-top: 1px solid #000; box-sizing: border-box;">
-                <div style="font-size:12px;">หมายเหตุ: <span style="white-space:pre-line">${$('#notes').val()}</span></div>
-            </div>
         </div>
-        <div class="doc-amount-words">( ${amountWords} )</div>
         <div style="margin-top: 5px; font-size: 11px; display: flex; gap: 5px; align-items: flex-start;">
             <span style="font-weight: bold; text-decoration: underline; white-space: nowrap;">เงื่อนไข:</span>
             <div style="white-space: pre-line; line-height: 1.2;">${$('#conditions').val() || '-'}</div>
@@ -976,14 +976,14 @@ function generatePreview() {
         <div class="doc-signatures">
             <div style="width:120px">${$('#qr_preview').attr('src') ? `<img src="${$('#qr_preview').attr('src')}" style="width:100%">` : ''}</div>
             <div class="signature-box">
-                <div>ผู้รับเงิน</div>
+                <div style="font-size: 11px;">ผู้รับเงิน</div>
                 <div class="signature-line">${$('#sig1_preview').attr('src') ? `<img src="${$('#sig1_preview').attr('src')}" class="signature-preview">` : ''}</div>
-                <div style="margin-top: 5px; font-size: 12px;">${$('#signer_name1').val()}</div>
+                <div style="margin-top: 5px; font-size: 10px;">${$('#signer_name1').val()}</div>
             </div>
             <div class="signature-box">
-                <div>ผู้อนุมัติ</div>
+                <div style="font-size: 11px;">ผู้อนุมัติ</div>
                 <div class="signature-line">${$('#sig2_preview').attr('src') ? `<img src="${$('#sig2_preview').attr('src')}" class="signature-preview">` : ''}</div>
-                <div style="margin-top: 5px; font-size: 12px;">${$('#signer_name2').val()}</div>
+                <div style="margin-top: 5px; font-size: 10px;">${$('#signer_name2').val()}</div>
             </div>
         </div>`;
     $('#print-area').html(html).removeClass('hidden');
