@@ -901,7 +901,6 @@ function generatePreview() {
                 <td style="text-align:right">${q.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
                 <td style="text-align:center">${$(el).find('.item-unit').val()}</td>
                 <td style="text-align:right">${p.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                <td style="text-align:right">${d > 0 ? d.toLocaleString(undefined,{minimumFractionDigits:2}) : '-'}</td>
                 <td style="text-align:right">${t.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
             </tr>`;
     });
@@ -935,19 +934,22 @@ function generatePreview() {
             </div>
         </div>
         <table class="doc-table">
-            <thead><tr><th style="width:50px; white-space: nowrap;">ลำดับ</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:80px">หน่วย</th><th style="width:100px">ราคา</th><th style="width:80px">ส่วนลด</th><th style="width:120px">รวมเงิน</th></tr></thead>
+            <thead><tr><th style="width:50px; white-space: nowrap;">ลำดับ</th><th>รายการ</th><th style="width:100px">จำนวน</th><th style="width:100px">หน่วย</th><th style="width:120px">ราคา</th><th style="width:150px">รวมเงิน</th></tr></thead>
             <tbody>${itemRows}</tbody>
         </table>
-        <div class="doc-footer">
-            <div class="doc-footer-left">
-                <div style="font-size:12px; margin-bottom:10px">หมายเหตุ: <span style="white-space:pre-line">${$('#notes').val()}</span></div>
+        <div class="doc-footer" style="display: block; border: 1px solid #000; border-top: none;">
+            <div style="display: flex; width: 100%;">
+                <div style="flex: 1; border-right: 1px solid #000;"></div>
+                <div style="width: 300px; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่าก่อนภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม (7%)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${vat.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                        <tr style="background:#92d050; font-weight:bold"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align:right">${grand.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                    </table>
+                </div>
             </div>
-            <div class="doc-footer-right">
-                <table>
-                    <tr><td>มูลค่าก่อนภาษี</td><td style="text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                    <tr><td>ภาษีมูลค่าเพิ่ม (7%)</td><td style="text-align:right">${vat.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                    <tr style="background:#92d050; font-weight:bold"><td>ยอดเงินสุทธิ</td><td style="text-align:right">${grand.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                </table>
+            <div style="width: 100%; padding: 10px; border-top: 1px solid #000; box-sizing: border-box;">
+                <div style="font-size:12px;">หมายเหตุ: <span style="white-space:pre-line">${$('#notes').val()}</span></div>
             </div>
         </div>
         <div class="doc-amount-words">( ${amountWords} )</div>

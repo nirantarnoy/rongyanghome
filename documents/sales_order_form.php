@@ -966,7 +966,6 @@ function generatePreview() {
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${unit}</td>
                 <td style="padding: 8px; text-align: right; border-right: 1px solid #000;">${price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-                <td style="padding: 8px; text-align: center; border-right: 1px solid #000;">${discount > 0 ? discount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '-'}</td>
                 <td style="padding: 8px; text-align: right;">${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
             </tr>
         `;
@@ -1015,11 +1014,10 @@ function generatePreview() {
                     <tr style="background-color: #92d050; color: #000; border-bottom: 1px solid #000;">
                         <th style="border-right: 1px solid #000; padding: 8px; width: 50px; white-space: nowrap;">ลำดับ</th>
                         <th style="border-right: 1px solid #000; padding: 8px;">รายการ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">จำนวน</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">หน่วยนับ</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 90px;">ราคา</th>
-                        <th style="border-right: 1px solid #000; padding: 8px; width: 70px;">ส่วนลด</th>
-                        <th style="padding: 8px; width: 110px;">รวมเป็นเงิน</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">จำนวน</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 80px;">หน่วยนับ</th>
+                        <th style="border-right: 1px solid #000; padding: 8px; width: 100px;">ราคา</th>
+                        <th style="padding: 8px; width: 130px;">รวมเป็นเงิน</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1029,11 +1027,8 @@ function generatePreview() {
 
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; border-top: none; font-size: 14px;">
                 <tr>
-                    <td style="width: 65%; padding: 10px; vertical-align: top; border-right: 1px solid #000;">
-                        <p style="margin: 0; font-weight: bold;">หมายเหตุ :</p>
-                        <p style="margin: 5px 0; font-size: 12px; white-space: pre-line;">${$('#notes').val()}</p>
-                    </td>
-                    <td style="width: 35%; padding: 0; vertical-align: top;">
+                    <td style="width: 60%; border-right: 1px solid #000;"></td>
+                    <td style="width: 40%; padding: 0; vertical-align: top;">
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr style="background-color: #92d050;">
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td>
@@ -1043,7 +1038,6 @@ function generatePreview() {
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม(VAT)</td>
                                 <td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                             </tr>
-
                             <tr style="background-color: #92d050; font-weight: bold;">
                                 <td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td>
                                 <td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
@@ -1051,12 +1045,16 @@ function generatePreview() {
                         </table>
                     </td>
                 </tr>
-                <tr>
-                    <td colspan="2" style="padding: 5px 10px; text-align: center; font-weight: bold; background-color: #f2f2f2;">
-                        ( ${thaiAmount} )
-                    </td>
-                </tr>
             </table>
+
+            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 10px; box-sizing: border-box; font-size: 14px;">
+                <p style="margin: 0; font-weight: bold;">หมายเหตุ :</p>
+                <p style="margin: 5px 0; font-size: 12px; white-space: pre-line;">${$('#notes').val()}</p>
+            </div>
+
+            <div style="width: 100%; border: 1px solid #000; border-top: none; padding: 5px 10px; text-align: center; font-weight: bold; background-color: #f2f2f2; box-sizing: border-box; font-size: 14px;">
+                ( ${thaiAmount} )
+            </div>
 
             <div style="margin-top: 10px; font-size: 13px;">
                 <p style="margin: 2px 0; font-weight: bold; text-decoration: underline;">เงื่อนไข :</p>

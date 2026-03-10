@@ -1047,7 +1047,6 @@ function generatePreview() {
                 <td style="text-align: right;">${qty.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                 <td style="text-align: center;">${unit}</td>
                 <td style="text-align: right;">${price > 0 ? price.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
-                <td style="text-align: right;">${disc > 0 ? disc.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
                 <td style="text-align: right;">${total.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             </tr>
         `;
@@ -1093,11 +1092,10 @@ function generatePreview() {
                 <tr>
                     <th style="width: 50px; white-space: nowrap;">ลำดับ</th>
                     <th>รายการ</th>
-                    <th style="width: 80px;">จำนวน</th>
-                    <th style="width: 80px;">หน่วยนับ</th>
-                    <th style="width: 100px;">ราคา</th>
-                    <th style="width: 80px;">ส่วนลด</th>
-                    <th style="width: 120px;">รวมเป็นเงิน</th>
+                    <th style="width: 100px;">จำนวน</th>
+                    <th style="width: 100px;">หน่วยนับ</th>
+                    <th style="width: 120px;">ราคา</th>
+                    <th style="width: 150px;">รวมเป็นเงิน</th>
                 </tr>
             </thead>
             <tbody>
@@ -1105,26 +1103,19 @@ function generatePreview() {
             </tbody>
         </table>
 
-        <div class="gr-footer">
-            <div class="gr-footer-left">
-                <div style="font-size: 12px;">หมายเหตุ : ${$('#notes').val()}</div>
+        <div class="gr-footer" style="display: block; border: 1px solid #000; border-top: none;">
+            <div style="display: flex; width: 100%;">
+                <div style="flex: 1; border-right: 1px solid #000;"></div>
+                <div style="width: 300px; padding: 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                        <tr style="background-color: #76b852; font-weight: bold;"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                    </table>
+                </div>
             </div>
-            <div class="gr-footer-right">
-                <table>
-                    <tr>
-                        <td style="font-weight: bold; padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่ารวมก่อนเสียภาษี</td>
-                        <td style="text-align: right; padding: 5px 10px; border-bottom: 1px solid #000;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">ภาษีมูลค่าเพิ่ม(VAT)</td>
-                        <td style="text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    </tr>
-
-                    <tr style="background-color: #76b852;">
-                        <td style="font-weight: bold;">ยอดเงินสุทธิ</td>
-                        <td style="text-align: right; font-weight: bold;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                    </tr>
-                </table>
+            <div style="width: 100%; padding: 10px; border-top: 1px solid #000; box-sizing: border-box;">
+                <div style="font-size: 12px; font-weight: bold;">หมายเหตุ : ${$('#notes').val()}</div>
             </div>
         </div>
         <div class="gr-amount-words">( ${amountWords} )</div>
