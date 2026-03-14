@@ -537,7 +537,7 @@ if ($edit_id) {
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 no-print border-t pt-8">
-            <button onclick="saveDoc()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+            <button onclick="saveInvoice()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i> บันทึก
             </button>
             <button onclick="generatePreview()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
