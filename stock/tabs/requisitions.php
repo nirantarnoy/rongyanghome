@@ -8,6 +8,7 @@
     </h2>
     
     <form id="requisitionForm" class="grid-form">
+        <input type="hidden" name="id" id="requisition_id">
         <div class="form-group">
             <label>เลขที่ใบเบิก *</label>
             <input type="text" name="req_no" class="form-control" value="WH<?php 
@@ -62,8 +63,11 @@
             </button>
         </div>
 
-        <div style="grid-column: 1/-1; text-align: right; margin-top: 2rem;">
-            <button type="submit" class="btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem;">
+        <div style="grid-column: 1/-1; text-align: right; margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
+            <button type="button" id="btnCancelReqEdit" class="btn-primary" onclick="resetReqForm()" style="background: #6B7280; display: none;">
+                <i class="fas fa-times"></i> ยกเลิก
+            </button>
+            <button type="submit" id="btnSubmitReq" class="btn-primary" style="padding: 1rem 2.5rem; font-size: 1rem;">
                 <i class="fas fa-save"></i> บันทึกใบเบิกสินค้า
             </button>
         </div>
@@ -208,30 +212,32 @@ function addRow() {
     });
 
     const html = `
-    <div class="req-item-row" id="row_${rowCount}" style="display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr auto; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #EEE;">
-        <div class="form-group">
+    <div class="req-item-row" id="row_${rowCount}" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #EEE;">
+        <div class="form-group" style="flex: 1 1 200px; margin-bottom: 0;">
             <label>สินค้า</label>
             <select name="items[${rowCount}][product_id]" class="form-control prod-select" required onchange="checkStock(${rowCount})">
                 ${prodOptions}
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
             <label>คลังสินค้า</label>
             <select name="items[${rowCount}][warehouse_id]" class="form-control wh-select" required onchange="checkStock(${rowCount})">
                 ${whOptions}
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="flex: 1 1 100px; margin-bottom: 0;">
             <label>คงเหลือ</label>
             <input type="text" class="form-control stock-display" readonly value="0" style="background: #E5E7EB; font-weight: bold; text-align: center;">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="flex: 1 1 100px; margin-bottom: 0;">
             <label>จำนวนเบิก</label>
             <input type="number" name="items[${rowCount}][qty]" class="form-control qty-input" min="1" required onkeyup="validateQty(${rowCount})" onchange="validateQty(${rowCount})">
         </div>
-        <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem; height: 42px;" onclick="removeRow(this)">
-            <i class="fas fa-trash"></i>
-        </button>
+        <div style="flex: 0 0 auto; margin-bottom: 0;">
+            <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem; height: 42px;" onclick="removeRow(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
     </div>`;
     $('#reqItemsContainer').append(html);
     rowCount++;
@@ -301,28 +307,18 @@ $(document).ready(function() {
         }
 
         const formData = $(this).serialize();
+        const reqId = $('#requisition_id').val();
+        const action = reqId ? 'update_requisition' : 'add_requisition';
         
         $.ajax({
-            url: 'stock_action.php?action=add_requisition',
+            url: 'stock_action.php?action=' + action,
             type: 'POST',
             data: formData,
             dataType: 'json',
             success: function(res) {
                 if (res.status === 'success') {
                     Swal.fire('สำเร็จ', res.message, 'success');
-                    $('#requisitionForm')[0].reset();
-                    const now = new Date();
-                    const ty = (now.getFullYear() + 543).toString().slice(-2);
-                    const dateStr = ty + 
-                                    (now.getMonth() + 1).toString().padStart(2, '0') + 
-                                    now.getDate().toString().padStart(2, '0') + 
-                                    now.getHours().toString().padStart(2, '0') + 
-                                    now.getMinutes().toString().padStart(2, '0') + 
-                                    now.getSeconds().toString().padStart(2, '0');
-                    $('input[name="req_no"]').val('WH' + dateStr);
-                    $('#reqItemsContainer').html('');
-                    rowCount = 0;
-                    addRow();
+                    resetReqForm();
                     loadRequisitions();
                 } else {
                     Swal.fire('ผิดพลาด', res.message, 'error');
@@ -331,6 +327,77 @@ $(document).ready(function() {
         });
     });
 });
+
+function resetReqForm() {
+    $('#requisitionForm')[0].reset();
+    $('#requisition_id').val('');
+    
+    // Generate new req_no
+    const now = new Date();
+    const ty = (now.getFullYear() + 543).toString().slice(-2);
+    const dateStr = ty + 
+                    (now.getMonth() + 1).toString().padStart(2, '0') + 
+                    now.getDate().toString().padStart(2, '0') + 
+                    now.getHours().toString().padStart(2, '0') + 
+                    now.getMinutes().toString().padStart(2, '0') + 
+                    now.getSeconds().toString().padStart(2, '0');
+    $('input[name="req_no"]').val('WH' + dateStr);
+    
+    $('#reqItemsContainer').html('');
+    rowCount = 0;
+    addRow();
+    
+    $('#btnSubmitReq').html('<i class="fas fa-save"></i> บันทึกใบเบิกสินค้า');
+    $('#btnCancelReqEdit').hide();
+    $('.content-card:first h2').html('<i class="fas fa-file-invoice" style="color: var(--accent-purple);"></i> สร้างใบเบิกสินค้า');
+}
+
+function editRequisition(id) {
+    $.ajax({
+        url: 'stock_action.php',
+        type: 'GET',
+        data: { action: 'get_requisition_json', id: id },
+        dataType: 'json',
+        success: function(response) {
+            if (response.status === 'success') {
+                const req = response.data;
+                if (req.status !== 'pending') {
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถแก้ไขใบเบิกนี้ได้', 'error');
+                    return;
+                }
+                $('#requisition_id').val(req.id);
+                $('input[name="req_no"]').val(req.req_no);
+                $('input[name="requisition_date"]').val(req.requisition_date);
+                $('input[name="po_no"]').val(req.po_no);
+                $('input[name="so_no"]').val(req.so_no);
+                $('input[name="customer_name"]').val(req.customer_name);
+                $('input[name="requester_name"]').val(req.requester_name);
+                $('input[name="phone"]').val(req.phone);
+                $('textarea[name="shipping_address"]').val(req.shipping_address);
+                $('input[name="shipping_method"]').val(req.shipping_method);
+                
+                $('#reqItemsContainer').html('');
+                rowCount = 0;
+                
+                req.items.forEach(item => {
+                    addRow();
+                    const currentRow = rowCount - 1;
+                    $(`#row_${currentRow} .prod-select`).val(item.product_id);
+                    $(`#row_${currentRow} .wh-select`).val(item.warehouse_id);
+                    $(`#row_${currentRow} .qty-input`).val(item.qty);
+                    checkStock(currentRow);
+                });
+                
+                $('#btnSubmitReq').html('<i class="fas fa-save"></i> อัปเดตใบเบิกสินค้า');
+                $('#btnCancelReqEdit').show();
+                $('.content-card:first h2').html('<i class="fas fa-edit" style="color: var(--accent-purple);"></i> แก้ไขใบเบิกสินค้า');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                Swal.fire('ข้อผิดพลาด', response.message || 'ไม่สามารถโหลดข้อมูลได้', 'error');
+            }
+        }
+    });
+}
 
 function loadRequisitions() {
     const search = $('#reqSearch').val();

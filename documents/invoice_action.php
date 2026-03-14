@@ -21,6 +21,20 @@ try {
     $user_id = $_SESSION['user_id'] ?? 0;
     $active_year = $_SESSION['active_year'] ?? (int)date('Y');
 
+    // Auto-migrate tables if needed
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN issuer_company_id INT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN header_name VARCHAR(255) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN header_address TEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN header_phone VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN header_tax_id VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN header_logo LONGTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN year INT DEFAULT 2026");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN type VARCHAR(50) DEFAULT 'invoice'");
+    @mysqli_query($conn, "ALTER TABLE invoices MODIFY COLUMN items LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
+
+
     if ($action == 'save') {
         $id = $_POST['id'] ?? null;
         $doc_number = mysqli_real_escape_string($conn, $_POST['doc_number'] ?? '');
@@ -105,7 +119,9 @@ try {
             logAction($conn, ($id ? "แก้ไข" : "สร้าง") . ($type == 'tax_invoice' ? "ใบกำกับภาษี" : "ใบแจ้งหนี้") . ": $doc_number", $id ? 'update' : 'create', $saved_id);
             $response = ['status' => 'success', 'message' => 'บันทึกเรียบร้อยแล้ว', 'id' => $saved_id];
         } else {
-            throw new Exception(mysqli_error($conn));
+            $err = mysqli_error($conn);
+            file_put_contents('invoice_error.log', date('Y-m-d H:i:s') . " - SAVE ERROR: " . $err . "\nSQL: " . $sql . "\n", FILE_APPEND);
+            throw new Exception($err);
         }
     } elseif ($action == 'list') {
         $search = mysqli_real_escape_string($conn, $_GET['search'] ?? '');

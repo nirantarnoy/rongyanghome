@@ -6,7 +6,7 @@ $id = $_GET['id'] ?? 0;
 $company_id = $_SESSION['company_id'];
 
 // Get production order
-$sql = "SELECT po.*, p.name as product_name, p.sku, p.unit as product_unit
+$sql = "SELECT po.*, p.name as product_name, p.sku, p.unit as product_unit, p.price as product_price
         FROM stock_production_orders po
         LEFT JOIN stock_products p ON po.product_id = p.id
         WHERE po.id = ? AND po.company_id = ?";
@@ -176,7 +176,7 @@ $company = mysqli_fetch_assoc($comp_result);
             </thead>
             <tbody>
                 <?php 
-                $price = $order['price'] ?? 0;
+                $price = $order['product_price'] ?? 0;
                 $total_prod = $order['qty'] * $price;
                 ?>
                 <tr>

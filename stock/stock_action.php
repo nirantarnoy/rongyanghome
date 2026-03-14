@@ -1110,6 +1110,62 @@ if ($action == 'add_requisition') {
     exit;
 }
 
+if ($action == 'update_requisition') {
+    header('Content-Type: application/json');
+    $id = $_POST['id'] ?? 0;
+    $req_no = $_POST['req_no'] ?? '';
+    $po_no = $_POST['po_no'] ?? '';
+    $so_no = $_POST['so_no'] ?? '';
+    $customer_name = $_POST['customer_name'] ?? '';
+    $requester_name = $_POST['requester_name'] ?? '';
+    $phone = $_POST['phone'] ?? '';
+    $shipping_address = $_POST['shipping_address'] ?? '';
+    $shipping_method = $_POST['shipping_method'] ?? '';
+    $requisition_date = $_POST['requisition_date'] ?? date('Y-m-d');
+    $items = $_POST['items'] ?? [];
+
+    $sql_check = "SELECT status FROM stock_requisitions WHERE id = ? AND company_id = ?";
+    $stmt_check = mysqli_prepare($conn, $sql_check);
+    mysqli_stmt_bind_param($stmt_check, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt_check);
+    $status = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_check))['status'] ?? '';
+
+    if ($status == 'approved') {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่สามารถแก้ไขใบเบิกที่อนุมัติแล้วได้']);
+        exit;
+    }
+
+    mysqli_begin_transaction($conn);
+    try {
+        $sql = "UPDATE stock_requisitions SET req_no=?, po_no=?, so_no=?, customer_name=?, requester_name=?, phone=?, shipping_address=?, shipping_method=?, requisition_date=? WHERE id=? AND company_id=?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sssssssssii", $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date, $id, $company_id);
+        mysqli_stmt_execute($stmt);
+
+        // Delete old items
+        $sql_del = "DELETE FROM stock_requisition_items WHERE requisition_id = ?";
+        $stmt_del = mysqli_prepare($conn, $sql_del);
+        mysqli_stmt_bind_param($stmt_del, "i", $id);
+        mysqli_stmt_execute($stmt_del);
+
+        // Insert new items
+        foreach ($items as $item) {
+            $sql_item = "INSERT INTO stock_requisition_items (requisition_id, product_id, warehouse_id, qty) VALUES (?, ?, ?, ?)";
+            $stmt_item = mysqli_prepare($conn, $sql_item);
+            mysqli_stmt_bind_param($stmt_item, "iiii", $id, $item['product_id'], $item['warehouse_id'], $item['qty']);
+            mysqli_stmt_execute($stmt_item);
+        }
+
+        mysqli_commit($conn);
+        logStockAction($conn, $company_id, "แก้ไขใบเบิกสินค้า: $req_no", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'แก้ไขใบเบิกเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
 if ($action == 'get_requisitions') {
     header('Content-Type: text/html');
     $search = $_GET['search'] ?? '';
@@ -1159,6 +1215,10 @@ if ($action == 'get_requisitions') {
                         <option value="approved" '.($row['status'] == 'approved' ? 'selected' : '').'>อนุมัติ</option>
                         <option value="rejected" '.($row['status'] == 'rejected' ? 'selected' : '').'>ปฏิเสธ</option>
                     </select>
+                    '.($row['status'] == 'pending' ? '
+                    <button onclick="editRequisition('.$row['id'].')" class="btn-primary" style="padding: 0.4rem; background: #6366F1;" title="แก้ไข">
+                        <i class="fas fa-edit"></i>
+                    </button>' : '').'
                     <a href="print_delivery_note.php?id='.$row['id'].'" target="_blank" class="btn-primary" style="padding: 0.4rem; background: #E91E63;" title="ใบส่งสินค้า">
                         <i class="fas fa-truck"></i>
                     </a>

@@ -20,6 +20,19 @@ try {
     $company_id = $_SESSION['company_id'] ?? 0;
     $active_year = $_SESSION['active_year'] ?? (int)date('Y');
 
+    // Auto-migrate tables if needed
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN issuer_company_id INT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_name VARCHAR(255) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_address TEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_phone VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_tax_id VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_logo LONGTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN year INT DEFAULT 2026");
+    @mysqli_query($conn, "ALTER TABLE receipts MODIFY COLUMN items LONGTEXT");
+
+
+
     if ($action == 'save') {
         $id = $_POST['id'] ?? null;
         $items = processItemsImages($_POST['items'] ?? '[]', 'uploads/items');
@@ -99,7 +112,9 @@ try {
             $saved_id = $id ?: mysqli_insert_id($conn);
             $response = ['status' => 'success', 'message' => 'บันทึกเรียบร้อยแล้ว', 'id' => $saved_id];
         } else {
-            throw new Exception(mysqli_error($conn));
+            $err = mysqli_error($conn);
+            file_put_contents('receipt_error.log', date('Y-m-d H:i:s') . " - SAVE ERROR: " . $err . "\nSQL: " . $sql . "\n", FILE_APPEND);
+            throw new Exception($err);
         }
     } elseif ($action == 'list') {
         $search = mysqli_real_escape_string($conn, $_GET['search'] ?? '');
