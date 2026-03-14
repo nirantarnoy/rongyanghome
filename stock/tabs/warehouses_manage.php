@@ -2,7 +2,7 @@
 // Warehouse Management Tab
 ?>
 
-<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+<div id="mainWarehouseView" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
     <div class="content-card">
         <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.3rem; display: flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-plus-circle" style="color: var(--accent-purple);"></i> เพิ่ม/แก้ไขคลังสินค้า
@@ -40,6 +40,30 @@
                 <p>กำลังโหลดข้อมูล...</p>
             </div>
         </div>
+    </div>
+</div>
+
+<div id="warehouseDetailsView" style="display: none; background: white; padding: 2rem; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 1rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <h2 id="detailsWarehouseName" style="margin: 0; font-size: 1.5rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-warehouse" style="color: var(--accent-purple);"></i> <span id="spanWarehouseName">คลังสินค้า</span>
+        </h2>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <input type="text" id="searchWarehouseProducts" placeholder="ค้นหาสินค้า..." class="form-control" style="width: 250px;">
+            <button onclick="exportWarehouseExcel()" class="btn-primary" style="background: #10B981; border: none; padding: 0.5rem 1rem; color: white; border-radius: 0.4rem; cursor: pointer;">
+                <i class="fas fa-file-excel"></i> Excel
+            </button>
+            <button onclick="exportWarehousePDF()" class="btn-primary" style="background: #EF4444; border: none; padding: 0.5rem 1rem; color: white; border-radius: 0.4rem; cursor: pointer;">
+                <i class="fas fa-file-pdf"></i> PDF
+            </button>
+            <button onclick="closeWarehouseDetails()" class="btn-primary" style="background: #6B7280; border: none; padding: 0.5rem 1rem; color: white; border-radius: 0.4rem; cursor: pointer;">
+                <i class="fas fa-arrow-left"></i> กลับ
+            </button>
+        </div>
+    </div>
+    
+    <div id="warehouseProductsList" style="overflow-x: auto;">
+        <!-- Table will be loaded here -->
     </div>
 </div>
 
@@ -132,5 +156,148 @@ function deleteWarehouse(id) {
             });
         }
     });
+}
+
+function viewWarehouseDetails(id, name) {
+    $('#mainWarehouseView').hide();
+    $('#warehouseDetailsView').show();
+    $('#spanWarehouseName').text(name);
+    $('#searchWarehouseProducts').val('');
+    
+    // Load products
+    $('#warehouseProductsList').html('<div style="text-align: center; padding: 3rem;"><i class="fas fa-spinner fa-spin fa-2x"></i><p>กำลังโหลดข้อมูล...</p></div>');
+    loadWarehouseProductsTable(id, '');
+    
+    // Save current ID for search/export
+    $('#warehouseDetailsView').data('warehouse-id', id);
+    $('#warehouseDetailsView').data('warehouse-name', name);
+}
+
+function closeWarehouseDetails() {
+    $('#warehouseDetailsView').hide();
+    $('#mainWarehouseView').show();
+}
+
+function loadWarehouseProductsTable(id, search) {
+    $.ajax({
+        url: 'stock_action.php?action=get_warehouse_details_html',
+        type: 'GET',
+        data: { id: id, search: search },
+        success: function(html) {
+            $('#warehouseProductsList').html(html);
+        }
+    });
+}
+
+// Search feature inside warehouse details
+$(document).ready(function() {
+    let searchTimeout;
+    $('#searchWarehouseProducts').on('input', function() {
+        clearTimeout(searchTimeout);
+        const search = $(this).val();
+        const id = $('#warehouseDetailsView').data('warehouse-id');
+        searchTimeout = setTimeout(function() {
+            loadWarehouseProductsTable(id, search);
+        }, 500);
+    });
+    
+    // Select all logic
+    $(document).on('change', '#selectAllWarehouseProducts', function() {
+        $('.export-checkbox').prop('checked', $(this).prop('checked'));
+    });
+});
+
+function exportWarehouseExcel() {
+    const table = document.getElementById("whProductsTable");
+    if (!table) return;
+    
+    let csv = [];
+    let rows = table.querySelectorAll("tr");
+    
+    for (let i = 0; i < rows.length; i++) {
+        if(rows[i].style.display === 'none') continue;
+        
+        let cols = rows[i].querySelectorAll("td, th");
+        if(cols.length === 0) continue;
+        
+        // Skip rows where checkbox is unselected, ignoring category rows (which don't have .export-checkbox) array
+        let checkbox = rows[i].querySelector(".export-checkbox");
+        if (checkbox && !checkbox.checked) {
+            continue;
+        }
+        
+        // Skip if it's a category row and there are no selected items under it.. well, it's a bit complex, let's just include all category rows or just let it go
+        let rowData = [];
+        
+        // If it's the header, start from index 1 (to skip checkbox column)
+        // If it's a normal row, start from index 1.
+        // If it's a category row, it has colspan=7.
+        let startIndex = 0;
+        if (cols.length > 1) {
+            startIndex = 1; // skip checkbox col
+        }
+        
+        for (let j = startIndex; j < cols.length; j++) {
+            let text = cols[j].innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").replace(/"/g, '""');
+            rowData.push('"' + text + '"');
+        }
+        if(rowData.length > 0) {
+            csv.push(rowData.join(","));
+        }
+    }
+    
+    let csvFile = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv.join("\\n")], {type: "text/csv;charset=utf-8;"});
+    let downloadLink = document.createElement("a");
+    downloadLink.download = $('#warehouseDetailsView').data('warehouse-name') + ".csv";
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+
+function exportWarehousePDF() {
+    // Clone the table
+    const tableBlock = document.getElementById("whProductsTable");
+    if (!tableBlock) return;
+    
+    const cloneTable = tableBlock.cloneNode(true);
+    // Remove unchecked rows
+    const rows = cloneTable.querySelectorAll('tr');
+    for(let i = rows.length - 1; i >= 0; i--) {
+        let cb = rows[i].querySelector('.export-checkbox');
+        if (cb && !cb.checked) {
+            rows[i].remove();
+        } else {
+            // Remove the first child/column (the checkbox)
+            if (rows[i].children.length > 1) {
+                rows[i].removeChild(rows[i].children[0]);
+            }
+        }
+    }
+    
+    const tableHtml = cloneTable.outerHTML;
+    const whName = $('#warehouseDetailsView').data('warehouse-name');
+    
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>' + whName + '</title>');
+    printWindow.document.write('<style>');
+    printWindow.document.write('body { font-family: "Sarabun", sans-serif; }');
+    printWindow.document.write('table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 14px; }');
+    printWindow.document.write('th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }');
+    printWindow.document.write('th { background-color: #f2f2f2; }');
+    printWindow.document.write('.category-row td { background-color: #e9ecef !important; font-weight: bold; }');
+    printWindow.document.write('</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<h2>' + whName + '</h2>');
+    printWindow.document.write(tableHtml);
+    printWindow.document.write('</body></html>');
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(function() {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
 }
 </script>

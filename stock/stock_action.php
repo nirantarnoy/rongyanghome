@@ -73,10 +73,12 @@ if ($action == 'get_warehouses') {
 
     while ($row = mysqli_fetch_assoc($res)) {
         echo '
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 0.5rem; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-            <div>
-                <div style="font-weight: 600; color: var(--text-dark);">'.htmlspecialchars($row['name']).'</div>
-                <div style="font-size: 0.85rem; color: var(--text-muted);">'.htmlspecialchars($row['location']).'</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 0.5rem; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s ease;" onmouseover="this.style.transform=\'translateY(-2px)\'; this.style.boxShadow=\'0 4px 6px rgba(0,0,0,0.1)\';" onmouseout="this.style.transform=\'translateY(0)\'; this.style.boxShadow=\'0 2px 4px rgba(0,0,0,0.05)\';">
+            <div style="cursor: pointer; flex-grow: 1;" onclick="viewWarehouseDetails('.$row['id'].', \''.addslashes($row['name']).'\')">
+                <div style="font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-warehouse text-muted"></i> '.htmlspecialchars($row['name']).'
+                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">'.htmlspecialchars($row['location']).'</div>
             </div>
             <div style="display: flex; gap: 0.5rem;">
                 <button onclick="editWarehouse('.$row['id'].', \''.addslashes($row['name']).'\', \''.addslashes($row['location']).'\')" style="background: #6366F1; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.4rem; cursor: pointer; font-size: 0.8rem;">
@@ -131,6 +133,99 @@ if ($action == 'delete_warehouse') {
     } else {
         echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
     }
+    exit;
+}
+
+if ($action == 'get_warehouse_details_html') {
+    header('Content-Type: text/html');
+    $warehouse_id = $_GET['id'] ?? 0;
+    $search = $_GET['search'] ?? '';
+
+    $search_cond = "";
+    if ($search) {
+        $search_cond = " AND (p.name LIKE ? OR p.sku LIKE ?) ";
+    }
+    
+    $sql = "SELECT p.*, c.name as cat_name,
+            (SELECT SUM(CASE WHEN t.type='in' THEN t.qty ELSE -t.qty END) 
+             FROM stock_transactions t 
+             WHERE t.product_id = p.id AND t.warehouse_id = ? AND t.company_id = ?) as balance
+            FROM stock_products p
+            LEFT JOIN stock_categories c ON p.category_id = c.id
+            WHERE p.company_id = ? $search_cond
+            HAVING balance > 0
+            ORDER BY c.name ASC, p.name ASC";
+            
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($search) {
+        $search_term = "%$search%";
+        mysqli_stmt_bind_param($stmt, "iiiss", $warehouse_id, $company_id, $company_id, $search_term, $search_term);
+    } else {
+        mysqli_stmt_bind_param($stmt, "iii", $warehouse_id, $company_id, $company_id);
+    }
+    
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    $grouped_products = [];
+    while ($row = mysqli_fetch_assoc($res)) {
+        $cat_key = $row['cat_name'] ? $row['cat_name'] : 'ไม่มีหมวดหมู่';
+        if (!isset($grouped_products[$cat_key])) {
+            $grouped_products[$cat_key] = [];
+        }
+        $grouped_products[$cat_key][] = $row;
+    }
+
+    if (empty($grouped_products)) {
+        echo '<div style="text-align: center; padding: 3rem; color: var(--text-muted); background: #F9FAFB; border-radius: 0.5rem; border: 1px dashed #D1D5DB;">ไม่พบสินค้าในคลังนี้</div>';
+        exit;
+    }
+
+    echo '<table id="whProductsTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 1rem;">
+            <thead>
+                <tr style="background: #F3F4F6; color: var(--text-muted); text-align: left; border-bottom: 2px solid #E5E7EB;">
+                    <th style="padding: 1rem; width: 50px; text-align: center;"><input type="checkbox" id="selectAllWarehouseProducts" checked></th>
+                    <th style="padding: 1rem;">ชื่อสินค้า</th>
+                    <th style="padding: 1rem;">รหัสอ้างอิงภายใน</th>
+                    <th style="padding: 1rem; text-align: right;">ราคารวม</th>
+                    <th style="padding: 1rem; text-align: right;">ต้นทุน</th>
+                    <th style="padding: 1rem; text-align: right;">ที่มีอยู่</th>
+                    <th style="padding: 1rem; text-align: center;">หน่วย</th>
+                </tr>
+            </thead>
+            <tbody>';
+            
+    foreach ($grouped_products as $cat_name => $products) {
+        $cat_count = count($products);
+        echo '  <tr class="category-row" style="background: #E5E7EB; font-weight: 600;">
+                    <td colspan="7" style="padding: 0.8rem 1rem; color: #374151;">
+                        <i class="fas fa-caret-down" style="width: 20px;"></i> '.htmlspecialchars($cat_name).' ('.$cat_count.')
+                    </td>
+                </tr>';
+                
+        foreach ($products as $p) {
+            $balance = $p['balance'];
+            $cost = $p['price'] ?? 0;
+            $total = $balance * $cost;
+            
+            echo '<tr style="border-bottom: 1px solid #E5E7EB; transition: background 0.15s;" onmouseover="this.style.background=\'#F9FAFB\'" onmouseout="this.style.background=\'transparent\'">
+                    <td style="padding: 1rem; text-align: center;">
+                        <input type="checkbox" class="export-checkbox" checked>
+                    </td>
+                    <td style="padding: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="far fa-star" style="color: #D1D5DB;"></i> '.htmlspecialchars($p['name']).'
+                    </td>
+                    <td style="padding: 1rem; color: var(--text-muted);">'.htmlspecialchars($p['sku']).'</td>
+                    <td style="padding: 1rem; text-align: right;">'.number_format($total, 2).'</td>
+                    <td style="padding: 1rem; text-align: right;">'.number_format($cost, 2).'</td>
+                    <td style="padding: 1rem; text-align: right; font-weight: bold; color: #059669;">'.number_format($balance, 2).'</td>
+                    <td style="padding: 1rem; text-align: center; color: var(--text-muted);">'.htmlspecialchars($p['unit']).'</td>
+                  </tr>';
+        }
+    }
+    
+    echo '  </tbody>
+          </table>';
     exit;
 }
 
@@ -1091,20 +1186,30 @@ if ($action == 'update_requisition_status') {
     $id = $_POST['id'] ?? 0;
     $status = $_POST['status'] ?? 'pending';
 
-    $sql = "UPDATE stock_requisitions SET status = ? WHERE id = ? AND company_id = ?";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "sii", $status, $id, $company_id);
+    // Get old status and req_no first
+    $sql_old = "SELECT status, req_no FROM stock_requisitions WHERE id = ? AND company_id = ?";
+    $stmt_old = mysqli_prepare($conn, $sql_old);
+    mysqli_stmt_bind_param($stmt_old, "ii", $id, $company_id);
+    mysqli_stmt_execute($stmt_old);
+    $req_data = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_old));
+    
+    if (!$req_data) {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่พบใบเบิกนี้']);
+        exit;
+    }
+    
+    $old_status = $req_data['status'];
+    $req_no = $req_data['req_no'];
 
-    if (mysqli_stmt_execute($stmt)) {
-        // If approved, we should automatically create stock 'out' transactions
-        if ($status == 'approved') {
-            // Get requisition number
-            $sql_req = "SELECT req_no FROM stock_requisitions WHERE id = ?";
-            $stmt_req = mysqli_prepare($conn, $sql_req);
-            mysqli_stmt_bind_param($stmt_req, "i", $id);
-            mysqli_stmt_execute($stmt_req);
-            $req_no = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt_req))['req_no'] ?? $id;
+    mysqli_begin_transaction($conn);
+    try {
+        $sql = "UPDATE stock_requisitions SET status = ? WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "sii", $status, $id, $company_id);
+        mysqli_stmt_execute($stmt);
 
+        // If changing to 'approved', deduct stock
+        if ($old_status != 'approved' && $status == 'approved') {
             $sql_items = "SELECT * FROM stock_requisition_items WHERE requisition_id = ?";
             $stmt_items = mysqli_prepare($conn, $sql_items);
             mysqli_stmt_bind_param($stmt_items, "i", $id);
@@ -1119,11 +1224,22 @@ if ($action == 'update_requisition_status') {
                 mysqli_stmt_bind_param($stmt_trans, "iiiiss", $company_id, $item['product_id'], $item['warehouse_id'], $item['qty'], $note, $date);
                 mysqli_stmt_execute($stmt_trans);
             }
+        } 
+        // If changing from 'approved' to something else, restore stock (delete past deduct transactions)
+        else if ($old_status == 'approved' && $status != 'approved') {
+            $note_match = "เบิกตามใบเบิกเลขที่ " . $req_no;
+            $sql_del_trans = "DELETE FROM stock_transactions WHERE company_id = ? AND note = ?";
+            $stmt_del_trans = mysqli_prepare($conn, $sql_del_trans);
+            mysqli_stmt_bind_param($stmt_del_trans, "is", $company_id, $note_match);
+            mysqli_stmt_execute($stmt_del_trans);
         }
+
+        mysqli_commit($conn);
         logStockAction($conn, $company_id, "อัปเดตสถานะใบเบิก ID $id เป็น $status", 'update');
-        echo json_encode(['status' => 'success', 'message' => 'อัปเดตสถานะเรียบร้อยแล้ว']);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . mysqli_error($conn)]);
+        echo json_encode(['status' => 'success', 'message' => 'อัปเดตสถานะและสต็อกเรียบร้อยแล้ว']);
+    } catch (Throwable $e) {
+        mysqli_rollback($conn);
+        echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
     }
     exit;
 }
