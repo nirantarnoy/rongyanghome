@@ -50,7 +50,31 @@ try {
     @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN customer_code VARCHAR(50)");
     @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN customer_email VARCHAR(100)");
     
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN issuer_company_id INT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_name VARCHAR(255) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_address TEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_phone VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_tax_id VARCHAR(50) DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN header_logo LONGTEXT DEFAULT NULL");
     @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN year INT DEFAULT 2026");
+    @mysqli_query($conn, "ALTER TABLE receipts MODIFY COLUMN items LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_enabled TINYINT(1) DEFAULT 0");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_type VARCHAR(20) DEFAULT 'exclude'");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN subtotal DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN total_discount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_amount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN grand_total DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN notes TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN conditions TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signature1 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signature2 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signer_name1 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signer_name2 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN payment_terms TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_address TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_phone VARCHAR(50)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_tax_id VARCHAR(50)");
 
 
     if ($action == 'save') {

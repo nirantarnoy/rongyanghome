@@ -849,6 +849,9 @@ function saveInvoice() {
                     if (!$('#doc_id').val()) window.location.href = 'invoice_form.php?id=' + res.id;
                 });
             } else Swal.fire('ผิดพลาด', res.message, 'error');
+        },
+        error: function(xhr) {
+            Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์ (Status: ' + xhr.status + ')', 'error');
         }
     });
 }
