@@ -12,6 +12,9 @@ require_once '../file_helper.php';
 $response = ['status' => 'error', 'message' => 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'];
 
 try {
+    if (!isset($conn) || !$conn) {
+        throw new Exception("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+    }
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
         throw new Exception("ขนาดข้อมูลใหญ่เกินไป (เกินค่า post_max_size ใน php.ini) กรุณาลดขนาดรูปภาพ");
     }
@@ -32,6 +35,21 @@ try {
     @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN year INT DEFAULT 2026");
     @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN type VARCHAR(50) DEFAULT 'invoice'");
     @mysqli_query($conn, "ALTER TABLE invoices MODIFY COLUMN items LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN vat_enabled TINYINT(1) DEFAULT 0");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN vat_type VARCHAR(20) DEFAULT 'exclude'");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN subtotal DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN total_discount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN vat_amount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN grand_total DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN notes TEXT");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN conditions TEXT");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN signature1 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN signature2 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN signer_name1 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN signer_name2 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN customer_code VARCHAR(50)");
+    @mysqli_query($conn, "ALTER TABLE invoices ADD COLUMN customer_email VARCHAR(100)");
+    
     @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
 
 
@@ -116,7 +134,7 @@ try {
         
         if (mysqli_query($conn, $sql)) {
             $saved_id = $id ?: mysqli_insert_id($conn);
-            logAction($conn, ($id ? "แก้ไข" : "สร้าง") . ($type == 'tax_invoice' ? "ใบกำกับภาษี" : "ใบแจ้งหนี้") . ": $doc_number", $id ? 'update' : 'create', $saved_id);
+            logInvoice($conn, ($id ? "แก้ไข" : "สร้าง") . ($type == 'tax_invoice' ? "ใบกำกับภาษี" : "ใบแจ้งหนี้") . ": $doc_number", $id ? 'update' : 'create', $saved_id);
             $response = ['status' => 'success', 'message' => 'บันทึกเรียบร้อยแล้ว', 'id' => $saved_id];
         } else {
             $err = mysqli_error($conn);
@@ -152,7 +170,7 @@ try {
         $id = (int)($_POST['id'] ?? 0);
         $sql = "UPDATE invoices SET type = 'tax_invoice' WHERE id = $id AND company_id = $company_id";
         if (mysqli_query($conn, $sql)) {
-            logAction($conn, "เปลี่ยนเป็นใบกำกับภาษี รหัส: $id", 'update', $id);
+            logInvoice($conn, "เปลี่ยนเป็นใบกำกับภาษี รหัส: $id", 'update', $id);
             $response = ['status' => 'success', 'message' => 'เปลี่ยนเป็นใบกำกับภาษีเรียบร้อยแล้ว'];
         } else {
             throw new Exception(mysqli_error($conn));
@@ -224,7 +242,8 @@ try {
         $response = ['status' => 'error', 'message' => 'Action ไม่ถูกต้อง'];
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    file_put_contents('error.log', date('Y-m-d H:i:s') . " - [" . $_SERVER['PHP_SELF'] . "] ERROR: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
     $response = ['status' => 'error', 'message' => $e->getMessage()];
 }
 

@@ -73,6 +73,27 @@ function logTransaction($conn, $activity, $action_type = 'create', $reference_id
 }
 
 /**
+ * บันทึก log สำหรับ Invoice
+ */
+function logInvoice($conn, $activity, $action_type = 'create', $reference_id = null) {
+    return logActivity($conn, 'invoice', $activity, $action_type, $reference_id);
+}
+
+/**
+ * บันทึก log สำหรับ Receipt
+ */
+function logReceipt($conn, $activity, $action_type = 'create', $reference_id = null) {
+    return logActivity($conn, 'receipt', $activity, $action_type, $reference_id);
+}
+
+/**
+ * บันทึก log ทั่วไป (Generic)
+ */
+function logAction($conn, $activity, $action_type = 'create', $reference_id = null) {
+    return logActivity($conn, 'general', $activity, $action_type, $reference_id);
+}
+
+/**
  * ดึง logs ตาม module และ company
  * 
  * @param mysqli $conn Database connection

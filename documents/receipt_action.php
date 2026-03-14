@@ -12,6 +12,9 @@ require_once '../file_helper.php';
 $response = ['status' => 'error', 'message' => 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'];
 
 try {
+    if (!isset($conn) || !$conn) {
+        throw new Exception("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+    }
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
         throw new Exception("ขนาดข้อมูลใหญ่เกินไป กรุณาลดขนาดรูปภาพ");
     }
@@ -30,6 +33,22 @@ try {
     @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN qr_code_image LONGTEXT DEFAULT NULL");
     @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN year INT DEFAULT 2026");
     @mysqli_query($conn, "ALTER TABLE receipts MODIFY COLUMN items LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_enabled TINYINT(1) DEFAULT 0");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_type VARCHAR(20) DEFAULT 'exclude'");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN subtotal DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN total_discount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN vat_amount DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN grand_total DECIMAL(15,2) DEFAULT 0.00");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN notes TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN conditions TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signature1 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signature2 LONGTEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signer_name1 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN signer_name2 VARCHAR(255)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN payment_terms TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_address TEXT");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_phone VARCHAR(50)");
+    @mysqli_query($conn, "ALTER TABLE receipts ADD COLUMN customer_tax_id VARCHAR(50)");
 
 
 
@@ -110,6 +129,7 @@ try {
         
         if (mysqli_query($conn, $sql)) {
             $saved_id = $id ?: mysqli_insert_id($conn);
+            logReceipt($conn, ($id ? "แก้ไข" : "สร้าง") . "ใบเสร็จรับเงิน: $doc_number", $id ? 'update' : 'create', $saved_id);
             $response = ['status' => 'success', 'message' => 'บันทึกเรียบร้อยแล้ว', 'id' => $saved_id];
         } else {
             $err = mysqli_error($conn);
@@ -135,7 +155,8 @@ try {
         $response = ['status' => 'error', 'message' => 'Action ไม่ถูกต้อง'];
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    file_put_contents('error.log', date('Y-m-d H:i:s') . " - [" . $_SERVER['PHP_SELF'] . "] ERROR: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
     $response = ['status' => 'error', 'message' => $e->getMessage()];
 }
 

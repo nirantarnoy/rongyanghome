@@ -17,6 +17,9 @@ require_once '../file_helper.php';
 $response = ['status' => 'error', 'message' => 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ'];
 
 try {
+    if (!isset($conn) || !$conn) {
+        throw new Exception("ไม่สามารถเชื่อมต่อฐานข้อมูลได้");
+    }
     // ตรวจสอบว่าข้อมูล POST ถูกส่งมาครบหรือไม่ (กรณีขนาดไฟล์เกินขีดจำกัด)
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && empty($_POST) && $_SERVER['CONTENT_LENGTH'] > 0) {
         throw new Exception("ขนาดข้อมูลใหญ่เกินไป (เกินค่า post_max_size ใน php.ini) กรุณาลดขนาดรูปภาพ");
@@ -221,7 +224,8 @@ try {
         $response = ['status' => 'error', 'message' => 'Action ไม่ถูกต้อง'];
     }
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    file_put_contents('error.log', date('Y-m-d H:i:s') . " - [" . $_SERVER['PHP_SELF'] . "] ERROR: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine() . "\n", FILE_APPEND);
     $response = ['status' => 'error', 'message' => $e->getMessage()];
 }
 
