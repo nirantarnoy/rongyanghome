@@ -220,32 +220,61 @@ function exportWarehouseExcel() {
         let cols = rows[i].querySelectorAll("td, th");
         if(cols.length === 0) continue;
         
-        // Skip rows where checkbox is unselected, ignoring category rows (which don't have .export-checkbox) array
+        // Skip unselected normal rows (categories don't have .export-checkbox)
         let checkbox = rows[i].querySelector(".export-checkbox");
         if (checkbox && !checkbox.checked) {
             continue;
         }
         
-        // Skip if it's a category row and there are no selected items under it.. well, it's a bit complex, let's just include all category rows or just let it go
-        let rowData = [];
+        // If this is a category row, we can just export its text
+        let isCategory = rows[i].classList.contains('category-row');
         
-        // If it's the header, start from index 1 (to skip checkbox column)
-        // If it's a normal row, start from index 1.
-        // If it's a category row, it has colspan=7.
+        let rowData = [];
         let startIndex = 0;
-        if (cols.length > 1) {
-            startIndex = 1; // skip checkbox col
+        
+        // Skip checkbox column for data rows (th also has no class but we know it's index 0)
+        if (!isCategory && cols.length > 1) {
+            startIndex = 1;
         }
         
         for (let j = startIndex; j < cols.length; j++) {
-            let text = cols[j].innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").replace(/"/g, '""');
+            // Get text, avoiding icons
+            let text = "";
+            
+            // Special handling for the second column which has the star icon
+            if (!isCategory && j === 1) {
+                // Try to get text without the icon
+                let tempDiv = document.createElement("div");
+                tempDiv.innerHTML = cols[j].innerHTML;
+                let icons = tempDiv.querySelectorAll('i, svg');
+                icons.forEach(el => el.remove());
+                text = tempDiv.innerText || tempDiv.textContent;
+            } else if (isCategory) {
+               // category row text
+               let tempDiv = document.createElement("div");
+               tempDiv.innerHTML = cols[j].innerHTML;
+               let icons = tempDiv.querySelectorAll('i, svg');
+               icons.forEach(el => el.remove());
+               text = tempDiv.innerText || tempDiv.textContent;
+            } else {
+                text = cols[j].innerText || cols[j].textContent;
+            }
+            
+            text = text.trim().replace(/(\\r\\n|\\n|\\r)/gm, " ").replace(/"/g, '""');
             rowData.push('"' + text + '"');
         }
+        
+        // Add empty cells to category row so it aligns somewhat
+        if (isCategory && rowData.length === 1 && cols.length === 1) {
+            rowData.push('""','""','""','""','""'); // Padding for alignment
+        }
+            
         if(rowData.length > 0) {
             csv.push(rowData.join(","));
         }
     }
     
+    // Add BOM for Excel Thai language support
     let csvFile = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv.join("\\n")], {type: "text/csv;charset=utf-8;"});
     let downloadLink = document.createElement("a");
     downloadLink.download = $('#warehouseDetailsView').data('warehouse-name') + ".csv";
