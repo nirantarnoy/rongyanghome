@@ -101,6 +101,17 @@
             </div>
         </div>
 
+        <div style="grid-column: 1/-1; margin-top: 2rem;">
+            <label style="font-weight: 600; color: var(--text-dark); display: block; margin-bottom: 1rem;">ผลิตภัณฑ์พลอยได้หรือเศษผลผลิตคงเหลือ</label>
+            <div id="byproductItemsContainer" style="margin-bottom: 1rem;">
+                <p id="noByproductText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการผลิตภัณฑ์พลอยได้</p>
+            </div>
+            <button type="button" class="btn-primary" style="background: #6366F1; padding: 0.6rem 1.2rem; font-size: 0.9rem;" onclick="addByproductRow()">
+                <i class="fas fa-plus"></i> เพิ่มผลิตภัณฑ์พลอยได้
+            </button>
+        </div>
+
+
         <div class="form-group" style="grid-column: span 2; margin-top: 1rem;">
             <label>ขั้นตอนการทำงาน/คำแนะนำ</label>
             <textarea name="instructions" class="form-control" rows="3" placeholder="ระบุขั้นตอนการทำงาน..."></textarea>
@@ -173,6 +184,8 @@
 
 <script>
 let bomRowCount = 0;
+let byproductRowCount = 0;
+
 
 function updateProductInfo(select) {
     const id = select.value;
@@ -220,6 +233,84 @@ function removeBomRow(btn) {
     }
 }
 
+function addByproductRow() {
+    $('#noByproductText').hide();
+    const html = `
+    <div class="byproduct-item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F0FDF4; padding: 1rem; border-radius: 0.8rem; border: 1px solid #BBF7D0;">
+        <div class="form-group" style="flex: 2;">
+            <label>รายการผลิตภัณฑ์พลอยได้</label>
+            <input type="text" name="byproducts[${byproductRowCount}][name]" class="form-control" placeholder="ชื่อสินค้า/เศษวัสดุ" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>จำนวน</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][qty]" class="form-control byproduct-qty" min="0" value="0" required onchange="calculateByproductTotal(this)">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>หน่วย</label>
+            <input type="text" name="byproducts[${byproductRowCount}][unit]" class="form-control" placeholder="หน่วย" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>ราคา/หน่วย</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][price]" class="form-control byproduct-price" min="0" value="0" required onchange="calculateByproductTotal(this)">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>รวมราคา</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][total]" class="form-control byproduct-total" value="0" readonly>
+        </div>
+        <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem;" onclick="removeByproductRow(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>`;
+    $('#byproductItemsContainer').append(html);
+    byproductRowCount++;
+}
+
+function addByproductRowWithData(data) {
+    $('#noByproductText').hide();
+    const html = `
+    <div class="byproduct-item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F0FDF4; padding: 1rem; border-radius: 0.8rem; border: 1px solid #BBF7D0;">
+        <div class="form-group" style="flex: 2;">
+            <label>รายการผลิตภัณฑ์พลอยได้</label>
+            <input type="text" name="byproducts[${byproductRowCount}][name]" class="form-control" value="${data.name}" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>จำนวน</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][qty]" class="form-control byproduct-qty" min="0" value="${data.qty}" required onchange="calculateByproductTotal(this)">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>หน่วย</label>
+            <input type="text" name="byproducts[${byproductRowCount}][unit]" class="form-control" value="${data.unit}" required>
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>ราคา/หน่วย</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][price]" class="form-control byproduct-price" min="0" value="${data.price}" required onchange="calculateByproductTotal(this)">
+        </div>
+        <div class="form-group" style="flex: 1;">
+            <label>รวมราคา</label>
+            <input type="number" step="0.01" name="byproducts[${byproductRowCount}][total]" class="form-control byproduct-total" value="${data.total}" readonly>
+        </div>
+        <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem;" onclick="removeByproductRow(this)">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>`;
+    $('#byproductItemsContainer').append(html);
+    byproductRowCount++;
+}
+
+function calculateByproductTotal(el) {
+    const row = $(el).closest('.byproduct-item-row');
+    const qty = parseFloat(row.find('.byproduct-qty').val()) || 0;
+    const price = parseFloat(row.find('.byproduct-price').val()) || 0;
+    row.find('.byproduct-total').val((qty * price).toFixed(2));
+}
+
+function removeByproductRow(btn) {
+    $(btn).closest('.byproduct-item-row').remove();
+    if ($('.byproduct-item-row').length === 0) {
+        $('#noByproductText').show();
+    }
+}
+
 $(document).ready(function() {
     loadProductionOrders();
 
@@ -260,6 +351,8 @@ function resetProductionForm() {
     $('#production_id').val('');
     $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
     bomRowCount = 0;
+    $('#byproductItemsContainer').html('<p id="noByproductText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการผลิตภัณฑ์พลอยได้</p>');
+    byproductRowCount = 0;
     $('#btnSubmitProduction').html('<i class="fas fa-check-square"></i> สร้างใบสั่งผลิต');
     $('#btnCancelProductionEdit').hide();
     $('.content-card h2:first').html('<i class="fas fa-industry" style="color: var(--accent-purple);"></i> สร้างใบสั่งผลิต');
@@ -337,6 +430,18 @@ function editProduction(id) {
                     });
                 } else {
                     $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
+                }
+
+                // Load Byproducts
+                $('#byproductItemsContainer').html('');
+                byproductRowCount = 0;
+                if (order.byproducts && order.byproducts.length > 0) {
+                    $('#noByproductText').hide();
+                    order.byproducts.forEach(item => {
+                        addByproductRowWithData(item);
+                    });
+                } else {
+                    $('#byproductItemsContainer').html('<p id="noByproductText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการผลิตภัณฑ์พลอยได้</p>');
                 }
                 
                 $('#btnSubmitProduction').html('<i class="fas fa-save"></i> อัปเดตใบสั่งผลิต');

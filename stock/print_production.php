@@ -35,6 +35,18 @@ while ($item = mysqli_fetch_assoc($bom_result)) {
     $bom_items[] = $item;
 }
 
+// Get byproducts
+$bp_sql = "SELECT * FROM stock_production_byproducts WHERE production_order_id = ? ORDER BY id";
+$bp_stmt = mysqli_prepare($conn, $bp_sql);
+mysqli_stmt_bind_param($bp_stmt, "i", $id);
+mysqli_stmt_execute($bp_stmt);
+$bp_result = mysqli_stmt_get_result($bp_stmt);
+$byproducts = [];
+while ($bp = mysqli_fetch_assoc($bp_result)) {
+    $byproducts[] = $bp;
+}
+
+
 // Get company info
 $comp_sql = "SELECT * FROM company WHERE id = ?";
 $comp_stmt = mysqli_prepare($conn, $comp_sql);
@@ -268,17 +280,30 @@ $company = mysqli_fetch_assoc($comp_result);
                 </tr>
             </thead>
             <tbody>
+                <?php 
+                $no = 1;
+                $total_bp = 0;
+                foreach ($byproducts as $bp): 
+                    $total_bp += $bp['total'];
+                ?>
                 <tr>
-                    <td class="text-center">1</td>
-                    <td>ไม้</td>
-                    <td class="text-center"></td>
-                    <td>แผ่น</td>
-                    <td class="text-right"></td>
-                    <td class="text-right"></td>
+                    <td class="text-center"><?= $no++ ?></td>
+                    <td><?= htmlspecialchars($bp['name']) ?></td>
+                    <td class="text-center"><?= number_format($bp['qty'], 2) ?></td>
+                    <td class="text-center"><?= htmlspecialchars($bp['unit']) ?></td>
+                    <td class="text-right"><?= number_format($bp['price'], 2) ?></td>
+                    <td class="text-right"><?= number_format($bp['total'], 2) ?></td>
                 </tr>
+                <?php endforeach; ?>
+                <?php if (empty($byproducts)): ?>
+                <tr>
+                    <td colspan="6" class="text-center">ไม่มีข้อมูล</td>
+                </tr>
+                <?php endif; ?>
             </tbody>
         </table>
-        <div class="total-box">รวมราคา 0.00 บาท</div>
+        <div class="total-box">รวมราคา <?= number_format($total_bp, 2) ?> บาท</div>
+
 
         <!-- Buttons -->
         <div class="no-print" style="margin-top: 50px; text-align: center;">

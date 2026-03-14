@@ -4,9 +4,26 @@ require '../config.php';
 
 $action = $_GET['action'] ?? '';
 $company_id = $_SESSION['company_id'];
+$active_year = $_SESSION['active_year'] ?? (int)date('Y');
+
+// Auto-migrate byproducts table
+$bq = "CREATE TABLE IF NOT EXISTS stock_production_byproducts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    production_order_id INT NOT NULL,
+    name VARCHAR(255),
+    qty DECIMAL(15,4),
+    unit VARCHAR(50),
+    price DECIMAL(15,4),
+    total DECIMAL(15,4),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_prod_id (production_order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+@mysqli_query($conn, $bq);
+
 
 function logStockAction($conn, $company_id, $activity, $action_type) {
     $user_login = $_SESSION['user_login'] ?? 'system';
+
     // Try to get user_id from users table if not in session
     $user_id = 0;
     $u_sql = "SELECT id FROM users WHERE username = ?";
@@ -659,6 +676,8 @@ if ($action == 'add_production') {
     $foreman = $_POST['foreman'] ?? '';
     $status = 'pending';
     $bom = $_POST['bom'] ?? [];
+    $byproducts = $_POST['byproducts'] ?? [];
+
 
     mysqli_begin_transaction($conn);
     try {
@@ -676,6 +695,19 @@ if ($action == 'add_production') {
             $stmt_bom = mysqli_prepare($conn, $sql_bom);
             mysqli_stmt_bind_param($stmt_bom, "iid", $production_order_id, $item['product_id'], $item['qty']);
             mysqli_stmt_execute($stmt_bom);
+        }
+
+        // Insert By-products
+        foreach ($byproducts as $bp) {
+            $sql_bp = "INSERT INTO stock_production_byproducts (production_order_id, name, qty, unit, price, total) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt_bp = mysqli_prepare($conn, $sql_bp);
+            $bp_name = $bp['name'] ?? '';
+            $bp_qty = (float)($bp['qty'] ?? 0);
+            $bp_unit = $bp['unit'] ?? '';
+            $bp_price = (float)($bp['price'] ?? 0);
+            $bp_total = (float)($bp['total'] ?? 0);
+            mysqli_stmt_bind_param($stmt_bp, "isdsdd", $production_order_id, $bp_name, $bp_qty, $bp_unit, $bp_price, $bp_total);
+            mysqli_stmt_execute($stmt_bp);
         }
 
         // Auto-create material requisition if BOM exists
@@ -745,6 +777,8 @@ if ($action == 'update_production') {
     $ordered_by = $_POST['ordered_by'] ?? '';
     $foreman = $_POST['foreman'] ?? '';
     $bom = $_POST['bom'] ?? [];
+    $byproducts = $_POST['byproducts'] ?? [];
+
 
     mysqli_begin_transaction($conn);
     try {
@@ -766,39 +800,56 @@ if ($action == 'update_production') {
                 mysqli_stmt_bind_param($stmt_bom, "iid", $id, $item['product_id'], $item['qty']);
                 mysqli_stmt_execute($stmt_bom);
             }
+        }
 
-            // Update pending material requisition if exists
-            $sql_check_req = "SELECT id FROM material_requisitions WHERE production_order_id = ? AND status = 'pending' LIMIT 1";
-            $stmt_check_req = mysqli_prepare($conn, $sql_check_req);
-            mysqli_stmt_bind_param($stmt_check_req, "i", $id);
-            mysqli_stmt_execute($stmt_check_req);
-            $res_check_req = mysqli_stmt_get_result($stmt_check_req);
+        // Update By-products: Delete old and insert new
+        $sql_del_bp = "DELETE FROM stock_production_byproducts WHERE production_order_id = ?";
+        $stmt_del_bp = mysqli_prepare($conn, $sql_del_bp);
+        mysqli_stmt_bind_param($stmt_del_bp, "i", $id);
+        mysqli_stmt_execute($stmt_del_bp);
+
+        foreach ($byproducts as $bp) {
+            $sql_bp = "INSERT INTO stock_production_byproducts (production_order_id, name, qty, unit, price, total) VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt_bp = mysqli_prepare($conn, $sql_bp);
+            $bp_name = $bp['name'] ?? '';
+            $bp_qty = (float)($bp['qty'] ?? 0);
+            $bp_unit = $bp['unit'] ?? '';
+            $bp_price = (float)($bp['price'] ?? 0);
+            $bp_total = (float)($bp['total'] ?? 0);
+            mysqli_stmt_bind_param($stmt_bp, "isdsdd", $id, $bp_name, $bp_qty, $bp_unit, $bp_price, $bp_total);
+            mysqli_stmt_execute($stmt_bp);
+        }
+        // Update pending material requisition if exists
+        $sql_check_req = "SELECT id FROM material_requisitions WHERE production_order_id = ? AND status = 'pending' LIMIT 1";
+        $stmt_check_req = mysqli_prepare($conn, $sql_check_req);
+        mysqli_stmt_bind_param($stmt_check_req, "i", $id);
+        mysqli_stmt_execute($stmt_check_req);
+        $res_check_req = mysqli_stmt_get_result($stmt_check_req);
             
-            if ($row_req = mysqli_fetch_assoc($res_check_req)) {
-                $requisition_id = $row_req['id'];
+        if ($row_req = mysqli_fetch_assoc($res_check_req)) {
+            $requisition_id = $row_req['id'];
+            
+            // Delete old items
+            $sql_del_req_items = "DELETE FROM material_requisition_items WHERE requisition_id = ?";
+            $stmt_del_req_items = mysqli_prepare($conn, $sql_del_req_items);
+            mysqli_stmt_bind_param($stmt_del_req_items, "i", $requisition_id);
+            mysqli_stmt_execute($stmt_del_req_items);
+            
+            // Insert new items from updated BOM
+            foreach ($bom as $item) {
+                $unit_sql = "SELECT unit FROM stock_products WHERE id = ?";
+                $unit_stmt = mysqli_prepare($conn, $unit_sql);
+                mysqli_stmt_bind_param($unit_stmt, "i", $item['product_id']);
+                mysqli_stmt_execute($unit_stmt);
+                $product_unit = mysqli_fetch_assoc(mysqli_stmt_get_result($unit_stmt))['unit'] ?? '';
                 
-                // Delete old items
-                $sql_del_req_items = "DELETE FROM material_requisition_items WHERE requisition_id = ?";
-                $stmt_del_req_items = mysqli_prepare($conn, $sql_del_req_items);
-                mysqli_stmt_bind_param($stmt_del_req_items, "i", $requisition_id);
-                mysqli_stmt_execute($stmt_del_req_items);
-                
-                // Insert new items from updated BOM
-                foreach ($bom as $item) {
-                    $unit_sql = "SELECT unit FROM stock_products WHERE id = ?";
-                    $unit_stmt = mysqli_prepare($conn, $unit_sql);
-                    mysqli_stmt_bind_param($unit_stmt, "i", $item['product_id']);
-                    mysqli_stmt_execute($unit_stmt);
-                    $product_unit = mysqli_fetch_assoc(mysqli_stmt_get_result($unit_stmt))['unit'] ?? '';
-                    
-                    $sql_req_item = "INSERT INTO material_requisition_items (requisition_id, product_id, qty_requested, unit) 
-                                    VALUES (?, ?, ?, ?)";
-                    $stmt_req_item = mysqli_prepare($conn, $sql_req_item);
-                    mysqli_stmt_bind_param($stmt_req_item, "iids", $requisition_id, $item['product_id'], $item['qty'], $product_unit);
-                    mysqli_stmt_execute($stmt_req_item);
-                }
-                logStockAction($conn, $company_id, "อัปเดตรายการในใบเบิกวัสดุ ID: $requisition_id ตามการแก้ไข BOM", 'update');
+                $sql_req_item = "INSERT INTO material_requisition_items (requisition_id, product_id, qty_requested, unit) 
+                                VALUES (?, ?, ?, ?)";
+                $stmt_req_item = mysqli_prepare($conn, $sql_req_item);
+                mysqli_stmt_bind_param($stmt_req_item, "iids", $requisition_id, $item['product_id'], $item['qty'], $product_unit);
+                mysqli_stmt_execute($stmt_req_item);
             }
+            logStockAction($conn, $company_id, "อัปเดตรายการในใบเบิกวัสดุ ID: $requisition_id ตามการแก้ไข BOM", 'update');
         }
 
         mysqli_commit($conn);
@@ -827,12 +878,26 @@ if ($action == 'get_production') {
         mysqli_stmt_bind_param($stmt_bom, "i", $id);
         mysqli_stmt_execute($stmt_bom);
         $res_bom = mysqli_stmt_get_result($stmt_bom);
-        $order['bom'] = [];
-        while ($bom_row = mysqli_fetch_assoc($res_bom)) {
-            $order['bom'][] = $bom_row;
+        $bom_list = [];
+        while ($row_bom = mysqli_fetch_assoc($res_bom)) {
+            $bom_list[] = $row_bom;
         }
+
+        // Get byproducts
+        $bp_list = [];
+        $sql_bp = "SELECT * FROM stock_production_byproducts WHERE production_order_id = ?";
+        $stmt_bp = mysqli_prepare($conn, $sql_bp);
+        mysqli_stmt_bind_param($stmt_bp, "i", $id);
+        mysqli_stmt_execute($stmt_bp);
+        $res_bp = mysqli_stmt_get_result($stmt_bp);
+        while ($row_bp = mysqli_fetch_assoc($res_bp)) {
+            $bp_list[] = $row_bp;
+        }
+        
+        echo json_encode(['status' => 'success', 'data' => $order, 'bom' => $bom_list, 'byproducts' => $bp_list]);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'ไม่พบใบสั่งผลิต']);
     }
-    echo json_encode($order);
     exit;
 }
 
@@ -1482,8 +1547,7 @@ if ($action == 'get_production_details') {
         echo '<p>ไม่พบข้อมูลใบสั่งผลิต</p>';
         exit;
     }
-    
-    $sql_bom = "SELECT b.*, p.name as product_name, p.sku, p.unit 
+        $sql_bom = "SELECT b.*, p.name as product_name, p.sku, p.unit 
                 FROM stock_production_bom b 
                 JOIN stock_products p ON b.product_id = p.id 
                 WHERE b.production_order_id = ?";
@@ -1491,6 +1555,14 @@ if ($action == 'get_production_details') {
     mysqli_stmt_bind_param($stmt_bom, "i", $id);
     mysqli_stmt_execute($stmt_bom);
     $res_bom = mysqli_stmt_get_result($stmt_bom);
+    
+    // Get byproducts
+    $sql_bp = "SELECT * FROM stock_production_byproducts WHERE production_order_id = ? ORDER BY id";
+    $stmt_bp = mysqli_prepare($conn, $sql_bp);
+    mysqli_stmt_bind_param($stmt_bp, "i", $id);
+    mysqli_stmt_execute($stmt_bp);
+    $res_bp = mysqli_stmt_get_result($stmt_bp);
+
     
     echo '
     <div style="margin-bottom: 2rem; border-bottom: 2px solid #F3F4F6; padding-bottom: 1rem;">
@@ -1617,6 +1689,39 @@ if ($action == 'get_production_details') {
             </tbody>
         </table>
     </div>
+
+    <div style="margin-bottom: 2rem;">
+        <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">ผลิตภัณฑ์พลอยได้หรือเศษผลผลิตคงเหลือ</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #F0FDF4; border-bottom: 2px solid #BBF7D0;">
+                    <th style="padding: 0.75rem; text-align: left;">รายการ</th>
+                    <th style="padding: 0.75rem; text-align: right;">จำนวน</th>
+                    <th style="padding: 0.75rem; text-align: right;">ราคา/หน่วย</th>
+                    <th style="padding: 0.75rem; text-align: right;">รวมราคา</th>
+                </tr>
+            </thead>
+            <tbody>';
+    
+    if (mysqli_num_rows($res_bp) == 0) {
+        echo '<tr><td colspan="4" style="padding: 1rem; text-align: center; color: #9CA3AF;">ไม่มีรายการผลิตภัณฑ์พลอยได้</td></tr>';
+    } else {
+        while ($bp = mysqli_fetch_assoc($res_bp)) {
+            echo '
+                <tr style="border-bottom: 1px solid #F0FDF4;">
+                    <td style="padding: 0.75rem;">'.htmlspecialchars($bp['name']).'</td>
+                    <td style="padding: 0.75rem; text-align: right;">'.number_format($bp['qty'], 2).' '.htmlspecialchars($bp['unit']).'</td>
+                    <td style="padding: 0.75rem; text-align: right;">'.number_format($bp['price'], 2).'</td>
+                    <td style="padding: 0.75rem; text-align: right; font-weight: 600;">'.number_format($bp['total'], 2).'</td>
+                </tr>';
+        }
+    }
+    
+    echo '
+            </tbody>
+        </table>
+    </div>
+
     
     <div style="margin-bottom: 2rem;">
         <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">ขั้นตอนการทำงาน / คำแนะนำ</h3>
