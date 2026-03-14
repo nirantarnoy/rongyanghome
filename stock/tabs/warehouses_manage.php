@@ -275,7 +275,8 @@ function exportWarehouseExcel() {
     }
     
     // Add BOM for Excel Thai language support
-    let csvFile = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv.join("\\n")], {type: "text/csv;charset=utf-8;"});
+    let csvContent = "\ufeff" + csv.join("\r\n");
+    let csvFile = new Blob([csvContent], {type: "text/csv;charset=utf-8;"});
     let downloadLink = document.createElement("a");
     downloadLink.download = $('#warehouseDetailsView').data('warehouse-name') + ".csv";
     downloadLink.href = window.URL.createObjectURL(csvFile);
