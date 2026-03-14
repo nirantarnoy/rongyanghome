@@ -402,12 +402,19 @@ function editProduction(id) {
         type: 'GET',
         data: { id: id },
         dataType: 'json',
-        success: function(order) {
-            if (order) {
+        success: function(res) {
+            if (res.status === 'success') {
+                const order = res.data;
+                const bom = res.bom;
+                const byproducts = res.byproducts;
+
                 $('#production_id').val(order.id);
                 $('input[name="order_no"]').val(order.order_no);
-                $('input[name="order_date"]').val(order.order_date);
-                $('input[name="due_date"]').val(order.due_date);
+                
+                // Format dates to YYYY-MM-DD for input[type=date]
+                if (order.order_date) $('input[name="order_date"]').val(order.order_date.split(' ')[0]);
+                if (order.due_date) $('input[name="due_date"]').val(order.due_date.split(' ')[0]);
+                
                 $('input[name="customer_name"]').val(order.customer_name);
                 $('input[name="project_name"]').val(order.project_name);
                 $('#prod_select').val(order.product_id);
@@ -423,9 +430,9 @@ function editProduction(id) {
                 // Load BOM
                 $('#bomItemsContainer').html('');
                 bomRowCount = 0;
-                if (order.bom && order.bom.length > 0) {
+                if (bom && bom.length > 0) {
                     $('#noBomText').hide();
-                    order.bom.forEach(item => {
+                    bom.forEach(item => {
                         addBomRowWithData(item.product_id, item.qty);
                     });
                 } else {
@@ -435,9 +442,9 @@ function editProduction(id) {
                 // Load Byproducts
                 $('#byproductItemsContainer').html('');
                 byproductRowCount = 0;
-                if (order.byproducts && order.byproducts.length > 0) {
+                if (byproducts && byproducts.length > 0) {
                     $('#noByproductText').hide();
-                    order.byproducts.forEach(item => {
+                    byproducts.forEach(item => {
                         addByproductRowWithData(item);
                     });
                 } else {
@@ -448,7 +455,12 @@ function editProduction(id) {
                 $('#btnCancelProductionEdit').show();
                 $('.content-card h2:first').html('<i class="fas fa-edit" style="color: var(--accent-purple);"></i> แก้ไขใบสั่งผลิต');
                 window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                Swal.fire('ผิดพลาด', res.message, 'error');
             }
+        },
+        error: function() {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถดึงข้อมูลใบสั่งผลิตได้', 'error');
         }
     });
 }
@@ -542,8 +554,12 @@ function finishProduction(id) {
         type: 'GET',
         data: { id: id },
         dataType: 'json',
-        success: function(order) {
-            if (!order) return;
+        success: function(res) {
+            if (res.status !== 'success') {
+                Swal.fire('ผิดพลาด', res.message, 'error');
+                return;
+            }
+            const order = res.data;
 
             // 2. Fetch warehouses for the selection
             const warehouses = <?= json_encode($warehouses ?? []) ?>;
