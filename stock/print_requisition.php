@@ -126,7 +126,14 @@ $company = mysqli_fetch_assoc(mysqli_stmt_get_result($comp_stmt));
         </table>
 
         <!-- Meta Info -->
-        <table class="meta-info" style="margin-bottom: 30px;">
+        <?php
+        // Try to get warehouse name from items (use the first one found)
+        mysqli_data_seek($res_items, 0);
+        $first_item = mysqli_fetch_assoc($res_items);
+        $warehouse_name = $first_item['warehouse_name'] ?? '-';
+        mysqli_data_seek($res_items, 0); // Reset for the main loop later
+        ?>
+        <table class="meta-info" style="margin-bottom: 10px;">
             <tr>
                 <td class="meta-label">รับผิดชอบ:</td>
                 <td style="width: 35%;"><span class="meta-underline"><?= htmlspecialchars($req['requester_name'] ?? '-') ?></span></td>
@@ -135,14 +142,19 @@ $company = mysqli_fetch_assoc(mysqli_stmt_get_result($comp_stmt));
             </tr>
             <tr>
                 <td class="meta-label">ตำแหน่งปลายทาง:</td>
-                <td><span class="meta-underline">________________________</span></td>
+                <td><span class="meta-underline"><?= htmlspecialchars($req['customer_name'] ?? '-') ?></span></td>
                 <td class="meta-label">เอกสารอ้างอิง:</td>
                 <td><span class="meta-underline"><?= htmlspecialchars($req['so_no'] ?? $req['po_no'] ?? '-') ?></span></td>
+            </tr>
+            <tr>
+                <td class="meta-label">ทาง (จัดส่งโดย):</td>
+                <td><span class="meta-underline"><?= htmlspecialchars($req['shipping_method'] ?: '-') ?></span></td>
+                <td colspan="2">ที่อยู่: <span class="meta-underline"><?= htmlspecialchars($req['shipping_address'] ?: '-') ?></span></td>
             </tr>
         </table>
 
         <div style="margin: 20px 0; font-weight: bold;">
-            คลังสินค้า <span style="border-bottom: 1px solid #ccc; min-width: 300px; display: inline-block;">________________________________</span>
+            คลังสินค้า <span style="border-bottom: 1px solid #ccc; min-width: 300px; display: inline-block; padding-left: 10px;"><?= htmlspecialchars($warehouse_name) ?></span>
         </div>
 
         <!-- สินค้าที่เบิก -->

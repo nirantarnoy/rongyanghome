@@ -54,6 +54,32 @@ mysqli_stmt_bind_param($comp_stmt, "i", $company_id);
 mysqli_stmt_execute($comp_stmt);
 $comp_result = mysqli_stmt_get_result($comp_stmt);
 $company = mysqli_fetch_assoc($comp_result);
+
+// Calculate duration
+$duration = '-';
+if (!empty($order['order_date']) && !empty($order['due_date']) && $order['due_date'] != '0000-00-00') {
+    $d1 = new DateTime($order['order_date']);
+    $d2 = new DateTime($order['due_date']);
+    $diff = $d1->diff($d2);
+    $duration = $diff->days;
+    if ($duration == 0) $duration = 1; // At least 1 day if start/end are same
+}
+
+// Get Warehouse names from requisition items
+$wh_sql = "SELECT DISTINCT w.name 
+           FROM material_requisition_items mri
+           JOIN stock_warehouses w ON mri.warehouse_id = w.id
+           JOIN material_requisitions mr ON mri.requisition_id = mr.id
+           WHERE mr.production_order_id = ? AND mr.company_id = ?";
+$wh_stmt = mysqli_prepare($conn, $wh_sql);
+mysqli_stmt_bind_param($wh_stmt, "ii", $id, $company_id);
+mysqli_stmt_execute($wh_stmt);
+$wh_res = mysqli_stmt_get_result($wh_stmt);
+$wh_names = [];
+while ($wh_row = mysqli_fetch_assoc($wh_res)) {
+    $wh_names[] = $wh_row['name'];
+}
+$warehouse_display = !empty($wh_names) ? implode(', ', $wh_names) : '';
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -147,8 +173,18 @@ $company = mysqli_fetch_assoc($comp_result);
             <tr>
                 <td class="meta-label">รับผิดชอบ:</td>
                 <td><?= htmlspecialchars($order['foreman'] ?? 'บจก.บ้านสักทองร้องแหย่ง') ?></td>
-                <td class="meta-label">วันที่เริ่มต้น:</td>
-                <td><?= date('d-m-Y H:i', strtotime($order['order_date'])) ?></td>
+                <td class="meta-label">วันที่สั่งผลิต:</td>
+                <td><?= date('d/m/Y', strtotime($order['order_date'])) ?></td>
+            </tr>
+            <tr>
+                <td class="meta-label">ลูกค้า:</td>
+                <td><?= htmlspecialchars($order['customer_name'] ?? '-') ?></td>
+                <td class="meta-label">กำหนดเสร็จ:</td>
+                <td><?= $order['due_date'] ? date('d/m/Y', strtotime($order['due_date'])) : '-' ?></td>
+            </tr>
+            <tr>
+                <td class="meta-label">โครงการ:</td>
+                <td colspan="3"><?= htmlspecialchars($order['project_name'] ?? '-') ?></td>
             </tr>
         </table>
 
@@ -157,18 +193,18 @@ $company = mysqli_fetch_assoc($comp_result);
         <table class="data-table">
             <thead>
                 <tr>
-                    <th style="width: 15%;">ปฏิบัติการ</th>
-                    <th style="width: 45%;">ศูนย์งาน</th>
+                    <th style="width: 25%;">ปฏิบัติการ (ขั้นตอน)</th>
+                    <th style="width: 35%;">ศูนย์งาน</th>
                     <th style="width: 15%;">ระยะเวลา (วัน)</th>
-                    <th style="width: 25%;">ผู้ปฏิบัติงาน</th>
+                    <th style="width: 25%;">ผู้ปฏิบัติงาน/หัวหน้างาน</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td class="text-center">เลื่อย</td>
-                    <td>โรงงานบริษัทบ้านสักทองร้องแหย่งจำกัด</td>
-                    <td class="text-center"></td>
-                    <td></td>
+                    <td class="text-center"><?= nl2br(htmlspecialchars($order['instructions'] ?: 'เลื่อย')) ?></td>
+                    <td><?= htmlspecialchars($order['project_name'] ?: 'โรงงานบริษัทบ้านสักทองร้องแหย่งจำกัด') ?></td>
+                    <td class="text-center"><?= $duration ?></td>
+                    <td class="text-center"><?= htmlspecialchars($order['foreman'] ?: '-') ?></td>
                 </tr>
             </tbody>
         </table>
@@ -193,7 +229,12 @@ $company = mysqli_fetch_assoc($comp_result);
                 ?>
                 <tr>
                     <td class="text-center">1</td>
-                    <td><?= htmlspecialchars($order['product_name']) ?></td>
+                    <td>
+                        <?= htmlspecialchars($order['product_name']) ?>
+                        <?php if (!empty($order['dimensions'])): ?>
+                            <br><small style="color: #666;">ขนาด/มิติ: <?= htmlspecialchars($order['dimensions']) ?></small>
+                        <?php endif; ?>
+                    </td>
                     <td class="text-center"><?= number_format($order['qty'], 2) ?></td>
                     <td class="text-center"><?= htmlspecialchars($order['unit']) ?></td>
                     <td class="text-right"><?= number_format($price, 2) ?></td>
@@ -203,8 +244,17 @@ $company = mysqli_fetch_assoc($comp_result);
         </table>
         <div class="total-box">รวมราคา <?= number_format($total_prod, 2) ?> บาท</div>
 
+        <?php if (!empty($order['qc_standards'])): ?>
+        <div style="margin-top: 5px; margin-bottom: 15px;">
+            <strong>มาตรฐานการตรวจสอบ (QC):</strong>
+            <div style="border: 1px solid #ccc; padding: 8px; border-radius: 4px; margin-top: 3px; font-size: 12px;">
+                <?= nl2br(htmlspecialchars($order['qc_standards'])) ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- ส่วนประกอบ -->
-        <div class="section-title">ส่วนประกอบ คลังสินค้า(เลือกคลัง) _________________</div>
+        <div class="section-title">ส่วนประกอบ คลังสินค้า: <?= htmlspecialchars($warehouse_display ?: '_________________') ?></div>
         <table class="data-table">
             <thead>
                 <tr>

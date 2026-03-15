@@ -1590,6 +1590,10 @@ if ($action == 'get_production_details') {
                 <p><strong>หัวหน้าช่าง:</strong> '.htmlspecialchars($order['foreman'] ?? '-').'</p>
             </div>
         </div>
+        <div style="margin-top: 1rem; border-top: 1px dashed #E5E7EB; padding-top: 1rem;">
+            <p><strong>ขั้นตอนการทำงาน/คำแนะนำ (ปฏิบัติการ):</strong><br>'.nl2br(htmlspecialchars($order['instructions'] ?? '-')).'</p>
+            <p style="margin-top: 1rem;"><strong>มาตรฐานการตรวจสอบ (QC):</strong><br>'.nl2br(htmlspecialchars($order['qc_standards'] ?? '-')).'</p>
+        </div>
     </div>';
     
     $mr_html = "";
