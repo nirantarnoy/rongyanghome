@@ -58,9 +58,14 @@
             <div id="reqItemsContainer">
                 <!-- Initial row will be added by JS -->
             </div>
-            <button type="button" class="btn-primary" style="background: #10B981;" onclick="addRow()">
-                <i class="fas fa-plus"></i> เพิ่มรายการ
-            </button>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn-primary" style="background: #10B981;" onclick="addRow()">
+                    <i class="fas fa-plus"></i> เพิ่มรายการ
+                </button>
+                <button type="button" class="btn-primary" style="background: #6366F1;" onclick="openStockSelector()">
+                    <i class="fas fa-warehouse"></i> ดึงจากคลังสินค้า
+                </button>
+            </div>
         </div>
 
         <div style="grid-column: 1/-1; text-align: right; margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem;">
@@ -201,6 +206,10 @@ const products = <?= json_encode($products) ?>;
 const warehouses = <?= json_encode($warehouses) ?>;
 
 function addRow() {
+    addRowWithData(null, null, null);
+}
+
+function addRowWithData(productId, warehouseId, qty) {
     let prodOptions = '<option value="">-- เลือกสินค้า --</option>';
     products.forEach(p => {
         prodOptions += `<option value="${p.id}">${p.name} (${p.sku})</option>`;
@@ -211,17 +220,18 @@ function addRow() {
         whOptions += `<option value="${w.id}">${w.name}</option>`;
     });
 
+    const currentIndex = rowCount;
     const html = `
-    <div class="req-item-row" id="row_${rowCount}" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #EEE;">
+    <div class="req-item-row" id="row_${currentIndex}" style="display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.5rem; border: 1px solid #EEE;">
         <div class="form-group" style="flex: 1 1 200px; margin-bottom: 0;">
             <label>สินค้า</label>
-            <select name="items[${rowCount}][product_id]" class="form-control prod-select" required onchange="checkStock(${rowCount})">
+            <select name="items[${currentIndex}][product_id]" class="form-control prod-select" required onchange="checkStock(${currentIndex})">
                 ${prodOptions}
             </select>
         </div>
         <div class="form-group" style="flex: 1 1 150px; margin-bottom: 0;">
             <label>คลังสินค้า</label>
-            <select name="items[${rowCount}][warehouse_id]" class="form-control wh-select" required onchange="checkStock(${rowCount})">
+            <select name="items[${currentIndex}][warehouse_id]" class="form-control wh-select" required onchange="checkStock(${currentIndex})">
                 ${whOptions}
             </select>
         </div>
@@ -231,7 +241,7 @@ function addRow() {
         </div>
         <div class="form-group" style="flex: 1 1 100px; margin-bottom: 0;">
             <label>จำนวนเบิก</label>
-            <input type="number" name="items[${rowCount}][qty]" class="form-control qty-input" min="1" required onkeyup="validateQty(${rowCount})" onchange="validateQty(${rowCount})">
+            <input type="number" name="items[${currentIndex}][qty]" class="form-control qty-input" min="1" required onkeyup="validateQty(${currentIndex})" onchange="validateQty(${currentIndex})">
         </div>
         <div style="flex: 0 0 auto; margin-bottom: 0;">
             <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem; height: 42px;" onclick="removeRow(this)">
@@ -240,6 +250,13 @@ function addRow() {
         </div>
     </div>`;
     $('#reqItemsContainer').append(html);
+    
+    if (productId) $(`#row_${currentIndex} .prod-select`).val(productId);
+    if (warehouseId) $(`#row_${currentIndex} .wh-select`).val(warehouseId);
+    if (qty) $(`#row_${currentIndex} .qty-input`).val(qty);
+    
+    if (productId && warehouseId) checkStock(currentIndex);
+    
     rowCount++;
 }
 
@@ -361,10 +378,8 @@ function editRequisition(id) {
         success: function(response) {
             if (response.status === 'success') {
                 const req = response.data;
-                if (req.status !== 'pending') {
-                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถแก้ไขใบเบิกนี้ได้', 'error');
-                    return;
-                }
+                // Allow editing regardless of status (like production)
+                // if (req.status !== 'pending') { ... } 
                 $('#requisition_id').val(req.id);
                 $('input[name="req_no"]').val(req.req_no);
                 $('input[name="requisition_date"]').val(req.requisition_date);
@@ -380,12 +395,7 @@ function editRequisition(id) {
                 rowCount = 0;
                 
                 req.items.forEach(item => {
-                    addRow();
-                    const currentRow = rowCount - 1;
-                    $(`#row_${currentRow} .prod-select`).val(item.product_id);
-                    $(`#row_${currentRow} .wh-select`).val(item.warehouse_id);
-                    $(`#row_${currentRow} .qty-input`).val(item.qty);
-                    checkStock(currentRow);
+                    addRowWithData(item.product_id, item.warehouse_id, item.qty);
                 });
                 
                 $('#btnSubmitReq').html('<i class="fas fa-save"></i> อัปเดตใบเบิกสินค้า');
@@ -564,6 +574,84 @@ function saveProjectExpense() {
                 Swal.fire('ผิดพลาด', data.message, 'error');
             }
         }
+    });
+}
+
+function openStockSelector() {
+    Swal.fire({
+        title: 'เลือกสินค้าจากคลังสินค้า',
+        html: `
+            <div class="text-left space-y-4" style="text-align: left;">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">เลือกคลังสินค้า</label>
+                    <select id="swal_warehouse_id" class="form-control" style="width: 100%;" onchange="loadWarehouseProducts(this.value)">
+                        <option value="">-- เลือกคลังสินค้า --</option>
+                        ${warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('')}
+                    </select>
+                </div>
+                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; rounded: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
+                    <p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>
+                </div>
+            </div>
+        `,
+        width: '700px',
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+function loadWarehouseProducts(whId) {
+    if (!whId) {
+        $('#swal_product_list').html('<p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>');
+        return;
+    }
+    
+    $('#swal_product_list').html('<p style="text-align: center; color: #6b7280; padding: 3rem;"><i class="fas fa-spinner fa-spin"></i> กำลังโหลดข้อมูล...</p>');
+    
+    $.ajax({
+        url: 'stock_action.php?action=get_warehouse_products',
+        type: 'GET',
+        data: { warehouse_id: whId },
+        success: function(res) {
+            let html = '';
+            if (!res || res.length === 0) {
+                html = '<p style="text-align: center; color: #9ca3af; padding: 3rem;">ไม่มีสินค้าในคลังนี้</p>';
+            } else {
+                res.forEach(p => {
+                    const productJson = JSON.stringify(p).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
+                    html += `
+                        <div onclick='addSelectedReqProduct(${productJson}, ${whId})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 0.3rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                    ${p.image_url ? `<img src="${p.image_url}" style="width: 100%; height: 100%; object-fit: contain;">` : '<i class="fas fa-box" style="color: #d1d5db;"></i>'}
+                                </div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 600; color: #1f2937;">${p.name}</div>
+                                    <div style="font-size: 0.75rem; color: #6b7280;">SKU: ${p.sku || '-'} | คงเหลือ: <span style="font-weight: 600; color: #374151;">${p.balance}</span> ${p.unit}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-weight: 700; color: #7C3AED;">฿${parseFloat(p.price).toLocaleString()}</div>
+                                <div style="font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; font-weight: 600;">คลิกเพื่อเบิก</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            $('#swal_product_list').html(html);
+        }
+    });
+}
+
+function addSelectedReqProduct(p, whId) {
+    addRowWithData(p.id, whId, 1);
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        icon: 'success',
+        title: 'เพิ่มสินค้า ' + p.name + ' เรียบร้อย'
     });
 }
 
