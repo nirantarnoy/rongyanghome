@@ -568,7 +568,7 @@ function addItem(data = null) {
     const html = `
         <div class="item-row border border-gray-200 rounded-lg p-4 bg-gray-50" data-item="${itemCount}">
             <div class="grid grid-cols-12 gap-3">
-                <div class="col-span-4">
+                <div class="col-span-5">
                     <label class="block text-xs font-medium text-gray-600 mb-1">รายการ</label>
                     <input type="text" class="item-name w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="ชื่อสินค้า/บริการ" value="${data?.name || ''}">
                 </div>
@@ -583,10 +583,6 @@ function addItem(data = null) {
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600 mb-1">ราคา/หน่วย</label>
                     <input type="number" class="item-price w-full px-3 py-2 border border-gray-300 rounded text-sm" value="${data?.price || 0}" min="0" step="0.01" onchange="calculateTotal()">
-                </div>
-                <div class="col-span-1">
-                    <label class="block text-xs font-medium text-gray-600 mb-1">ส่วนลด</label>
-                    <input type="number" class="item-discount w-full px-3 py-2 border border-gray-300 rounded text-sm" value="${data?.discount || 0}" min="0" step="0.01" onchange="calculateTotal()">
                 </div>
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600 mb-1">รวม</label>
@@ -626,21 +622,17 @@ function previewItemImage(input, id) {
 
 function calculateTotal() {
     let subtotal = 0;
-    let totalDiscount = 0;
     
     $('.item-row').each(function() {
         const qty = parseFloat($(this).find('.item-qty').val()) || 0;
         const price = parseFloat($(this).find('.item-price').val()) || 0;
-        const discount = parseFloat($(this).find('.item-discount').val()) || 0;
-        
-        const total = (qty * price) - discount;
+        const total = (qty * price);
         
         $(this).find('.item-total').val(total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-        subtotal += (qty * price);
-        totalDiscount += discount;
+        subtotal += total;
     });
     
-    return { subtotal, totalDiscount };
+    return { subtotal, totalDiscount: 0 };
 }
 
 function previewSignature(num) {
@@ -675,7 +667,7 @@ function savePO() {
         const image = $(this).find('img[id^="item_img_"]').attr('src') || '';
         
         if (name) {
-            items.push({ name, qty, unit, price, discount, image });
+            items.push({ name, qty, unit, price, discount: 0, image });
         }
     });
 
@@ -785,9 +777,8 @@ function generatePreview() {
         const qty = parseFloat($(this).find('.item-qty').val()) || 0;
         const unit = $(this).find('.item-unit').val();
         const price = parseFloat($(this).find('.item-price').val()) || 0;
-        const disc = parseFloat($(this).find('.item-discount').val()) || 0;
         const image = $(this).find('img[id^="item_img_"]').attr('src') || '';
-        const total = (qty * price) - disc;
+        const total = (qty * price);
         
         itemsHtml += `
             <tr style="border-bottom: 1px solid #000;">
@@ -850,7 +841,7 @@ function generatePreview() {
                     <th style="padding: 5px;">รายการ</th>
                     <th style="width: 80px; padding: 5px;">จำนวน</th>
                     <th style="width: 80px; padding: 5px;">หน่วยนับ</th>
-                    <th style="width: 100px; padding: 5px;">ราคา</th>
+                    <th style="width: 100px; padding: 5px;">ราคา/หน่วย</th>
                     <th style="width: 120px; padding: 5px;">รวมเป็นเงิน</th>
                 </tr>
             </thead>

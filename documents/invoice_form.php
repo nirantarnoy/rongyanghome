@@ -597,7 +597,7 @@ function addItem(data = null) {
     const html = `
         <div class="item-row border border-gray-100 rounded-2xl p-4 bg-gray-50/50" data-item="${itemCount}">
             <div class="grid grid-cols-12 gap-3">
-                <div class="col-span-12 md:col-span-4">
+                <div class="col-span-12 md:col-span-5">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">รายการ</label>
                     <input type="text" class="item-name w-full px-3 py-2 border border-gray-200 rounded-xl text-sm" value="${data?.name || ''}">
                     <div class="mt-2 flex items-center gap-2">
@@ -616,10 +616,6 @@ function addItem(data = null) {
                 <div class="col-span-3 md:col-span-2">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">ราคา/หน่วย</label>
                     <input type="number" class="item-price w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-right" value="${data?.price || 0}" step="0.01" onchange="calculateDocTotal()">
-                </div>
-                <div class="col-span-3 md:col-span-1">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">ส่วนลด</label>
-                    <input type="number" class="item-discount w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-right" value="${data?.discount || 0}" step="0.01" onchange="calculateDocTotal()">
                 </div>
                 <div class="col-span-9 md:col-span-2">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">รวม</label>
@@ -646,20 +642,17 @@ function removeItem(id) {
 
 function calculateDocTotal() {
     let subtotal = 0;
-    let totalDiscount = 0;
     
     $('.item-row').each(function() {
         const qty = parseFloat($(this).find('.item-qty').val()) || 0;
         const price = parseFloat($(this).find('.item-price').val()) || 0;
-        const discount = parseFloat($(this).find('.item-discount').val()) || 0;
-        const total = (qty * price) - discount;
+        const total = (qty * price);
         
         $(this).find('.item-total').val(total.toLocaleString(undefined, {minimumFractionDigits: 2}));
-        subtotal += (qty * price);
-        totalDiscount += discount;
+        subtotal += total;
     });
     
-    return { subtotal, totalDiscount };
+    return { subtotal, totalDiscount: 0 };
 }
 
 function compressImage(file, maxWidth, maxHeight, quality) {
@@ -779,7 +772,7 @@ function saveInvoice() {
                 qty: $(this).find('.item-qty').val(),
                 unit: $(this).find('.item-unit').val().trim(),
                 price: $(this).find('.item-price').val(),
-                discount: $(this).find('.item-discount').val()
+                discount: 0
             });
         }
     });
@@ -907,8 +900,7 @@ function generatePreview() {
     $('.item-row').each((i, el) => {
         const q = parseFloat($(el).find('.item-qty').val()) || 0;
         const p = parseFloat($(el).find('.item-price').val()) || 0;
-        const d = parseFloat($(el).find('.item-discount').val()) || 0;
-        const t = (q * p) - d;
+        const t = (q * p);
         const itemImg = $(el).find('img[id^="item_img_"]').attr('src') || '';
         itemRows += `
             <tr>
@@ -953,7 +945,7 @@ function generatePreview() {
             </div>
         </div>
         <table class="doc-table">
-            <thead><tr><th style="width:40px; white-space: nowrap;">ลำดับ</th><th style="width:60px">รูป</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:60px">หน่วย</th><th style="width:100px">ราคา</th><th style="width:120px">รวมเงิน</th></tr></thead>
+            <thead><tr><th style="width:40px; white-space: nowrap;">ลำดับ</th><th style="width:60px">รูป</th><th>รายการ</th><th style="width:80px">จำนวน</th><th style="width:60px">หน่วย</th><th style="width:100px">ราคา/หน่วย</th><th style="width:120px">รวมเงิน</th></tr></thead>
             <tbody>${itemRows}</tbody>
         </table>
         <div class="doc-footer" style="display: block; border: 1px solid #000; border-top: none;">
