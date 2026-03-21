@@ -743,6 +743,30 @@ if ($action == 'add_production') {
             logStockAction($conn, $company_id, "สร้างใบเบิกจ่ายวัสดุอัตโนมัติ: $requisition_no จากใบสั่งผลิต $order_no", 'create');
         }
 
+        // Save byproducts as products if requested
+        $warnings = [];
+        if (($_POST['save_byproducts_as_products'] ?? 0) == 1 && !empty($byproducts)) {
+            foreach ($byproducts as $bp) {
+                $bp_name = $bp['name'] ?? '';
+                if (empty($bp_name)) continue;
+                $check_p = "SELECT id FROM stock_products WHERE name = ? AND company_id = ? LIMIT 1";
+                $st_p = mysqli_prepare($conn, $check_p);
+                mysqli_stmt_bind_param($st_p, "si", $bp_name, $company_id);
+                mysqli_stmt_execute($st_p);
+                $res_p = mysqli_stmt_get_result($st_p);
+                if (mysqli_num_rows($res_p) > 0) {
+                    $warnings[] = "สินค้าชื่อ '$bp_name' มีอยู่ในระบบแล้ว (ข้ามการบันทึก)";
+                } else {
+                    $bp_unit = $bp['unit'] ?? '';
+                    $bp_price = (float)($bp['price'] ?? 0);
+                    $ins_p = "INSERT INTO stock_products (company_id, year, name, unit, price) VALUES (?, ?, ?, ?, ?)";
+                    $st_ins = mysqli_prepare($conn, $ins_p);
+                    mysqli_stmt_bind_param($st_ins, "iissd", $company_id, $active_year, $bp_name, $bp_unit, $bp_price);
+                    mysqli_stmt_execute($st_ins);
+                }
+            }
+        }
+
         mysqli_commit($conn);
         logStockAction($conn, $company_id, "สร้างใบสั่งผลิต: $order_no", 'create');
         
@@ -751,7 +775,7 @@ if ($action == 'add_production') {
             $message .= ' และสร้างใบเบิกจ่ายวัสดุอัตโนมัติแล้ว';
         }
         
-        echo json_encode(['status' => 'success', 'message' => $message, 'production_id' => $production_order_id]);
+        echo json_encode(['status' => 'success', 'message' => $message, 'production_id' => $production_order_id, 'warnings' => $warnings]);
     } catch (Throwable $e) {
         mysqli_rollback($conn);
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
@@ -819,6 +843,29 @@ if ($action == 'update_production') {
             mysqli_stmt_bind_param($stmt_bp, "isdsdd", $id, $bp_name, $bp_qty, $bp_unit, $bp_price, $bp_total);
             mysqli_stmt_execute($stmt_bp);
         }
+        // Save byproducts as products if requested
+        $warnings = [];
+        if (($_POST['save_byproducts_as_products'] ?? 0) == 1 && !empty($byproducts)) {
+            foreach ($byproducts as $bp) {
+                $bp_name = $bp['name'] ?? '';
+                if (empty($bp_name)) continue;
+                $check_p = "SELECT id FROM stock_products WHERE name = ? AND company_id = ? LIMIT 1";
+                $st_p = mysqli_prepare($conn, $check_p);
+                mysqli_stmt_bind_param($st_p, "si", $bp_name, $company_id);
+                mysqli_stmt_execute($st_p);
+                $res_p = mysqli_stmt_get_result($st_p);
+                if (mysqli_num_rows($res_p) > 0) {
+                    $warnings[] = "สินค้าชื่อ '$bp_name' มีอยู่ในระบบแล้ว (ข้ามการบันทึก)";
+                } else {
+                    $bp_unit = $bp['unit'] ?? '';
+                    $bp_price = (float)($bp['price'] ?? 0);
+                    $ins_p = "INSERT INTO stock_products (company_id, year, name, unit, price) VALUES (?, ?, ?, ?, ?)";
+                    $st_ins = mysqli_prepare($conn, $ins_p);
+                    mysqli_stmt_bind_param($st_ins, "iissd", $company_id, $active_year, $bp_name, $bp_unit, $bp_price);
+                    mysqli_stmt_execute($st_ins);
+                }
+            }
+        }
         // Update pending material requisition if exists
         $sql_check_req = "SELECT id FROM material_requisitions WHERE production_order_id = ? AND status = 'pending' LIMIT 1";
         $stmt_check_req = mysqli_prepare($conn, $sql_check_req);
@@ -853,8 +900,8 @@ if ($action == 'update_production') {
         }
 
         mysqli_commit($conn);
-        logStockAction($conn, $company_id, "แก้ไขใบสั่งผลิต: $order_no", 'update');
-        echo json_encode(['status' => 'success', 'message' => 'อัปเดตใบสั่งผลิตและรายการเบิกวัสดุเรียบร้อยแล้ว']);
+        logStockAction($conn, $company_id, "แก้ไขใบสั่งผลิต: $order_no (ID: $id)", 'update');
+        echo json_encode(['status' => 'success', 'message' => 'อัปเดตใบสั่งผลิตเรียบร้อยแล้ว', 'warnings' => $warnings]);
     } catch (Throwable $e) {
         mysqli_rollback($conn);
         echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);

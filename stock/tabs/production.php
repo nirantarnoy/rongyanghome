@@ -316,29 +316,70 @@ $(document).ready(function() {
 
     $('#productionForm').on('submit', function(e) {
         e.preventDefault();
-        const formData = $(this).serialize();
         const productionId = $('#production_id').val();
         const action = productionId ? 'update_production' : 'add_production';
+        const byproductRows = $('.byproduct-item-row');
         
-        $.ajax({
-            url: 'stock_action.php?action=' + action,
-            type: 'POST',
-            data: formData,
-            dataType: 'json',
-            success: function(res) {
-                if (res.status === 'success') {
-                    Swal.fire('สำเร็จ', res.message, 'success');
-                    resetProductionForm();
-                    loadProductionOrders();
-                } else {
-                    Swal.fire('ผิดพลาด', res.message, 'error');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', xhr.responseText);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + error + '<br><br>กรุณาตรวจสอบ Console สำหรับรายละเอียด', 'error');
+        async function submitForm(saveByproducts = 0) {
+            let formData = $('#productionForm').serialize();
+            if (saveByproducts) {
+                formData += '&save_byproducts_as_products=1';
             }
-        });
+
+            $.ajax({
+                url: 'stock_action.php?action=' + action,
+                type: 'POST',
+                data: formData,
+                dataType: 'json',
+                success: function(res) {
+                    if (res.status === 'success') {
+                        if (res.warnings && res.warnings.length > 0) {
+                            Swal.fire({
+                                title: 'สำเร็จ',
+                                html: res.message + '<br><br>' + 
+                                      '<div style="text-align: left; background: #FFF9C4; padding: 1rem; border-radius: 0.5rem; border: 1px solid #FFD600; font-size: 0.9rem; color: #856404;">' +
+                                      '<strong>การแจ้งเตือน:</strong><br>' + res.warnings.join('<br>') + 
+                                      '</div>',
+                                icon: 'success'
+                            });
+                        } else {
+                            Swal.fire('สำเร็จ', res.message, 'success');
+                        }
+                        resetProductionForm();
+                        loadProductionOrders();
+                    } else {
+                        Swal.fire('ผิดพลาด', res.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', xhr.responseText);
+                    Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้: ' + error + '<br><br>กรุณาตรวจสอบ Console สำหรับรายละเอียด', 'error');
+                }
+            });
+        }
+
+        if (byproductRows.length > 0) {
+            Swal.fire({
+                title: 'สินค้าพลอยได้',
+                text: 'ต้องการบันทึกสินค้าพลอยได้เหล่านี้เป็นสินค้าใหม่ในระบบด้วยหรือไม่?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: 'ใช่, บันทึกเป็นสินค้าใหม่',
+                denyButtonText: 'ไม่ต้องการ, บันทึกเฉพาะใบสั่งผลิต',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#10B981',
+                denyButtonColor: '#6B7280'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    submitForm(1);
+                } else if (result.isDenied) {
+                    submitForm(0);
+                }
+            });
+        } else {
+            submitForm(0);
+        }
     });
 
     $('#btnCancelProductionEdit').on('click', function() {
