@@ -1082,6 +1082,7 @@ if ($action == 'complete_production') {
     $id = $_POST['id'] ?? 0;
     $warehouse_id = $_POST['warehouse_id'] ?? 0;
     $prod_qty = $_POST['prod_qty'] ?? 0; // Actual qty produced
+    $byproduct_warehouses = $_POST['byproduct_warehouses'] ?? [];
     
     if (!$warehouse_id) {
         echo json_encode(['status' => 'error', 'message' => 'กรุณาระบุคลังสินค้า']);
@@ -1114,9 +1115,56 @@ if ($action == 'complete_production') {
         $note_in = "ผลิตสำเร็จตามใบสั่งผลิต: " . $order['order_no'];
         $stmt_in = mysqli_prepare($conn, $sql_in);
         mysqli_stmt_bind_param($stmt_in, "iiids", $company_id, $order['product_id'], $warehouse_id, $actual_qty, $note_in);
-        mysqli_stmt_execute($stmt_in);
+        if (!mysqli_stmt_execute($stmt_in)) {
+            throw new Exception("Error recording stock in: " . mysqli_error($conn));
+        }
 
-        // 4. Stock OUT for BOM items (if not already completed via material requisition)
+        // 4. Handle Byproducts
+        $sql_bp = "SELECT * FROM stock_production_byproducts WHERE production_order_id = ?";
+        $stmt_bp = mysqli_prepare($conn, $sql_bp);
+        mysqli_stmt_bind_param($stmt_bp, "i", $id);
+        mysqli_stmt_execute($stmt_bp);
+        $res_bp = mysqli_stmt_get_result($stmt_bp);
+        
+        while ($bp = mysqli_fetch_assoc($res_bp)) {
+            $bp_id = $bp['id'];
+            $bp_wh_id = $byproduct_warehouses[$bp_id] ?? 0;
+            
+            if ($bp_wh_id > 0) {
+                // Find or create product for this byproduct name
+                $bp_name = $bp['name'];
+                $bp_unit = $bp['unit'];
+                $bp_price = $bp['price'];
+                
+                $check_sql = "SELECT id FROM stock_products WHERE name = ? AND company_id = ? LIMIT 1";
+                $check_stmt = mysqli_prepare($conn, $check_sql);
+                mysqli_stmt_bind_param($check_stmt, "si", $bp_name, $company_id);
+                mysqli_stmt_execute($check_stmt);
+                $res_check = mysqli_stmt_get_result($check_stmt);
+                
+                if ($p_row = mysqli_fetch_assoc($res_check)) {
+                    $p_id = $p_row['id'];
+                } else {
+                    // Create product
+                    $ins_p_sql = "INSERT INTO stock_products (company_id, year, name, unit, price) VALUES (?, ?, ?, ?, ?)";
+                    $ins_p_stmt = mysqli_prepare($conn, $ins_p_sql);
+                    $year = $active_year;
+                    mysqli_stmt_bind_param($ins_p_stmt, "iissd", $company_id, $year, $bp_name, $bp_unit, $bp_price);
+                    mysqli_stmt_execute($ins_p_stmt);
+                    $p_id = mysqli_insert_id($conn);
+                }
+                
+                // Record stock in for byproduct
+                $bp_in_sql = "INSERT INTO stock_transactions (company_id, product_id, warehouse_id, type, qty, note, transaction_date) 
+                             VALUES (?, ?, ?, 'in', ?, ?, NOW())";
+                $bp_note = "สินค้าพลอยได้จากใบสั่งผลิต: " . $order['order_no'];
+                $bp_in_stmt = mysqli_prepare($conn, $bp_in_sql);
+                mysqli_stmt_bind_param($bp_in_stmt, "iiids", $company_id, $p_id, $bp_wh_id, $bp['qty'], $bp_note);
+                mysqli_stmt_execute($bp_in_stmt);
+            }
+        }
+
+        // 5. Stock OUT for BOM items (if not already completed via material requisition)
         // Check associated material requisition
         $sql_mr = "SELECT id, status FROM material_requisitions WHERE production_order_id = ? AND company_id = ? AND status != 'completed' LIMIT 1";
         $stmt_mr = mysqli_prepare($conn, $sql_mr);
@@ -1140,7 +1188,6 @@ if ($action == 'complete_production') {
                 $b_qty = $bom_item['qty'];
                 
                 // Deduct from warehouses (Auto-find stock if no warehouse specified for BOM)
-                // Use the same logic as approve_material_req
                 $wh_sql = "SELECT w.id, SUM(CASE WHEN t.type='in' THEN t.qty ELSE -t.qty END) as balance
                            FROM stock_warehouses w
                            LEFT JOIN stock_transactions t ON w.id = t.warehouse_id AND t.product_id = ?

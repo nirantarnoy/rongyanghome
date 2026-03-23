@@ -601,6 +601,7 @@ function finishProduction(id) {
                 return;
             }
             const order = res.data;
+            const byproducts = res.byproducts || [];
 
             // 2. Fetch warehouses for the selection
             const warehouses = <?= json_encode($warehouses ?? []) ?>;
@@ -608,6 +609,28 @@ function finishProduction(id) {
             warehouses.forEach(wh => {
                 whOptions += `<option value="${wh.id}">${wh.name}</option>`;
             });
+
+            let byproductHtml = "";
+            if (byproducts.length > 0) {
+                byproductHtml = `<div style="margin-top: 1.5rem; border-top: 2px solid var(--accent-purple); padding-top: 1rem;">
+                    <h4 style="margin: 0 0 1rem 0; color: var(--accent-purple); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-boxes"></i> สินค้าพลอยได้
+                    </h4>`;
+                
+                byproducts.forEach((bp, index) => {
+                    byproductHtml += `
+                        <div style="text-align: left; background: #F0FDF4; padding: 0.8rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #BBF7D0;">
+                            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 0.5rem;">${bp.name} (${bp.qty} ${bp.unit})</div>
+                            <label style="display: block; margin-bottom: 0.3rem; font-size: 0.85rem; font-weight: 500;">เลือกคลังสินค้าสำหรับรับเข้า</label>
+                            <select id="bp_warehouse_${bp.id}" class="swal2-input bp-warehouse-select" data-bp-id="${bp.id}" style="width: 100%; margin: 0; display: block; height: 2.5rem; font-size: 0.9rem;">
+                                <option value="">-- เลือกคลังสินค้า --</option>
+                                ${whOptions}
+                            </select>
+                        </div>
+                    `;
+                });
+                byproductHtml += `</div>`;
+            }
 
             Swal.fire({
                 title: 'ยืนยันการผลิตสำเร็จ',
@@ -625,6 +648,9 @@ function finishProduction(id) {
                             <option value="">-- เลือกคลังสินค้า --</option>
                             ${whOptions}
                         </select>
+                        
+                        ${byproductHtml}
+                        
                         <p style="font-size: 0.8rem; color: #6B7280; margin-top: 1rem; border-top: 1px dashed #ccc; padding-top: 0.5rem;">
                             * ระบบจะทำการเพิ่มสต็อกสินค้าสำเร็จรูป และตัดสต็อกวัสดุ (BOM) ให้อัตโนมัติ
                         </p>
@@ -636,16 +662,42 @@ function finishProduction(id) {
                 cancelButtonColor: '#6B7280',
                 confirmButtonText: 'ยืนยันเสร็จสิ้น',
                 cancelButtonText: 'ยกเลิก',
+                width: '600px',
                 preConfirm: () => {
                     const warehouse_id = Swal.getPopup().querySelector('#finish_warehouse').value;
                     const prod_qty = Swal.getPopup().querySelector('#finish_qty').value;
+                    
                     if (!warehouse_id) {
-                        Swal.showValidationMessage(`กรุณาเลือกคลังสินค้า`);
+                        Swal.showValidationMessage(`กรุณาเลือกคลังสินค้าหลัก`);
+                        return false;
                     }
                     if (!prod_qty || prod_qty <= 0) {
                         Swal.showValidationMessage(`กรุณาระบุจำนวนที่ถูกต้อง`);
+                        return false;
                     }
-                    return { warehouse_id: warehouse_id, prod_qty: prod_qty };
+
+                    // Collect byproduct warehouse selections
+                    const byproductWarehouses = {};
+                    let bpValid = true;
+                    $('.bp-warehouse-select').each(function() {
+                        const bpId = $(this).data('bp-id');
+                        const whId = $(this).val();
+                        if (!whId) {
+                            bpValid = false;
+                        }
+                        byproductWarehouses[bpId] = whId;
+                    });
+
+                    if (!bpValid) {
+                        Swal.showValidationMessage(`กรุณาเลือกคลังสินค้าสำหรับสินค้าพลอยได้ทุกรายการ`);
+                        return false;
+                    }
+
+                    return { 
+                        warehouse_id: warehouse_id, 
+                        prod_qty: prod_qty,
+                        byproduct_warehouses: byproductWarehouses 
+                    };
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -655,7 +707,8 @@ function finishProduction(id) {
                         data: { 
                             id: id, 
                             warehouse_id: result.value.warehouse_id,
-                            prod_qty: result.value.prod_qty 
+                            prod_qty: result.value.prod_qty,
+                            byproduct_warehouses: result.value.byproduct_warehouses
                         },
                         dataType: 'json',
                         success: function(res) {
