@@ -31,12 +31,39 @@
             </div>
             <div class="form-group">
                 <label>ราคาต่อหน่วย</label>
-                <input type="number" step="0.01" name="price" class="form-control" placeholder="0.00">
+                <input type="number" step="0.01" name="price" id="prod_price" class="form-control" placeholder="0.00">
             </div>
             <div class="form-group">
                 <label>สต็อกขั้นต่ำ (แจ้งเตือน)</label>
                 <input type="number" name="min_stock" class="form-control" value="0">
             </div>
+
+            <!-- New VAT Fields -->
+            <div class="form-group" style="grid-column: 1 / -1; background: #f8fafc; padding: 1.5rem; border-radius: 0.8rem; border: 1px solid #e2e8f0; margin-top: 0.5rem;">
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="flex: 1;">
+                            <label style="color: #ef4444; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                ราคาก่อน vat 7%
+                                <input type="checkbox" name="has_vat" value="1" id="has_vat" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                            </label>
+                            <input type="number" step="0.01" name="price_before_vat" id="price_before_vat" class="form-control" style="margin-top: 0.5rem;" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 2rem; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="price_display_mode" value="before_vat" style="width: 1.1rem; height: 1.1rem;"> 
+                            แสดงราคาก่อน Vat 7%
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;">
+                            <input type="radio" name="price_display_mode" value="unit" checked style="width: 1.1rem; height: 1.1rem;"> 
+                            แสดงราคาต่อหน่วย
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-group" style="grid-column: span 2;">
                 <label>รูปภาพสินค้า (Upload)</label>
                 <input type="file" name="product_image" id="product_image" class="form-control" accept="image/*">
@@ -142,9 +169,26 @@ $(document).ready(function() {
         }
     });
 
+    // VAT Calculations
+    $('#prod_price').on('input', function() {
+        const price = parseFloat($(this).val()) || 0;
+        const beforeVat = (price / 1.07).toFixed(2);
+        $('#price_before_vat').val(beforeVat);
+    });
+
+    $('#price_before_vat').on('input', function() {
+        const beforeVat = parseFloat($(this).val()) || 0;
+        const price = (beforeVat * 1.07).toFixed(2);
+        $('#prod_price').val(price);
+    });
+
     function resetProductForm() {
         $('#productForm')[0].reset();
         $('#product_id').val('');
+        $('#prod_price').val('');
+        $('#price_before_vat').val('');
+        $('#has_vat').prop('checked', false);
+        $('input[name="price_display_mode"][value="unit"]').prop('checked', true);
         $('#btnSubmitProduct').html('<i class="fas fa-save"></i> บันทึกข้อมูลสินค้า');
         $('#btnCancelEdit').hide();
         $('#imagePreview').hide();
@@ -259,7 +303,10 @@ function editProduct(id) {
                 $('input[name="sku"]').val(product.sku);
                 $('select[name="category_id"]').val(product.category_id);
                 $('input[name="unit"]').val(product.unit);
-                $('input[name="price"]').val(product.price);
+                $('#prod_price').val(product.price);
+                $('#price_before_vat').val(product.price_before_vat);
+                $('#has_vat').prop('checked', product.has_vat == 1);
+                $(`input[name="price_display_mode"][value="${product.price_display_mode || 'unit'}"]`).prop('checked', true);
                 $('input[name="min_stock"]').val(product.min_stock);
                 $('textarea[name="description"]').val(product.description);
                 

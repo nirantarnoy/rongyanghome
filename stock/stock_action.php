@@ -20,6 +20,20 @@ $bq = "CREATE TABLE IF NOT EXISTS stock_production_byproducts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 @mysqli_query($conn, $bq);
 
+// Auto-migrate stock_products for VAT fields
+$cols_to_add = [
+    "price_before_vat" => "DECIMAL(15,2) DEFAULT 0.00",
+    "has_vat" => "TINYINT(1) DEFAULT 0",
+    "price_display_mode" => "VARCHAR(20) DEFAULT 'unit'" // 'unit' or 'before_vat'
+];
+
+foreach ($cols_to_add as $col => $type) {
+    $check_col = mysqli_query($conn, "SHOW COLUMNS FROM stock_products LIKE '$col'");
+    if (mysqli_num_rows($check_col) == 0) {
+        mysqli_query($conn, "ALTER TABLE stock_products ADD COLUMN $col $type");
+    }
+}
+
 
 function logStockAction($conn, $company_id, $activity, $action_type) {
     $user_login = $_SESSION['user_login'] ?? 'system';
@@ -222,9 +236,10 @@ if ($action == 'get_warehouse_details_html') {
                 
         foreach ($products as $p) {
             $balance = $p['balance'];
-            $cost = $p['price'] ?? 0;
-            $total = $balance * $cost;
             
+            // Determine costs based on display preference
+            $cost = ($p['price_display_mode'] ?? 'unit') == 'before_vat' ? ($p['price_before_vat'] ?? 0) : ($p['price'] ?? 0);
+            $total = $balance * $cost;
             echo '<tr style="border-bottom: 1px solid #E5E7EB; transition: background 0.15s;" onmouseover="this.style.background=\'#F9FAFB\'" onmouseout="this.style.background=\'transparent\'">
                     <td style="padding: 1rem; text-align: center;">
                         <input type="checkbox" class="export-checkbox" checked>
@@ -342,6 +357,9 @@ if ($action == 'add_product') {
     $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
     $unit = $_POST['unit'] ?? '';
     $price = $_POST['price'] ?? 0;
+    $price_before_vat = $_POST['price_before_vat'] ?? 0;
+    $has_vat = (int)($_POST['has_vat'] ?? 0);
+    $price_display_mode = $_POST['price_display_mode'] ?? 'unit';
     $min_stock = $_POST['min_stock'] ?? 0;
     $description = $_POST['description'] ?? '';
     
@@ -360,9 +378,9 @@ if ($action == 'add_product') {
         }
     }
 
-    $sql = "INSERT INTO stock_products (company_id, category_id, name, sku, unit, price, min_stock, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO stock_products (company_id, category_id, name, sku, unit, price, price_before_vat, has_vat, price_display_mode, min_stock, image_url, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "iisssdiss", $company_id, $category_id, $name, $sku, $unit, $price, $min_stock, $image_url, $description);
+    mysqli_stmt_bind_param($stmt, "iisssddisiss", $company_id, $category_id, $name, $sku, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $image_url, $description);
 
     if (mysqli_stmt_execute($stmt)) {
         logStockAction($conn, $company_id, "เพิ่มสินค้า: $name (SKU: $sku)", 'create');
@@ -397,6 +415,9 @@ if ($action == 'update_product') {
     $category_id = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
     $unit = $_POST['unit'] ?? '';
     $price = $_POST['price'] ?? 0;
+    $price_before_vat = $_POST['price_before_vat'] ?? 0;
+    $has_vat = (int)($_POST['has_vat'] ?? 0);
+    $price_display_mode = $_POST['price_display_mode'] ?? 'unit';
     $min_stock = $_POST['min_stock'] ?? 0;
     $description = $_POST['description'] ?? '';
     
@@ -418,13 +439,13 @@ if ($action == 'update_product') {
         }
     }
 
-    $sql = "UPDATE stock_products SET name = ?, sku = ?, category_id = ?, unit = ?, price = ?, min_stock = ?, description = ? $image_sql WHERE id = ? AND company_id = ?";
+    $sql = "UPDATE stock_products SET name = ?, sku = ?, category_id = ?, unit = ?, price = ?, price_before_vat = ?, has_vat = ?, price_display_mode = ?, min_stock = ?, description = ? $image_sql WHERE id = ? AND company_id = ?";
     $stmt = mysqli_prepare($conn, $sql);
     
     if ($image_sql) {
-        mysqli_stmt_bind_param($stmt, "ssisdissii", $name, $sku, $category_id, $unit, $price, $min_stock, $description, $image_url, $id, $company_id);
+        mysqli_stmt_bind_param($stmt, "ssissddisissi", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $image_url, $id, $company_id);
     } else {
-        mysqli_stmt_bind_param($stmt, "ssisdisii", $name, $sku, $category_id, $unit, $price, $min_stock, $description, $id, $company_id);
+        mysqli_stmt_bind_param($stmt, "ssissddisisi", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $id, $company_id);
     }
 
     if (mysqli_stmt_execute($stmt)) {
@@ -492,6 +513,9 @@ if ($action == 'get_products') {
             $warehouse_details .= '</div>';
         }
 
+        $display_price = ($row['price_display_mode'] == 'before_vat') ? $row['price_before_vat'] : $row['price'];
+        $price_label = ($row['price_display_mode'] == 'before_vat') ? ' (ก่อน VAT)' : '';
+
         echo '
         <div class="product-card">
             <img src="'.$img.'" class="product-img" alt="'.$row['name'].'">
@@ -499,7 +523,7 @@ if ($action == 'get_products') {
                 <div class="product-name">'.htmlspecialchars($row['name']).'</div>
                 <div class="product-sku">SKU: '.htmlspecialchars($row['sku']).' | '.htmlspecialchars($row['category_name'] ?? 'ทั่วไป').'</div>
                 <div class="product-meta">
-                    <div class="product-price">฿'.number_format($row['price'], 2).'</div>
+                    <div class="product-price">฿'.number_format($display_price, 2).$price_label.'</div>
                     <div class="product-stock" '.$low_stock_class.'>รวม: '.$total_stock.' '.$row['unit'].'</div>
                 </div>
                 '.$warehouse_details.'
