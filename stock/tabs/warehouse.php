@@ -171,15 +171,30 @@ $(document).ready(function() {
 
     // VAT Calculations
     $('#prod_price').on('input', function() {
-        const price = parseFloat($(this).val()) || 0;
-        const beforeVat = (price / 1.07).toFixed(2);
-        $('#price_before_vat').val(beforeVat);
+        if ($('#has_vat').is(':checked')) {
+            const price = parseFloat($(this).val()) || 0;
+            const beforeVat = (price / 1.07).toFixed(2);
+            $('#price_before_vat').val(beforeVat);
+        }
     });
 
     $('#price_before_vat').on('input', function() {
         const beforeVat = parseFloat($(this).val()) || 0;
         const price = (beforeVat * 1.07).toFixed(2);
         $('#prod_price').val(price);
+    });
+
+    $('#has_vat').on('change', function() {
+        if ($(this).is(':checked')) {
+            const price = parseFloat($('#prod_price').val()) || 0;
+            if (price > 0) {
+                const beforeVat = (price / 1.07).toFixed(2);
+                $('#price_before_vat').val(beforeVat);
+            }
+            $('input[name="price_display_mode"][value="before_vat"]').prop('checked', true);
+        } else {
+            $('input[name="price_display_mode"][value="unit"]').prop('checked', true);
+        }
     });
 
     function resetProductForm() {

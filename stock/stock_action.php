@@ -443,9 +443,9 @@ if ($action == 'update_product') {
     $stmt = mysqli_prepare($conn, $sql);
     
     if ($image_sql) {
-        mysqli_stmt_bind_param($stmt, "ssissddisissi", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $image_url, $id, $company_id);
+        mysqli_stmt_bind_param($stmt, "ssisddisissii", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $image_url, $id, $company_id);
     } else {
-        mysqli_stmt_bind_param($stmt, "ssissddisisi", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $id, $company_id);
+        mysqli_stmt_bind_param($stmt, "ssisddisisii", $name, $sku, $category_id, $unit, $price, $price_before_vat, $has_vat, $price_display_mode, $min_stock, $description, $id, $company_id);
     }
 
     if (mysqli_stmt_execute($stmt)) {
@@ -514,7 +514,7 @@ if ($action == 'get_products') {
         }
 
         $display_price = ($row['price_display_mode'] == 'before_vat') ? $row['price_before_vat'] : $row['price'];
-        $price_label = ($row['price_display_mode'] == 'before_vat') ? ' (ก่อน VAT)' : '';
+        $price_label = ($row['price_display_mode'] == 'before_vat') ? '<span style="font-size: 0.75rem;">(ก่อน VAT)</span>' : '<span style="font-size: 0.75rem;">(ต่อหน่วย)</span>';
 
         echo '
         <div class="product-card">
@@ -523,7 +523,7 @@ if ($action == 'get_products') {
                 <div class="product-name">'.htmlspecialchars($row['name']).'</div>
                 <div class="product-sku">SKU: '.htmlspecialchars($row['sku']).' | '.htmlspecialchars($row['category_name'] ?? 'ทั่วไป').'</div>
                 <div class="product-meta">
-                    <div class="product-price">฿'.number_format($display_price, 2).$price_label.'</div>
+                    <div class="product-price">฿'.number_format($display_price, 2).' '.$price_label.'</div>
                     <div class="product-stock" '.$low_stock_class.'>รวม: '.$total_stock.' '.$row['unit'].'</div>
                 </div>
                 '.$warehouse_details.'
