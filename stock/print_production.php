@@ -6,7 +6,7 @@ $id = $_GET['id'] ?? 0;
 $company_id = $_SESSION['company_id'];
 
 // Get production order
-$sql = "SELECT po.*, p.name as product_name, p.sku, p.unit as product_unit, p.price as product_price
+$sql = "SELECT po.*, p.name as product_name, p.sku, p.unit as product_unit, p.price as product_price, p.price_before_vat, p.price_display_mode
         FROM stock_production_orders po
         LEFT JOIN stock_products p ON po.product_id = p.id
         WHERE po.id = ? AND po.company_id = ?";
@@ -224,7 +224,7 @@ $warehouse_display = !empty($wh_names) ? implode(', ', $wh_names) : '';
             </thead>
             <tbody>
                 <?php 
-                $price = $order['product_price'] ?? 0;
+                $price = ($order['price_display_mode'] == 'before_vat') ? $order['price_before_vat'] : $order['product_price'];
                 $total_prod = $order['qty'] * $price;
                 ?>
                 <tr>
@@ -272,14 +272,15 @@ $warehouse_display = !empty($wh_names) ? implode(', ', $wh_names) : '';
                 $total_bom = 0;
                 foreach ($bom_items as $item): 
                     // Get price from store or database if needed, but assuming it's joined
-                    $item_price = 0; // default 0 if not exist
-                    // Let's try to get price from products table
-                    $p_sql = "SELECT price FROM stock_products WHERE id = ?";
+                    $item_price = 0;
+                    $p_sql = "SELECT price, price_before_vat, price_display_mode FROM stock_products WHERE id = ?";
                     $p_stmt = mysqli_prepare($conn, $p_sql);
                     mysqli_stmt_bind_param($p_stmt, "i", $item['product_id']);
                     mysqli_stmt_execute($p_stmt);
                     $p_res = mysqli_stmt_get_result($p_stmt);
-                    if($p_row = mysqli_fetch_assoc($p_res)) $item_price = $p_row['price'];
+                    if ($p_row = mysqli_fetch_assoc($p_res)) {
+                        $item_price = ($p_row['price_display_mode'] == 'before_vat') ? $p_row['price_before_vat'] : $p_row['price'];
+                    }
                     
                     $subtotal = $item['qty'] * $item_price;
                     $total_bom += $subtotal;

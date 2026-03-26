@@ -177,12 +177,14 @@ $company = mysqli_fetch_assoc(mysqli_stmt_get_result($comp_stmt));
                 while ($item = mysqli_fetch_assoc($res_items)): 
                     // Get price from store or database if needed
                     $item_price = 0;
-                    $p_sql = "SELECT price FROM stock_products WHERE id = ?";
+                    $p_sql = "SELECT price, price_before_vat, price_display_mode FROM stock_products WHERE id = ?";
                     $p_stmt = mysqli_prepare($conn, $p_sql);
                     mysqli_stmt_bind_param($p_stmt, "i", $item['product_id']);
                     mysqli_stmt_execute($p_stmt);
                     $p_res = mysqli_stmt_get_result($p_stmt);
-                    if($p_row = mysqli_fetch_assoc($p_res)) $item_price = $p_row['price'];
+                    if ($p_row = mysqli_fetch_assoc($p_res)) {
+                        $item_price = ($p_row['price_display_mode'] == 'before_vat') ? $p_row['price_before_vat'] : $p_row['price'];
+                    }
                     
                     $subtotal = $item['qty'] * $item_price;
                     $total_all += $subtotal;

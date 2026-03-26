@@ -631,7 +631,7 @@ function loadWarehouseProducts(whId) {
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-weight: 700; color: #7C3AED;">฿${parseFloat(p.price).toLocaleString()}</div>
+                                <div style="font-weight: 700; color: #7C3AED;">฿${parseFloat(p.display_price || p.price).toLocaleString()}</div>
                                 <div style="font-size: 0.7rem; color: #9ca3af; text-transform: uppercase; font-weight: 600;">คลิกเพื่อเบิก</div>
                             </div>
                         </div>

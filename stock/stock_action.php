@@ -310,7 +310,7 @@ if ($action == 'get_warehouse_products') {
     $res = mysqli_stmt_get_result($stmt);
     $products = [];
     while ($row = mysqli_fetch_assoc($res)) {
-        // Return raw image_url
+        $row['display_price'] = ($row['price_display_mode'] == 'before_vat') ? ($row['price_before_vat'] ?? 0) : ($row['price'] ?? 0);
         $products[] = $row;
     }
     echo json_encode($products);
@@ -1527,7 +1527,7 @@ if ($action == 'get_requisition_details') {
         exit;
     }
     
-    $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, w.name as warehouse_name 
+    $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, p.price, p.price_before_vat, p.price_display_mode, w.name as warehouse_name 
                   FROM stock_requisition_items ri 
                   JOIN stock_products p ON ri.product_id = p.id 
                   LEFT JOIN stock_warehouses w ON ri.warehouse_id = w.id
@@ -1565,11 +1565,17 @@ if ($action == 'get_requisition_details') {
                 <th style="padding: 0.75rem; text-align: left;">สินค้า</th>
                 <th style="padding: 0.75rem; text-align: left;">คลังสินค้า</th>
                 <th style="padding: 0.75rem; text-align: right;">จำนวน</th>
+                <th style="padding: 0.75rem; text-align: right;">ราคาต่อหน่วย</th>
+                <th style="padding: 0.75rem; text-align: right;">รวมราคา</th>
             </tr>
         </thead>
         <tbody>';
     
+    $total_all = 0;
     while ($item = mysqli_fetch_assoc($res_items)) {
+        $item_price = ($item['price_display_mode'] == 'before_vat') ? $item['price_before_vat'] : $item['price'];
+        $subtotal = $item['qty'] * $item_price;
+        $total_all += $subtotal;
         echo '
             <tr style="border-bottom: 1px solid #F3F4F6;">
                 <td style="padding: 0.75rem;">
@@ -1577,14 +1583,23 @@ if ($action == 'get_requisition_details') {
                     <div style="font-size: 0.8rem; color: #6B7280;">SKU: '.htmlspecialchars($item['sku']).'</div>
                 </td>
                 <td style="padding: 0.75rem;">'.htmlspecialchars($item['warehouse_name'] ?? 'ไม่ระบุ').'</td>
-                <td style="padding: 0.75rem; text-align: right; font-weight: 600;">'.number_format($item['qty']).' '.htmlspecialchars($item['unit']).'</td>
+                <td style="padding: 0.75rem; text-align: right; font-weight: 700;">'.number_format($item['qty']).' '.htmlspecialchars($item['unit']).'</td>
+                <td style="padding: 0.75rem; text-align: right;">'.number_format($item_price, 2).'</td>
+                <td style="padding: 0.75rem; text-align: right; font-weight: 700; color: #22C55E;">'.number_format($subtotal, 2).'</td>
             </tr>';
     }
     
     echo '
         </tbody>
-    </table>
+        <tfoot>
+            <tr style="background: #F9FAFB; font-weight: bold;">
+                <td colspan="4" style="padding: 1rem; text-align: right; font-size: 1rem;">ยอดรวมราคา:</td>
+                <td style="padding: 1rem; text-align: right; font-size: 1.1rem; color: #DC2626;">'.number_format($total_all, 2).' บาท</td>
+            </tr>
+        </tfoot>
+    </table>' ;
     
+    echo '
     <div style="margin-top: 2rem; text-align: right;">
         <button onclick="closeModal()" class="btn-primary" style="background: #9CA3AF;">ปิดหน้าต่าง</button>
         <a href="print_requisition.php?id='.$id.'" target="_blank" class="btn-primary" style="background: #10B981; margin-left: 0.5rem;">
@@ -1647,7 +1662,7 @@ if ($action == 'get_requisition_json') {
     $req = mysqli_fetch_assoc($res);
     
     if ($req) {
-        $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, p.price, w.name as warehouse_name 
+        $sql_items = "SELECT ri.*, p.name as product_name, p.sku, p.unit, p.price, p.price_before_vat, p.price_display_mode, w.name as warehouse_name 
                       FROM stock_requisition_items ri 
                       JOIN stock_products p ON ri.product_id = p.id 
                       LEFT JOIN stock_warehouses w ON ri.warehouse_id = w.id
@@ -1659,7 +1674,9 @@ if ($action == 'get_requisition_json') {
         $req['items'] = [];
         $grand_total = 0;
         while ($item = mysqli_fetch_assoc($res_items)) {
-            $item['subtotal'] = $item['qty'] * $item['price'];
+            $display_price = ($item['price_display_mode'] == 'before_vat') ? $item['price_before_vat'] : $item['price'];
+            $item['display_price'] = $display_price;
+            $item['subtotal'] = $item['qty'] * $display_price;
             $grand_total += $item['subtotal'];
             $req['items'][] = $item;
         }
@@ -1689,7 +1706,7 @@ if ($action == 'get_production_details') {
         echo '<p>ไม่พบข้อมูลใบสั่งผลิต</p>';
         exit;
     }
-        $sql_bom = "SELECT b.*, p.name as product_name, p.sku, p.unit 
+        $sql_bom = "SELECT b.*, p.name as product_name, p.sku, p.unit, p.price, p.price_before_vat, p.price_display_mode
                 FROM stock_production_bom b 
                 JOIN stock_products p ON b.product_id = p.id 
                 WHERE b.production_order_id = ?";
@@ -1724,13 +1741,9 @@ if ($action == 'get_production_details') {
                 <p><strong>ขนาด/มิติ:</strong> '.htmlspecialchars($order['dimensions'] ?? '-').'</p>
             </div>
         </div>
-        <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div>
-                <p><strong>ผู้สั่งผลิต:</strong> '.htmlspecialchars($order['ordered_by'] ?? '-').'</p>
-            </div>
-            <div>
-                <p><strong>หัวหน้าช่าง:</strong> '.htmlspecialchars($order['foreman'] ?? '-').'</p>
-            </div>
+        <div style="margin-top: 1rem; border-top: 1px dashed #E5E7EB; padding-top: 1rem;">
+            <p><strong>ผู้สั่งผลิต:</strong> '.htmlspecialchars($order['ordered_by'] ?? '-').'</p>
+            <p><strong>หัวหน้าช่าง:</strong> '.htmlspecialchars($order['foreman'] ?? '-').'</p>
         </div>
         <div style="margin-top: 1rem; border-top: 1px dashed #E5E7EB; padding-top: 1rem;">
             <p><strong>ขั้นตอนการทำงาน/คำแนะนำ (ปฏิบัติการ):</strong><br>'.nl2br(htmlspecialchars($order['instructions'] ?? '-')).'</p>
@@ -1812,14 +1825,20 @@ if ($action == 'get_production_details') {
                 <tr style="background: #F9FAFB; border-bottom: 2px solid #E5E7EB;">
                     <th style="padding: 0.75rem; text-align: left;">วัสดุ</th>
                     <th style="padding: 0.75rem; text-align: right;">จำนวนที่ใช้</th>
+                    <th style="padding: 0.75rem; text-align: right;">ราคาต่อหน่วย</th>
+                    <th style="padding: 0.75rem; text-align: right;">รวมราคา</th>
                 </tr>
             </thead>
             <tbody>';
     
     if (mysqli_num_rows($res_bom) == 0) {
-        echo '<tr><td colspan="2" style="padding: 1rem; text-align: center; color: #9CA3AF;">ไม่มีรายการวัสดุ</td></tr>';
+        echo '<tr><td colspan="4" style="padding: 1rem; text-align: center; color: #9CA3AF;">ไม่มีรายการวัสดุ</td></tr>';
     } else {
+        $total_bom = 0;
         while ($bom = mysqli_fetch_assoc($res_bom)) {
+            $bom_price = ($bom['price_display_mode'] == 'before_vat') ? $bom['price_before_vat'] : $bom['price'];
+            $subtotal = $bom['qty'] * $bom_price;
+            $total_bom += $subtotal;
             echo '
                 <tr style="border-bottom: 1px solid #F3F4F6;">
                     <td style="padding: 0.75rem;">
@@ -1827,12 +1846,20 @@ if ($action == 'get_production_details') {
                         <div style="font-size: 0.8rem; color: #6B7280;">SKU: '.htmlspecialchars($bom['sku']).'</div>
                     </td>
                     <td style="padding: 0.75rem; text-align: right; font-weight: 600;">'.number_format($bom['qty'], 2).' '.htmlspecialchars($bom['unit']).'</td>
+                    <td style="padding: 0.75rem; text-align: right;">'.number_format($bom_price, 2).'</td>
+                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: #22C55E;">'.number_format($subtotal, 2).'</td>
                 </tr>';
         }
     }
     
     echo '
             </tbody>
+            <tfoot>
+                <tr style="background: #F9FAFB; font-weight: bold;">
+                    <td colspan="3" style="padding: 1rem; text-align: right;">รวมต้นทุนวัสดุ:</td>
+                    <td style="padding: 1rem; text-align: right; color: #DC2626;">'.number_format($total_bom, 2).' บาท</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
