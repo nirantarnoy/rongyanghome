@@ -183,7 +183,7 @@ if ($action == 'get_warehouse_details_html') {
 
     $search_cond = "";
     if ($search) {
-        $search_cond = " AND (p.name LIKE ? OR p.sku LIKE ?) ";
+        $search_cond = " AND (p.name LIKE ? OR p.sku LIKE ? OR c.name LIKE ?) ";
     }
     
     $sql = "SELECT p.*, c.name as cat_name,
@@ -199,7 +199,7 @@ if ($action == 'get_warehouse_details_html') {
     $stmt = mysqli_prepare($conn, $sql);
     if ($search) {
         $search_term = "%$search%";
-        mysqli_stmt_bind_param($stmt, "iiiss", $warehouse_id, $company_id, $company_id, $search_term, $search_term);
+        mysqli_stmt_bind_param($stmt, "iiisss", $warehouse_id, $company_id, $company_id, $search_term, $search_term, $search_term);
     } else {
         mysqli_stmt_bind_param($stmt, "iii", $warehouse_id, $company_id, $company_id);
     }
@@ -631,19 +631,20 @@ if ($action == 'get_transactions') {
     $where = "WHERE t.company_id = ?";
     if ($search) {
         $search_term = "%$search%";
-        $where .= " AND (p.name LIKE ? OR p.sku LIKE ? OR t.note LIKE ? OR w.name LIKE ?)";
+        $where .= " AND (p.name LIKE ? OR p.sku LIKE ? OR t.note LIKE ? OR w.name LIKE ? OR c.name LIKE ?)";
     }
 
     $sql = "SELECT t.*, p.name as product_name, p.unit, w.name as warehouse_name 
             FROM stock_transactions t 
             JOIN stock_products p ON t.product_id = p.id 
             LEFT JOIN stock_warehouses w ON t.warehouse_id = w.id
+            LEFT JOIN stock_categories c ON p.category_id = c.id
             $where 
             ORDER BY t.transaction_date DESC, t.id DESC 
             LIMIT 100";
     $stmt = mysqli_prepare($conn, $sql);
     if ($search) {
-        mysqli_stmt_bind_param($stmt, "issss", $company_id, $search_term, $search_term, $search_term, $search_term);
+        mysqli_stmt_bind_param($stmt, "isssss", $company_id, $search_term, $search_term, $search_term, $search_term, $search_term);
     } else {
         mysqli_stmt_bind_param($stmt, "i", $company_id);
     }
