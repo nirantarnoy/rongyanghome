@@ -171,6 +171,15 @@ if ($action == 'get_warehouse_details_html') {
     header('Content-Type: text/html');
     $warehouse_id = $_GET['id'] ?? 0;
     $search = $_GET['search'] ?? '';
+    $sort_by = $_GET['sort_by'] ?? 'sku';
+    $sort_order = $_GET['sort_order'] ?? 'ASC';
+
+    if (!in_array($sort_by, ['name', 'sku', 'balance', 'unit'])) {
+        $sort_by = 'sku';
+    }
+    if (!in_array($sort_order, ['ASC', 'DESC'])) {
+        $sort_order = 'ASC';
+    }
 
     $search_cond = "";
     if ($search) {
@@ -185,7 +194,7 @@ if ($action == 'get_warehouse_details_html') {
             LEFT JOIN stock_categories c ON p.category_id = c.id
             WHERE p.company_id = ? $search_cond
             HAVING balance > 0
-            ORDER BY c.name ASC, p.name ASC";
+            ORDER BY c.name ASC, p.$sort_by $sort_order";
             
     $stmt = mysqli_prepare($conn, $sql);
     if ($search) {
@@ -212,16 +221,21 @@ if ($action == 'get_warehouse_details_html') {
         exit;
     }
 
+    $sort_icon_name = $sort_by == 'name' ? ($sort_order == 'ASC' ? '<i class="fas fa-sort-alpha-down"></i>' : '<i class="fas fa-sort-alpha-up"></i>') : '<i class="fas fa-sort" style="opacity: 0.3"></i>';
+    $sort_icon_sku = $sort_by == 'sku' ? ($sort_order == 'ASC' ? '<i class="fas fa-sort-numeric-down"></i>' : '<i class="fas fa-sort-numeric-up"></i>') : '<i class="fas fa-sort" style="opacity: 0.3"></i>';
+    $sort_icon_qty = $sort_by == 'balance' ? ($sort_order == 'ASC' ? '<i class="fas fa-sort-amount-down"></i>' : '<i class="fas fa-sort-amount-up"></i>') : '<i class="fas fa-sort" style="opacity: 0.3"></i>';
+    $sort_icon_unit = $sort_by == 'unit' ? ($sort_order == 'ASC' ? '<i class="fas fa-sort-alpha-down"></i>' : '<i class="fas fa-sort-alpha-up"></i>') : '<i class="fas fa-sort" style="opacity: 0.3"></i>';
+
     echo '<table id="whProductsTable" style="width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 1rem;">
             <thead>
                 <tr style="background: #F3F4F6; color: var(--text-muted); text-align: left; border-bottom: 2px solid #E5E7EB;">
                     <th style="padding: 1rem; width: 50px; text-align: center;"><input type="checkbox" id="selectAllWarehouseProducts" checked></th>
-                    <th style="padding: 1rem;">ชื่อสินค้า</th>
-                    <th style="padding: 1rem;">รหัสอ้างอิงภายใน</th>
+                    <th style="padding: 1rem; cursor: pointer; user-select: none;" onclick="setWhProductSort(\'name\')">ชื่อสินค้า '.$sort_icon_name.'</th>
+                    <th style="padding: 1rem; cursor: pointer; user-select: none;" onclick="setWhProductSort(\'sku\')">รหัสอ้างอิงภายใน '.$sort_icon_sku.'</th>
                     <th style="padding: 1rem; text-align: right;">ราคารวม</th>
                     <th style="padding: 1rem; text-align: right;">ต้นทุน</th>
-                    <th style="padding: 1rem; text-align: right;">ที่มีอยู่</th>
-                    <th style="padding: 1rem; text-align: center;">หน่วย</th>
+                    <th style="padding: 1rem; text-align: right; cursor: pointer; user-select: none;" onclick="setWhProductSort(\'balance\')">ที่มีอยู่ '.$sort_icon_qty.'</th>
+                    <th style="padding: 1rem; text-align: center; cursor: pointer; user-select: none;" onclick="setWhProductSort(\'unit\')">หน่วย '.$sort_icon_unit.'</th>
                 </tr>
             </thead>
             <tbody>';

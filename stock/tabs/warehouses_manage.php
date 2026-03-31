@@ -173,6 +173,9 @@ function viewWarehouseDetails(id, name) {
     $('#warehouseDetailsView').data('warehouse-name', name);
 }
 
+var currentWhSortBy = 'sku';
+var currentWhSortOrder = 'ASC';
+
 function closeWarehouseDetails() {
     $('#warehouseDetailsView').hide();
     $('#mainWarehouseView').show();
@@ -182,11 +185,29 @@ function loadWarehouseProductsTable(id, search) {
     $.ajax({
         url: 'stock_action.php?action=get_warehouse_details_html',
         type: 'GET',
-        data: { id: id, search: search },
+        data: { 
+            id: id, 
+            search: search,
+            sort_by: currentWhSortBy,
+            sort_order: currentWhSortOrder
+        },
         success: function(html) {
             $('#warehouseProductsList').html(html);
         }
     });
+}
+
+function setWhProductSort(field) {
+    if (currentWhSortBy === field) {
+        currentWhSortOrder = (currentWhSortOrder === 'ASC') ? 'DESC' : 'ASC';
+    } else {
+        currentWhSortBy = field;
+        currentWhSortOrder = 'ASC';
+    }
+    
+    const id = $('#warehouseDetailsView').data('warehouse-id');
+    const search = $('#searchWarehouseProducts').val();
+    loadWarehouseProductsTable(id, search);
 }
 
 // Search feature inside warehouse details
