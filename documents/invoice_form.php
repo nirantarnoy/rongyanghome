@@ -648,7 +648,7 @@ function calculateDocTotal() {
         const price = parseFloat($(this).find('.item-price').val()) || 0;
         const total = (qty * price);
         
-        $(this).find('.item-total').val(total.toLocaleString(undefined, {minimumFractionDigits: 2}));
+        $(this).find('.item-total').val(total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
         subtotal += total;
     });
     
@@ -909,10 +909,10 @@ function generatePreview() {
                     ${itemImg ? `<img src="${itemImg}" style="max-height: 40px; border: 1px solid #eee;">` : ''}
                 </td>
                 <td>${$(el).find('.item-name').val()}</td>
-                <td style="text-align:right">${q.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                <td style="text-align:right">${q.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
                 <td style="text-align:center">${$(el).find('.item-unit').val()}</td>
-                <td style="text-align:right">${p.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-                <td style="text-align:right">${t.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
+                <td style="text-align:right">${p.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="text-align:right">${t.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td>
             </tr>`;
     });
     // Removed empty rows loop as per user request
@@ -957,9 +957,9 @@ function generatePreview() {
                 </div>
                 <div style="width: 300px; padding: 0;">
                     <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่าก่อนภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม (7%)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${vat.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
-                        <tr style="background:#92d050; font-weight:bold"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align:right">${grand.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">มูลค่าก่อนภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${(grand - vat).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000;">ภาษีมูลค่าเพิ่ม (7%)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align:right">${vat.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>
+                        <tr style="background:#92d050; font-weight:bold"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align:right">${grand.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>
                     </table>
                 </div>
             </div>

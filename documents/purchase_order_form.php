@@ -859,9 +859,9 @@ function generatePreview() {
                 </div>
                 <div style="width: 300px; padding: 0;">
                     <table style="width: 100%; border-collapse: collapse;">
-                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
-                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
-                        <tr style="background-color: #76b852; font-weight: bold;"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">มูลค่ารวมก่อนเสียภาษี</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${(grandTotal - vatAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
+                        <tr><td style="padding: 5px 10px; border-bottom: 1px solid #000; border-right: 1px solid #000; font-weight: bold;">ภาษีมูลค่าเพิ่ม (VAT)</td><td style="padding: 5px 10px; border-bottom: 1px solid #000; text-align: right;">${vatAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
+                        <tr style="background-color: #76b852; font-weight: bold;"><td style="padding: 5px 10px; border-right: 1px solid #000;">ยอดเงินสุทธิ</td><td style="padding: 5px 10px; text-align: right;">${grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td></tr>
                     </table>
                 </div>
             </div>
