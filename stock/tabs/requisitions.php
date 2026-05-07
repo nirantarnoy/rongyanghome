@@ -251,7 +251,13 @@ function addRowWithData(productId, warehouseId, qty) {
     </div>`;
     $('#reqItemsContainer').append(html);
     
-    if (productId) $(`#row_${currentIndex} .prod-select`).val(productId);
+    // Initialize Select2 for the new row
+    $(`#row_${currentIndex} .prod-select`).select2({
+        placeholder: "-- เลือกสินค้า --",
+        width: '100%'
+    });
+    
+    if (productId) $(`#row_${currentIndex} .prod-select`).val(productId).trigger('change');
     if (warehouseId) $(`#row_${currentIndex} .wh-select`).val(warehouseId);
     if (qty) $(`#row_${currentIndex} .qty-input`).val(qty);
     
@@ -589,7 +595,13 @@ function openStockSelector() {
                         ${warehouses.map(w => `<option value="${w.id}">${w.name}</option>`).join('')}
                     </select>
                 </div>
-                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; rounded: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
+                <div id="swal_search_container" style="display: none; margin-bottom: 1rem;">
+                    <div style="position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9CA3AF;"></i>
+                        <input type="text" id="swal_product_search" class="form-control" placeholder="พิมพ์ชื่อสินค้าหรือ SKU เพื่อค้นหา..." style="padding-left: 2.5rem; width: 100%;" onkeyup="filterSwalProducts()">
+                    </div>
+                </div>
+                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
                     <p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>
                 </div>
             </div>
@@ -617,10 +629,11 @@ function loadWarehouseProducts(whId) {
             if (!res || res.length === 0) {
                 html = '<p style="text-align: center; color: #9ca3af; padding: 3rem;">ไม่มีสินค้าในคลังนี้</p>';
             } else {
+                $('#swal_search_container').show();
                 res.forEach(p => {
                     const productJson = JSON.stringify(p).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
                     html += `
-                        <div onclick='addSelectedReqProduct(${productJson}, ${whId})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
+                        <div class="swal-prod-item" data-search="${(p.name + ' ' + (p.sku || '')).toLowerCase()}" onclick='addSelectedReqProduct(${productJson}, ${whId})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 0.3rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                     ${p.image_url ? `<img src="${p.image_url}" style="width: 100%; height: 100%; object-fit: contain;">` : '<i class="fas fa-box" style="color: #d1d5db;"></i>'}
@@ -639,6 +652,18 @@ function loadWarehouseProducts(whId) {
                 });
             }
             $('#swal_product_list').html(html);
+        }
+    });
+}
+
+function filterSwalProducts() {
+    const search = $('#swal_product_search').val().toLowerCase();
+    $('.swal-prod-item').each(function() {
+        const text = $(this).data('search');
+        if (text.includes(search)) {
+            $(this).show();
+        } else {
+            $(this).hide();
         }
     });
 }

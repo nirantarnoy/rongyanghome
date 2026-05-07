@@ -200,11 +200,12 @@ function updateProductInfo(select) {
 
 function addBomRow() {
     $('#noBomText').hide();
+    const currentIndex = bomRowCount;
     const html = `
-    <div class="bom-item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.8rem; border: 1px solid var(--border-color);">
+    <div class="bom-item-row" id="bom_row_${currentIndex}" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.8rem; border: 1px solid var(--border-color);">
         <div class="form-group" style="flex: 3;">
             <label>วัสดุ/วัตถุดิบ</label>
-            <select name="bom[${bomRowCount}][product_id]" class="form-control" required>
+            <select name="bom[${currentIndex}][product_id]" class="form-control bom-prod-select" required>
                 <option value="">-- เลือกวัสดุ --</option>
                 <?php
                 mysqli_data_seek($prod_res, 0);
@@ -216,13 +217,20 @@ function addBomRow() {
         </div>
         <div class="form-group" style="flex: 1;">
             <label>จำนวนที่ใช้</label>
-            <input type="number" step="0.01" name="bom[${bomRowCount}][qty]" class="form-control" min="0.01" required>
+            <input type="number" step="0.01" name="bom[${currentIndex}][qty]" class="form-control" min="0.01" required>
         </div>
         <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem;" onclick="removeBomRow(this)">
             <i class="fas fa-trash"></i>
         </button>
     </div>`;
     $('#bomItemsContainer').append(html);
+    
+    // Initialize Select2 for the new BOM row
+    $(`#bom_row_${currentIndex} .bom-prod-select`).select2({
+        placeholder: "-- เลือกวัสดุ --",
+        width: '100%'
+    });
+    
     bomRowCount++;
 }
 
@@ -312,6 +320,12 @@ function removeByproductRow(btn) {
 }
 
 $(document).ready(function() {
+    // Initialize Select2 for main product
+    $('#prod_select').select2({
+        placeholder: "-- เลือกสินค้า --",
+        width: '100%'
+    });
+
     loadProductionOrders();
 
     $('#productionForm').on('submit', function(e) {
@@ -389,6 +403,7 @@ $(document).ready(function() {
 
 function resetProductionForm() {
     $('#productionForm')[0].reset();
+    $('#prod_select').val(null).trigger('change');
     $('#production_id').val('');
     $('#bomItemsContainer').html('<p id="noBomText" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">ยังไม่มีรายการวัสดุ</p>');
     bomRowCount = 0;
@@ -508,11 +523,12 @@ function editProduction(id) {
 
 function addBomRowWithData(productId, qty) {
     $('#noBomText').hide();
+    const currentIndex = bomRowCount;
     const html = `
-    <div class="bom-item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.8rem; border: 1px solid var(--border-color);">
+    <div class="bom-item-row" id="bom_row_${currentIndex}" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; background: #F9FAFB; padding: 1rem; border-radius: 0.8rem; border: 1px solid var(--border-color);">
         <div class="form-group" style="flex: 3;">
             <label>วัสดุ/วัตถุดิบ</label>
-            <select name="bom[${bomRowCount}][product_id]" class="form-control" required>
+            <select name="bom[${currentIndex}][product_id]" class="form-control bom-prod-select" required>
                 <option value="">-- เลือกวัสดุ --</option>
                 <?php
                 mysqli_data_seek($prod_res, 0);
@@ -524,14 +540,21 @@ function addBomRowWithData(productId, qty) {
         </div>
         <div class="form-group" style="flex: 1;">
             <label>จำนวนที่ใช้</label>
-            <input type="number" step="0.01" name="bom[${bomRowCount}][qty]" class="form-control" min="0.01" value="${qty}" required>
+            <input type="number" step="0.01" name="bom[${currentIndex}][qty]" class="form-control" min="0.01" value="${qty}" required>
         </div>
         <button type="button" class="btn-primary" style="background: #EF4444; padding: 0.8rem;" onclick="removeBomRow(this)">
             <i class="fas fa-trash"></i>
         </button>
     </div>`;
     $('#bomItemsContainer').append(html);
-    $(`select[name="bom[${bomRowCount}][product_id]"]`).val(productId);
+    
+    // Initialize Select2 for the new BOM row
+    $(`#bom_row_${currentIndex} .bom-prod-select`).select2({
+        placeholder: "-- เลือกวัสดุ --",
+        width: '100%'
+    });
+    
+    $(`#bom_row_${currentIndex} .bom-prod-select`).val(productId).trigger('change');
     bomRowCount++;
 }
 
@@ -804,7 +827,13 @@ function openStockSelector() {
                         <option value="">-- เลือกคลังสินค้า --</option>
                     </select>
                 </div>
-                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; rounded: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
+                <div id="swal_search_container" style="display: none; margin-bottom: 1rem;">
+                    <div style="position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9CA3AF;"></i>
+                        <input type="text" id="swal_product_search" class="form-control" placeholder="พิมพ์ชื่อสินค้าหรือ SKU เพื่อค้นหา..." style="padding-left: 2.5rem; width: 100%;" onkeyup="filterSwalProducts()">
+                    </div>
+                </div>
+                <div id="swal_product_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem; background: #f9fafb; min-height: 150px;">
                     <p style="text-align: center; color: #9ca3af; padding: 3rem;">กรุณาเลือกคลังสินค้าเพื่อดูรายการ</p>
                 </div>
             </div>
@@ -846,10 +875,11 @@ function loadWarehouseProducts(whId) {
             if (!res || res.length === 0) {
                 html = '<p style="text-align: center; color: #9ca3af; padding: 3rem;">ไม่มีสินค้าในคลังนี้</p>';
             } else {
+                $('#swal_search_container').show();
                 res.forEach(p => {
                     const productJson = JSON.stringify(p).replace(/'/g, "&#39;").replace(/"/g, '&quot;');
                     html += `
-                        <div onclick='addSelectedBomProduct(${productJson})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
+                        <div class="swal-prod-item" data-search="${(p.name + ' ' + (p.sku || '')).toLowerCase()}" onclick='addSelectedBomProduct(${productJson})' style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: white; border: 1px solid #e5e7eb; border-radius: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#A855F7'; this.style.backgroundColor='#FAF5FF';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.backgroundColor='white';">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <div style="width: 40px; height: 40px; background: #f3f4f6; border-radius: 0.3rem; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                                     ${p.image_url ? `<img src="${p.image_url}" style="width: 100%; height: 100%; object-fit: contain;">` : '<i class="fas fa-box" style="color: #d1d5db;"></i>'}
@@ -868,6 +898,18 @@ function loadWarehouseProducts(whId) {
                 });
             }
             $('#swal_product_list').html(html);
+        }
+    });
+}
+
+function filterSwalProducts() {
+    const search = $('#swal_product_search').val().toLowerCase();
+    $('.swal-prod-item').each(function() {
+        const text = $(this).data('search');
+        if (text.includes(search)) {
+            $(this).show();
+        } else {
+            $(this).hide();
         }
     });
 }

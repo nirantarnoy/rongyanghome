@@ -96,6 +96,13 @@
 
 <script>
 $(document).ready(function() {
+    // Initialize Select2
+    $('select[name="product_id"]').select2({
+        placeholder: "-- เลือกสินค้า --",
+        allowClear: true,
+        width: '100%'
+    });
+
     loadTransactions();
 
     $('#transactionForm').on('submit', function(e) {
@@ -111,6 +118,7 @@ $(document).ready(function() {
                 if (res.status === 'success') {
                     Swal.fire('สำเร็จ', res.message, 'success');
                     $('#transactionForm')[0].reset();
+                    $('select[name="product_id"]').val(null).trigger('change');
                     $('input[name="transaction_date"]').val('<?= date('Y-m-d') ?>');
                     loadTransactions();
                 } else {
