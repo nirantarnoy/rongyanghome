@@ -547,7 +547,7 @@
                             ${photoHtml}
                         </td>
                         <td>
-                            <h2 style="margin: 0; font-size: 18px; font-weight: bold;">บริษัท รงยาง โฮม จำกัด</h2>
+                            <h2 style="margin: 0; font-size: 18px; font-weight: bold;"><?= htmlspecialchars($_SESSION['company_name'] ?? 'บริษัท ---') ?></h2>
                             <p style="margin: 3px 0 0 0; font-size: 11px;">102/5 หมู่ 2 ต.บางพระ อ.เมืองฉะเชิงเทรา จ.ฉะเชิงเทรา 24000</p>
                             <h3 style="margin: 8px 0 0 0; text-decoration: underline; font-size: 14px;">ใบแจ้งยอดเงินเดือน / PAY SLIP</h3>
                         </td>
