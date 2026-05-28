@@ -76,6 +76,7 @@ if ($action == 'list') {
                 if ($mod == 'stock') $color = 'bg-indigo-100 text-indigo-700';
                 if ($mod == 'projects') $color = 'bg-amber-100 text-amber-700';
                 if ($mod == 'companytransaction') $color = 'bg-green-100 text-green-700';
+                if ($mod == 'payroll') $color = 'bg-sky-100 text-sky-700';
                 $moduleBadges .= "<span class='px-2 py-0.5 $color text-[10px] font-bold rounded-md mr-1 uppercase'>$mod</span>";
             }
 

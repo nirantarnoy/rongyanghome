@@ -74,6 +74,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     <a href="user.php" class="nav-link text-sm font-medium <?= $current_page == 'user.php' ? 'active' : '' ?>">ผู้ใช้งาน</a>
                     <a href="login_logs.php" class="nav-link text-sm font-medium <?= $current_page == 'login_logs.php' ? 'active' : '' ?>">ประวัติการเข้าสู่ระบบ</a>
                 <?php endif; ?>
+                <?php if ($is_admin || in_array('payroll', $allowed_modules)): ?>
+                    <a href="payroll/index.php" class="nav-link text-sm font-medium">ระบบเงินเดือน</a>
+                <?php endif; ?>
                 <div class="h-6 w-px bg-slate-200"></div>
 
                 <?php if ($is_admin): ?>

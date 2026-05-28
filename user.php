@@ -190,6 +190,10 @@ while ($row = mysqli_fetch_assoc($companyRes)) {
                                 <input type="checkbox" name="modules[]" value="companytransaction" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
                                 <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Transaction (บัญชีบริษัท)</span>
                             </label>
+                            <label class="flex items-center gap-2 cursor-pointer group">
+                                <input type="checkbox" name="modules[]" value="payroll" class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                                <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Payroll (ระบบเงินเดือน)</span>
+                            </label>
                         </div>
                         <input type="hidden" name="allowed_modules" id="allowed_modules">
                     </div>

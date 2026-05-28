@@ -46,6 +46,8 @@ if ($user_role === 'admin') {
         if (in_array('projects', $allowed_modules)) $is_allowed = true;
     } elseif (strpos($current_path, '/companytransaction/') !== false) {
         if (in_array('companytransaction', $allowed_modules)) $is_allowed = true;
+    } elseif (strpos($current_path, '/payroll/') !== false) {
+        if (in_array('payroll', $allowed_modules)) $is_allowed = true;
     } elseif (strpos($current_path, '/user.php') !== false || strpos($current_path, '/company.php') !== false || strpos($current_path, '/dashboard.php') !== false) {
         // These are usually admin-only or main system files
         if (in_array('admin', $allowed_modules)) $is_allowed = true;
@@ -61,6 +63,7 @@ if ($user_role === 'admin') {
             if ($first == 'stock') header("Location: /stock/index.php");
             elseif ($first == 'projects') header("Location: /projects/index.php");
             elseif ($first == 'companytransaction') header("Location: /companytransaction/index.php");
+            elseif ($first == 'payroll') header("Location: /payroll/index.php");
             else header("Location: /dashboard.php");
         } else {
             // No modules allowed, maybe they only have admin access but role is user? 

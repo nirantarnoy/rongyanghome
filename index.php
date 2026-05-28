@@ -112,6 +112,22 @@
         </a>
         <?php endif; ?>
 
+        <!-- Menu Item: Payroll (ระบบเงินเดือน) -->
+        <?php if ($is_admin || in_array('payroll', $allowed_modules)): ?>
+        <a href="payroll/index.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
+            <div class="flex flex-col items-center">
+                <div class="menu-icon bg-sky-50 text-sky-600 w-20 h-20 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-sky-600 group-hover:text-white transition-colors shadow-sm">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-sky-600 transition-colors">ระบบเงินเดือน (Payroll)</h3>
+                <p class="text-gray-500 text-center text-sm">จัดการข้อมูลพนักงาน เวลาเข้างาน และการลา</p>
+            </div>
+        </a>
+        <?php endif; ?>
+
+
         <!-- Menu Item: Documents (จัดการเอกสาร) -->
         <a href="documents/index.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
             <div class="flex flex-col items-center">
