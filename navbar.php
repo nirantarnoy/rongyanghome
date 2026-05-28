@@ -77,6 +77,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <?php if ($is_admin || in_array('payroll', $allowed_modules)): ?>
                     <a href="payroll/index.php" class="nav-link text-sm font-medium">ระบบเงินเดือน</a>
                 <?php endif; ?>
+                <?php if ($is_admin || in_array('projects', $allowed_modules)): ?>
+                    <a href="subcontractors/index.php" class="nav-link text-sm font-medium">ผู้รับเหมา / โปรเจค</a>
+                <?php endif; ?>
                 <div class="h-6 w-px bg-slate-200"></div>
 
                 <?php if ($is_admin): ?>

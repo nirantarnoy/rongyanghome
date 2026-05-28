@@ -97,6 +97,21 @@
         </a>
         <?php endif; ?>
 
+        <!-- Menu Item: Subcontractors & Projects -->
+        <?php if ($is_admin || in_array('projects', $allowed_modules)): ?>
+        <a href="subcontractors/index.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
+            <div class="flex flex-col items-center">
+                <div class="menu-icon bg-emerald-50 text-emerald-600 w-20 h-20 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-sm">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-emerald-600 transition-colors">ผู้รับเหมา & งานโครงการ</h3>
+                <p class="text-gray-500 text-center text-sm">จ่ายค่าแรงผู้รับเหมา ประกันผลงาน สรุปต้นทุน</p>
+            </div>
+        </a>
+        <?php endif; ?>
+
         <!-- Menu Item 3: Company Transaction -->
         <?php if ($is_admin || in_array('companytransaction', $allowed_modules)): ?>
         <a href="companytransaction/index.php" class="menu-card bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 group">
