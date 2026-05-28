@@ -70,6 +70,13 @@ if (mysqli_num_rows($photoRes) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN photo VARCHAR(255) DEFAULT NULL AFTER status");
 }
 
+// Ensure wage_type column exists
+$checkWageTypeSQL = "SHOW COLUMNS FROM payroll_employees LIKE 'wage_type'";
+$wtRes = mysqli_query($conn, $checkWageTypeSQL);
+if (mysqli_num_rows($wtRes) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN wage_type ENUM('monthly', 'daily') NOT NULL DEFAULT 'monthly' AFTER salary");
+}
+
 $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
@@ -86,6 +93,37 @@ $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createAttendanceTable);
+
+$createPayrollRunsTable = "CREATE TABLE IF NOT EXISTS payroll_runs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    month_period VARCHAR(7) NOT NULL, -- Format YYYY-MM
+    status ENUM('pending', 'approved') NOT NULL DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_company_month (company_id, month_period)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createPayrollRunsTable);
+
+$createPayrollRunDetailsTable = "CREATE TABLE IF NOT EXISTS payroll_run_details (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    payroll_run_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    wage_type ENUM('monthly', 'daily') NOT NULL,
+    rate DECIMAL(10, 2) NOT NULL,
+    base_earnings DECIMAL(10, 2) NOT NULL,
+    present_days INT NOT NULL DEFAULT 0,
+    absent_days INT NOT NULL DEFAULT 0,
+    leave_days INT NOT NULL DEFAULT 0,
+    deductions DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    net_pay DECIMAL(10, 2) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_run_emp (payroll_run_id, employee_id),
+    FOREIGN KEY (payroll_run_id) REFERENCES payroll_runs(id) ON DELETE CASCADE,
+    FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createPayrollRunDetailsTable);
 
 // Insert default setting if not exist
 $checkSetting = mysqli_query($conn, "SELECT id FROM payroll_settings WHERE company_id = $company_id");
@@ -291,28 +329,30 @@ switch ($action) {
             }
         }
 
+        $wage_type = $_POST['wage_type'] ?? 'monthly';
+
         if ($id > 0) {
             $sql = "UPDATE payroll_employees SET 
                     emp_code = ?, first_name = ?, last_name = ?, department = ?, position = ?, 
-                    salary = ?, start_date = ?, phone = ?, max_business_leave = ?, max_sick_leave = ?, 
+                    salary = ?, wage_type = ?, start_date = ?, phone = ?, max_business_leave = ?, max_sick_leave = ?, 
                     max_annual_leave = ?, max_other_leave = ?, status = ?, photo = ?
                     WHERE id = ? AND company_id = ?";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sssssdssiiiissii", 
+            mysqli_stmt_bind_param($stmt, "sssssdsssiiiissii", 
                 $emp_code, $first_name, $last_name, $department, $position, 
-                $salary, $start_date, $phone, $max_business_leave, $max_sick_leave, 
+                $salary, $wage_type, $start_date, $phone, $max_business_leave, $max_sick_leave, 
                 $max_annual_leave, $max_other_leave, $status, $photo_path, $id, $company_id
             );
         } else {
             $sql = "INSERT INTO payroll_employees (
                         company_id, emp_code, first_name, last_name, department, position, 
-                        salary, start_date, phone, max_business_leave, max_sick_leave, 
+                        salary, wage_type, start_date, phone, max_business_leave, max_sick_leave, 
                         max_annual_leave, max_other_leave, status, photo
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "isssssdssiiiiss", 
+            mysqli_stmt_bind_param($stmt, "isssssdsssiiiiss", 
                 $company_id, $emp_code, $first_name, $last_name, $department, $position, 
-                $salary, $start_date, $phone, $max_business_leave, $max_sick_leave, 
+                $salary, $wage_type, $start_date, $phone, $max_business_leave, $max_sick_leave, 
                 $max_annual_leave, $max_other_leave, $status, $photo_path
             );
         }
@@ -576,6 +616,238 @@ switch ($action) {
             'attendance_today' => $att_stats,
             'today_date' => $today
         ]);
+        break;
+
+    // -------------------------------------------------------------
+    // PAYROLL CALCULATIONS & SUMMARY ACTIONS
+    // -------------------------------------------------------------
+    case 'list_payroll_runs':
+        $sql = "SELECT r.*, 
+                       COUNT(d.id) as total_employees, 
+                       SUM(d.net_pay) as total_net_pay 
+                FROM payroll_runs r
+                LEFT JOIN payroll_run_details d ON r.id = d.payroll_run_id
+                WHERE r.company_id = ?
+                GROUP BY r.id
+                ORDER BY r.month_period DESC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $runs = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $runs[] = $row;
+        }
+        echo json_encode($runs);
+        break;
+
+    case 'get_payroll_run':
+        $month = mysqli_real_escape_string($conn, $_GET['month_period'] ?? date('Y-m'));
+        
+        // Check if run already exists in DB
+        $run_sql = "SELECT * FROM payroll_runs WHERE company_id = ? AND month_period = ?";
+        $run_stmt = mysqli_prepare($conn, $run_sql);
+        mysqli_stmt_bind_param($run_stmt, "is", $company_id, $month);
+        mysqli_stmt_execute($run_stmt);
+        $run_res = mysqli_stmt_get_result($run_stmt);
+        $run = mysqli_fetch_assoc($run_res);
+        
+        if ($run) {
+            // Retrieve saved details
+            $details_sql = "SELECT d.*, e.emp_code, e.first_name, e.last_name, e.department, e.position, e.photo 
+                            FROM payroll_run_details d
+                            JOIN payroll_employees e ON d.employee_id = e.id
+                            WHERE d.payroll_run_id = ?
+                            ORDER BY e.emp_code ASC";
+            $details_stmt = mysqli_prepare($conn, $details_sql);
+            mysqli_stmt_bind_param($details_stmt, "i", $run['id']);
+            mysqli_stmt_execute($details_stmt);
+            $res = mysqli_stmt_get_result($details_stmt);
+            $details = [];
+            while ($row = mysqli_fetch_assoc($res)) {
+                $row['name'] = $row['first_name'] . ' ' . $row['last_name'];
+                $details[] = $row;
+            }
+            echo json_encode([
+                'status' => 'saved',
+                'run_id' => $run['id'],
+                'month_period' => $run['month_period'],
+                'run_status' => $run['status'],
+                'details' => $details
+            ]);
+        } else {
+            // Run doesn't exist, calculate dynamically
+            // Fetch all active employees
+            $emp_sql = "SELECT id, emp_code, first_name, last_name, department, position, salary, wage_type, photo 
+                        FROM payroll_employees 
+                        WHERE company_id = ? AND status = 'active'
+                        ORDER BY emp_code ASC";
+            $emp_stmt = mysqli_prepare($conn, $emp_sql);
+            mysqli_stmt_bind_param($emp_stmt, "i", $company_id);
+            mysqli_stmt_execute($emp_stmt);
+            $emp_res = mysqli_stmt_get_result($emp_stmt);
+            
+            // Get attendance stats for this month
+            $att_sql = "SELECT employee_id, status, COUNT(*) as count 
+                        FROM payroll_attendance 
+                        WHERE company_id = ? AND DATE_FORMAT(work_date, '%Y-%m') = ?
+                        GROUP BY employee_id, status";
+            $att_stmt = mysqli_prepare($conn, $att_sql);
+            mysqli_stmt_bind_param($att_stmt, "is", $company_id, $month);
+            mysqli_stmt_execute($att_stmt);
+            $att_res = mysqli_stmt_get_result($att_stmt);
+            
+            $att_map = [];
+            while ($row = mysqli_fetch_assoc($att_res)) {
+                $emp_id = $row['employee_id'];
+                $status = $row['status'];
+                $count = (int)$row['count'];
+                if (!isset($att_map[$emp_id])) {
+                    $att_map[$emp_id] = ['present' => 0, 'absent' => 0, 'leave' => 0];
+                }
+                if ($status === 'normal' || $status === 'late') {
+                    $att_map[$emp_id]['present'] += $count;
+                } else if ($status === 'absent') {
+                    $att_map[$emp_id]['absent'] = $count;
+                } else if ($status === 'leave') {
+                    $att_map[$emp_id]['leave'] = $count;
+                }
+            }
+            
+            $details = [];
+            while ($emp = mysqli_fetch_assoc($emp_res)) {
+                $emp_id = $emp['id'];
+                $stats = $att_map[$emp_id] ?? ['present' => 0, 'absent' => 0, 'leave' => 0];
+                
+                $wage_type = $emp['wage_type'];
+                $rate = (float)$emp['salary'];
+                $present_days = $stats['present'];
+                $absent_days = $stats['absent'];
+                $leave_days = $stats['leave'];
+                
+                if ($wage_type === 'monthly') {
+                    $base_earnings = $rate;
+                    // Deduct for absences: (salary / 30) * absent_days
+                    $deductions = round(($rate / 30) * $absent_days, 2);
+                    $net_pay = $base_earnings - $deductions;
+                } else {
+                    $base_earnings = $rate * $present_days;
+                    $deductions = 0.00;
+                    $net_pay = $base_earnings;
+                }
+                
+                $details[] = [
+                    'employee_id' => $emp_id,
+                    'emp_code' => $emp['emp_code'],
+                    'first_name' => $emp['first_name'],
+                    'last_name' => $emp['last_name'],
+                    'name' => $emp['first_name'] . ' ' . $emp['last_name'],
+                    'department' => $emp['department'],
+                    'position' => $emp['position'],
+                    'photo' => $emp['photo'],
+                    'wage_type' => $wage_type,
+                    'rate' => $rate,
+                    'base_earnings' => $base_earnings,
+                    'present_days' => $present_days,
+                    'absent_days' => $absent_days,
+                    'leave_days' => $leave_days,
+                    'deductions' => $deductions,
+                    'net_pay' => $net_pay
+                ];
+            }
+            
+            echo json_encode([
+                'status' => 'calculated',
+                'month_period' => $month,
+                'run_status' => 'pending',
+                'details' => $details
+            ]);
+        }
+        break;
+
+    case 'save_payroll_run':
+        $month = mysqli_real_escape_string($conn, $_POST['month_period'] ?? '');
+        $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'pending');
+        $details_json = $_POST['details'] ?? '[]';
+        $details_list = json_decode($details_json, true);
+        
+        if (empty($month) || !is_array($details_list)) {
+            echo json_encode(['status' => 'error', 'message' => 'ข้อมูลที่ส่งมาไม่ถูกต้อง']);
+            exit();
+        }
+        
+        mysqli_begin_transaction($conn);
+        
+        // Insert or update run
+        $run_sql = "INSERT INTO payroll_runs (company_id, month_period, status) VALUES (?, ?, ?)
+                    ON DUPLICATE KEY UPDATE status = VALUES(status)";
+        $run_stmt = mysqli_prepare($conn, $run_sql);
+        mysqli_stmt_bind_param($run_stmt, "iss", $company_id, $month, $status);
+        if (!mysqli_stmt_execute($run_stmt)) {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+            exit();
+        }
+        
+        // Get run ID
+        $get_id_sql = "SELECT id FROM payroll_runs WHERE company_id = ? AND month_period = ?";
+        $get_id_stmt = mysqli_prepare($conn, $get_id_sql);
+        mysqli_stmt_bind_param($get_id_stmt, "is", $company_id, $month);
+        mysqli_stmt_execute($get_id_stmt);
+        $run_id = mysqli_fetch_assoc(mysqli_stmt_get_result($get_id_stmt))['id'];
+        
+        // Delete existing details first (to rebuild)
+        mysqli_query($conn, "DELETE FROM payroll_run_details WHERE payroll_run_id = $run_id");
+        
+        // Insert details
+        $success = true;
+        $error_msg = '';
+        foreach ($details_list as $item) {
+            $employee_id = (int)$item['employee_id'];
+            $wage_type = $item['wage_type'];
+            $rate = (float)$item['rate'];
+            $base_earnings = (float)$item['base_earnings'];
+            $present_days = (int)$item['present_days'];
+            $absent_days = (int)$item['absent_days'];
+            $leave_days = (int)$item['leave_days'];
+            $deductions = (float)$item['deductions'];
+            $net_pay = (float)$item['net_pay'];
+            
+            $detail_sql = "INSERT INTO payroll_run_details (
+                                payroll_run_id, employee_id, wage_type, rate, base_earnings, 
+                                present_days, absent_days, leave_days, deductions, net_pay
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $detail_stmt = mysqli_prepare($conn, $detail_sql);
+            mysqli_stmt_bind_param($detail_stmt, "iissdiiidd", 
+                $run_id, $employee_id, $wage_type, $rate, $base_earnings, 
+                $present_days, $absent_days, $leave_days, $deductions, $net_pay
+            );
+            if (!mysqli_stmt_execute($detail_stmt)) {
+                $success = false;
+                $error_msg = mysqli_error($conn);
+                break;
+            }
+        }
+        
+        if ($success) {
+            mysqli_commit($conn);
+            echo json_encode(['status' => 'success', 'message' => 'บันทึกการคำนวณเงินเดือนเรียบร้อยแล้ว']);
+        } else {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $error_msg]);
+        }
+        break;
+
+    case 'delete_payroll_run':
+        $id = (int)($_POST['id'] ?? 0);
+        $sql = "DELETE FROM payroll_runs WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'ลบข้อมูลรอบบัญชีเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
         break;
 
     default:

@@ -102,6 +102,11 @@ $company_id = $_SESSION['company_id'] ?? 1;
                         <span>แฟ้มคำนวณวันลา</span>
                     </button>
 
+                    <button onclick="switchTab('payroll_calc')" id="btn-payroll_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-money-check-dollar w-5"></i>
+                        <span>คำนวณเงินเดือน</span>
+                    </button>
+
                     <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
                         <i class="fa-solid fa-sliders w-5"></i>
                         <span>ตั้งค่าระบบ</span>
@@ -183,6 +188,11 @@ $company_id = $_SESSION['company_id'] ?? 1;
                     <?php include 'tabs/calculations.php'; ?>
                 </div>
 
+                <!-- TAB: PAYROLL CALCULATION -->
+                <div id="tab-payroll_calc" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/payroll_calc.php'; ?>
+                </div>
+
                 <!-- TAB: SETTINGS -->
                 <div id="tab-settings" class="tab-pane hidden space-y-6">
                     <?php include 'tabs/settings.php'; ?>
@@ -227,6 +237,11 @@ $company_id = $_SESSION['company_id'] ?? 1;
                     title = 'แฟ้มคำนวณวันลา';
                     subtitle = 'ตรวจสอบและคำนวณประวัติการลาสะสม';
                     loadLeaveCalculations();
+                    break;
+                case 'payroll_calc':
+                    title = 'คำนวณเงินเดือน';
+                    subtitle = 'คำนวณค่าจ้างประจำเดือน พิมพ์สลิป และดูยอดสรุป';
+                    loadPayrollCalc();
                     break;
                 case 'settings':
                     title = 'ตั้งค่าระบบ';

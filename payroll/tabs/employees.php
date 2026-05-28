@@ -94,7 +94,7 @@
                     </div>
 
                     <!-- Position & Salary Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-slate-500 mb-1.5">แผนก <span class="text-rose-500">*</span></label>
                             <input type="text" name="department" id="department_input" required placeholder="เช่น ฝ่ายผลิต, บัญชี"
@@ -106,7 +106,15 @@
                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">เงินเดือนประจำ (บาท) <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
+                            <select name="wage_type" id="wage_type_input" required onchange="toggleWageTypeLabel(this.value)"
+                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                <option value="monthly">เงินเดือน (รายเดือน)</option>
+                                <option value="daily">ค่าแรง (รายวัน)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5" id="salary_label">อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span></label>
                             <input type="number" step="0.01" name="salary" id="salary_input" required placeholder="15000"
                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
                         </div>
@@ -200,6 +208,10 @@
                             avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
                         }
 
+                        let wageTypeBadge = emp.wage_type === 'daily' 
+                            ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold">รายวัน</span>`
+                            : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-bold">รายเดือน</span>`;
+
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4 text-xs font-bold text-slate-800">${emp.emp_code}</td>
@@ -213,7 +225,10 @@
                                 <div>${emp.position}</div>
                                 <div class="text-[10px] text-slate-400 mt-0.5">${emp.department}</div>
                             </td>
-                            <td class="px-6 py-4 text-xs text-slate-700 font-bold">${formatCurrency(emp.salary)}</td>
+                            <td class="px-6 py-4 text-xs text-slate-700 font-bold">
+                                <div>${formatCurrency(emp.salary)}</div>
+                                <div class="mt-1">${wageTypeBadge}</div>
+                            </td>
                             <td class="px-6 py-4 text-xs text-slate-500">${formatThaiDate(emp.start_date)}</td>
                             <td class="px-6 py-4 text-xs text-slate-500">
                                 <div class="flex items-center gap-1.5">
@@ -261,6 +276,16 @@
         }
     }
 
+    function toggleWageTypeLabel(val) {
+        if (val === 'daily') {
+            $('#salary_label').html('ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span>');
+            $('#salary_input').attr('placeholder', '500');
+        } else {
+            $('#salary_label').html('อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span>');
+            $('#salary_input').attr('placeholder', '15000');
+        }
+    }
+
     // Modal Operations
     function openEmployeeModal(mode, id = null) {
         $('#employeeForm')[0].reset();
@@ -277,6 +302,8 @@
         $('#max_annual_leave_input').val(6);
         $('#max_other_leave_input').val(15);
         $('#status_input').val('active');
+        $('#wage_type_input').val('monthly');
+        toggleWageTypeLabel('monthly');
         
         if (mode === 'add') {
             $('#employeeModalTitle').text('เพิ่มพนักงานใหม่');
@@ -306,6 +333,9 @@
                     $('#phone_input').val(emp.phone);
                     $('#start_date_input').val(emp.start_date);
                     $('#status_input').val(emp.status);
+                    
+                    $('#wage_type_input').val(emp.wage_type);
+                    toggleWageTypeLabel(emp.wage_type);
                     
                     $('#max_business_leave_input').val(emp.max_business_leave);
                     $('#max_sick_leave_input').val(emp.max_sick_leave);
