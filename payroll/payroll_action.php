@@ -16,11 +16,20 @@ $company_id = $_SESSION['company_id'] ?? 1;
 $createSettingsTable = "CREATE TABLE IF NOT EXISTS payroll_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL UNIQUE,
-    pay_day INT DEFAULT 10,
+    pay_day VARCHAR(100) DEFAULT '10',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createSettingsTable);
+
+// Ensure column type is VARCHAR if it was created as INT earlier
+$checkTypeSQL = "SHOW COLUMNS FROM payroll_settings LIKE 'pay_day'";
+$typeRes = mysqli_query($conn, $checkTypeSQL);
+if ($typeRow = mysqli_fetch_assoc($typeRes)) {
+    if (strpos(strtolower($typeRow['Type']), 'int') !== false) {
+        mysqli_query($conn, "ALTER TABLE payroll_settings MODIFY COLUMN pay_day VARCHAR(100) DEFAULT '10'");
+    }
+}
 
 $createHolidaysTable = "CREATE TABLE IF NOT EXISTS payroll_holidays (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,10 +57,18 @@ $createEmployeesTable = "CREATE TABLE IF NOT EXISTS payroll_employees (
     max_annual_leave INT NOT NULL DEFAULT 6,
     max_other_leave INT NOT NULL DEFAULT 15,
     status ENUM('active', 'inactive') DEFAULT 'active',
+    photo VARCHAR(255) DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createEmployeesTable);
+
+// Ensure column exists
+$checkPhotoSQL = "SHOW COLUMNS FROM payroll_employees LIKE 'photo'";
+$photoRes = mysqli_query($conn, $checkPhotoSQL);
+if (mysqli_num_rows($photoRes) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN photo VARCHAR(255) DEFAULT NULL AFTER status");
+}
 
 $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -73,7 +90,7 @@ mysqli_query($conn, $createAttendanceTable);
 // Insert default setting if not exist
 $checkSetting = mysqli_query($conn, "SELECT id FROM payroll_settings WHERE company_id = $company_id");
 if (mysqli_num_rows($checkSetting) == 0) {
-    mysqli_query($conn, "INSERT IGNORE INTO payroll_settings (company_id, pay_day) VALUES ($company_id, 10)");
+    mysqli_query($conn, "INSERT IGNORE INTO payroll_settings (company_id, pay_day) VALUES ($company_id, '10')");
 }
 
 $action = $_REQUEST['action'] ?? '';
@@ -89,19 +106,29 @@ switch ($action) {
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $data = mysqli_fetch_assoc($res);
-        echo json_encode($data ?: ['pay_day' => 10]);
+        echo json_encode($data ?: ['pay_day' => '10']);
         break;
 
     case 'save_settings':
-        $pay_day = (int)($_POST['pay_day'] ?? 10);
-        if ($pay_day < 1 || $pay_day > 31) {
-            echo json_encode(['status' => 'error', 'message' => 'วันที่จ่ายเงินต้องอยู่ระหว่าง 1 ถึง 31']);
-            exit();
+        $pay_day = mysqli_real_escape_string($conn, $_POST['pay_day'] ?? '10');
+        // Validate tokens
+        $tokens = explode(',', $pay_day);
+        $valid_tokens = [];
+        foreach ($tokens as $token) {
+            $token = trim($token);
+            if ($token === 'L' || ((int)$token >= 1 && (int)$token <= 31)) {
+                $valid_tokens[] = $token;
+            }
         }
+        $pay_day_saved = implode(',', $valid_tokens);
+        if (empty($pay_day_saved)) {
+            $pay_day_saved = '10';
+        }
+
         $sql = "INSERT INTO payroll_settings (company_id, pay_day) VALUES (?, ?) 
                 ON DUPLICATE KEY UPDATE pay_day = VALUES(pay_day)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ii", $company_id, $pay_day);
+        mysqli_stmt_bind_param($stmt, "is", $company_id, $pay_day_saved);
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['status' => 'success', 'message' => 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว']);
         } else {
@@ -228,29 +255,65 @@ switch ($action) {
             exit();
         }
 
+        // Handling file upload
+        $photo_path = null;
+        if ($id > 0) {
+            $old_sql = "SELECT photo FROM payroll_employees WHERE id = ? AND company_id = ?";
+            $old_stmt = mysqli_prepare($conn, $old_sql);
+            mysqli_stmt_bind_param($old_stmt, "ii", $id, $company_id);
+            mysqli_stmt_execute($old_stmt);
+            $old_res = mysqli_stmt_get_result($old_stmt);
+            if ($old_row = mysqli_fetch_assoc($old_res)) {
+                $photo_path = $old_row['photo'];
+            }
+        }
+
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            $fileTmpPath = $_FILES['photo']['tmp_name'];
+            $fileName = $_FILES['photo']['name'];
+            $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (in_array($fileExtension, $allowedExtensions)) {
+                $newFileName = 'emp_' . uniqid() . '.' . $fileExtension;
+                $uploadFileDir = '../uploads/employees/';
+                if (!is_dir($uploadFileDir)) {
+                    mkdir($uploadFileDir, 0777, true);
+                }
+                $dest_path = $uploadFileDir . $newFileName;
+                
+                if (move_uploaded_file($fileTmpPath, $dest_path)) {
+                    if ($photo_path && file_exists('../' . $photo_path)) {
+                        @unlink('../' . $photo_path);
+                    }
+                    $photo_path = 'uploads/employees/' . $newFileName;
+                }
+            }
+        }
+
         if ($id > 0) {
             $sql = "UPDATE payroll_employees SET 
                     emp_code = ?, first_name = ?, last_name = ?, department = ?, position = ?, 
                     salary = ?, start_date = ?, phone = ?, max_business_leave = ?, max_sick_leave = ?, 
-                    max_annual_leave = ?, max_other_leave = ?, status = ?
+                    max_annual_leave = ?, max_other_leave = ?, status = ?, photo = ?
                     WHERE id = ? AND company_id = ?";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sssssdssiiiisii", 
+            mysqli_stmt_bind_param($stmt, "sssssdssiiiissii", 
                 $emp_code, $first_name, $last_name, $department, $position, 
                 $salary, $start_date, $phone, $max_business_leave, $max_sick_leave, 
-                $max_annual_leave, $max_other_leave, $status, $id, $company_id
+                $max_annual_leave, $max_other_leave, $status, $photo_path, $id, $company_id
             );
         } else {
             $sql = "INSERT INTO payroll_employees (
                         company_id, emp_code, first_name, last_name, department, position, 
                         salary, start_date, phone, max_business_leave, max_sick_leave, 
-                        max_annual_leave, max_other_leave, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        max_annual_leave, max_other_leave, status, photo
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "isssssdssiiiis", 
+            mysqli_stmt_bind_param($stmt, "isssssdssiiiiss", 
                 $company_id, $emp_code, $first_name, $last_name, $department, $position, 
                 $salary, $start_date, $phone, $max_business_leave, $max_sick_leave, 
-                $max_annual_leave, $max_other_leave, $status
+                $max_annual_leave, $max_other_leave, $status, $photo_path
             );
         }
 
@@ -263,6 +326,20 @@ switch ($action) {
 
     case 'delete_employee':
         $id = (int)($_POST['id'] ?? 0);
+        
+        // Find photo path to delete
+        $photo_sql = "SELECT photo FROM payroll_employees WHERE id = ? AND company_id = ?";
+        $photo_stmt = mysqli_prepare($conn, $photo_sql);
+        mysqli_stmt_bind_param($photo_stmt, "ii", $id, $company_id);
+        mysqli_stmt_execute($photo_stmt);
+        $photo_res = mysqli_stmt_get_result($photo_stmt);
+        if ($photo_row = mysqli_fetch_assoc($photo_res)) {
+            $photo_path = $photo_row['photo'];
+            if ($photo_path && file_exists('../' . $photo_path)) {
+                @unlink('../' . $photo_path);
+            }
+        }
+
         $sql = "DELETE FROM payroll_employees WHERE id = ? AND company_id = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
@@ -279,7 +356,7 @@ switch ($action) {
     case 'list_attendance':
         $work_date = $_GET['work_date'] ?? date('Y-m-d');
         
-        $sql = "SELECT e.id as employee_id, e.emp_code, e.first_name, e.last_name, e.department, e.position,
+        $sql = "SELECT e.id as employee_id, e.emp_code, e.first_name, e.last_name, e.department, e.position, e.photo,
                        a.id as attendance_id, a.work_date, a.check_in, a.check_out, a.status, a.leave_type, a.note
                 FROM payroll_employees e
                 LEFT JOIN payroll_attendance a ON e.id = a.employee_id AND a.work_date = ?
@@ -412,7 +489,7 @@ switch ($action) {
         }
 
         // Fetch all active employees
-        $emp_sql = "SELECT id, emp_code, first_name, last_name, department, position, 
+        $emp_sql = "SELECT id, emp_code, first_name, last_name, department, position, photo, 
                            max_business_leave, max_sick_leave, max_annual_leave, max_other_leave
                     FROM payroll_employees 
                     WHERE company_id = ? AND status = 'active'
@@ -438,6 +515,7 @@ switch ($action) {
                 'name' => $emp['first_name'] . ' ' . $emp['last_name'],
                 'department' => $emp['department'],
                 'position' => $emp['position'],
+                'photo' => $emp['photo'],
                 
                 'business_used' => $leaves_used['business'],
                 'business_max' => (int)$emp['max_business_leave'],

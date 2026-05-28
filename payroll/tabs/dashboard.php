@@ -162,7 +162,14 @@
             type: 'GET',
             data: { action: 'get_settings' },
             success: function(data) {
-                $('#dash-pay-day').text(`ทุกวันที่ ${data.pay_day}`);
+                if (data.pay_day) {
+                    let formatted = data.pay_day.split(',').map(function(d) {
+                        return d.trim() === 'L' ? 'สิ้นเดือน' : d.trim();
+                    }).join(', ');
+                    $('#dash-pay-day').text(`ทุกวันที่ ${formatted}`);
+                } else {
+                    $('#dash-pay-day').text('-');
+                }
             }
         });
 

@@ -9,14 +9,20 @@
             
             <form id="payDayForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">กำหนดวันจ่ายเงินเดือน</label>
-                    <div class="flex items-center gap-3">
-                        <span class="text-sm font-medium text-slate-500 whitespace-nowrap">จ่ายทุกวันที่</span>
-                        <input type="number" id="pay_day_input" name="pay_day" min="1" max="31" required
-                               class="w-20 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-center font-bold text-slate-800 outline-none transition-all">
-                        <span class="text-sm font-medium text-slate-500 whitespace-nowrap">ของเดือน</span>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">กำหนดวันจ่ายเงินเดือน (เลือกได้หลายวัน)</label>
+                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-[220px] overflow-y-auto p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <?php for ($d = 1; $d <= 31; $d++): ?>
+                            <label class="flex items-center gap-1.5 cursor-pointer p-1.5 hover:bg-slate-200/50 rounded-lg transition-colors">
+                                <input type="checkbox" value="<?= $d ?>" class="pay-day-chk w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                                <span class="text-xs font-semibold text-slate-700"><?= $d ?></span>
+                            </label>
+                        <?php endfor; ?>
+                        <label class="col-span-4 sm:col-span-6 flex items-center gap-1.5 cursor-pointer p-2 bg-blue-50/50 hover:bg-blue-100/50 border border-blue-100 rounded-lg transition-colors mt-1">
+                            <input type="checkbox" value="L" class="pay-day-chk w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500">
+                            <span class="text-xs font-bold text-blue-700"><i class="fa-solid fa-calendar-day mr-1"></i> วันสิ้นเดือน (30 หรือ 31)</span>
+                        </label>
                     </div>
-                    <p class="text-[10px] text-slate-400 mt-2">หมายเหตุ: หากต้องการให้ระบบคำนวณตัดงวด สามารถเปลี่ยนวันจ่ายได้ตามรอบการเงิน</p>
+                    <p class="text-[10px] text-slate-400 mt-2">หมายเหตุ: ระบบรองรับการระบุวันจ่ายเงินเดือนหลายวันต่อเดือน สำหรับการจ่ายงวด 2 หรือ 3 ครั้ง</p>
                 </div>
                 <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2">
                     <i class="fa-solid fa-floppy-disk"></i>
@@ -114,7 +120,15 @@
             type: 'GET',
             data: { action: 'get_settings' },
             success: function(data) {
-                $('#pay_day_input').val(data.pay_day);
+                // Clear checkboxes
+                $('.pay-day-chk').prop('checked', false);
+                
+                if (data.pay_day) {
+                    const days = data.pay_day.split(',');
+                    days.forEach(function(day) {
+                        $(`.pay-day-chk[value="${day.trim()}"]`).prop('checked', true);
+                    });
+                }
             }
         });
 
@@ -165,11 +179,24 @@
     // Submit pay_day form
     $('#payDayForm').on('submit', function(e) {
         e.preventDefault();
-        const pay_day = $('#pay_day_input').val();
+        
+        // Collect checked days
+        const selectedDays = [];
+        $('.pay-day-chk:checked').each(function() {
+            selectedDays.push($(this).val());
+        });
+        
+        if (selectedDays.length === 0) {
+            Swal.fire('คำเตือน', 'กรุณาเลือกวันจ่ายเงินเดือนอย่างน้อย 1 วัน', 'warning');
+            return;
+        }
+
+        const pay_day_str = selectedDays.join(',');
+        
         $.ajax({
             url: 'payroll_action.php',
             type: 'POST',
-            data: { action: 'save_settings', pay_day: pay_day },
+            data: { action: 'save_settings', pay_day: pay_day_str },
             success: function(res) {
                 if (res.status === 'success') {
                     Swal.fire({

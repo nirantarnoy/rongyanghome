@@ -125,10 +125,23 @@
                         let timeDisabled = (status === 'absent' || status === 'leave') ? 'disabled' : '';
                         let leaveDisabled = (status !== 'leave') ? 'disabled' : '';
 
+                        let avatarHtml = '';
+                        if (row.photo) {
+                            avatarHtml = `<img src="../${row.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
+                        } else {
+                            let initials = (row.first_name ? row.first_name.charAt(0) : '') + (row.last_name ? row.last_name.charAt(0) : '');
+                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
+                        }
+
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors" data-employee-id="${row.employee_id}">
                             <td class="px-4 py-3 text-xs font-bold text-slate-800">${row.emp_code}</td>
-                            <td class="px-4 py-3 text-xs font-semibold text-slate-700">${row.first_name} ${row.last_name}</td>
+                            <td class="px-4 py-3 text-xs font-semibold text-slate-700">
+                                <div class="flex items-center gap-3">
+                                    ${avatarHtml}
+                                    <span>${row.first_name} ${row.last_name}</span>
+                                </div>
+                            </td>
                             <td class="px-4 py-3 text-xs text-slate-500">
                                 <div class="font-medium">${row.position}</div>
                                 <div class="text-[10px] text-slate-400 mt-0.5">${row.department}</div>

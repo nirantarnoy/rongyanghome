@@ -56,22 +56,40 @@
                 <form id="employeeForm" class="space-y-4">
                     <input type="hidden" id="emp_id" name="id">
                     
-                    <!-- Basic Info Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">รหัสพนักงาน <span class="text-rose-500">*</span></label>
-                            <input type="text" name="emp_code" id="emp_code_input" required placeholder="EMP-00001"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                    <!-- Photo & Basic Info Row -->
+                    <div class="flex flex-col md:flex-row gap-6 border-b border-slate-100 pb-4">
+                        <!-- Photo Upload Column -->
+                        <div class="flex flex-col items-center justify-center space-y-2 md:border-r border-slate-100 pr-0 md:pr-6 self-center md:self-stretch">
+                            <div class="relative group">
+                                <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-50 flex items-center justify-center shadow-inner" id="photo_preview_container">
+                                    <i class="fa-solid fa-user-tie text-slate-300 text-4xl" id="photo_preview_icon"></i>
+                                    <img src="" id="photo_preview" class="w-full h-full object-cover hidden">
+                                </div>
+                                <label for="photo_input" class="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center cursor-pointer shadow-md transition-all">
+                                    <i class="fa-solid fa-camera text-xs"></i>
+                                </label>
+                                <input type="file" name="photo" id="photo_input" accept="image/*" class="hidden" onchange="previewEmployeePhoto(this)">
+                            </div>
+                            <span class="text-[10px] text-slate-400">รูปภาพพนักงาน (สูงสุด 2MB)</span>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ชื่อจริง <span class="text-rose-500">*</span></label>
-                            <input type="text" name="first_name" id="first_name_input" required placeholder="สมชาย"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">นามสกุล <span class="text-rose-500">*</span></label>
-                            <input type="text" name="last_name" id="last_name_input" required placeholder="ใจดี"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                        
+                        <!-- Basic Info Column -->
+                        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">รหัสพนักงาน <span class="text-rose-500">*</span></label>
+                                <input type="text" name="emp_code" id="emp_code_input" required placeholder="EMP-00001"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ชื่อจริง <span class="text-rose-500">*</span></label>
+                                <input type="text" name="first_name" id="first_name_input" required placeholder="สมชาย"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">นามสกุล <span class="text-rose-500">*</span></label>
+                                <input type="text" name="last_name" id="last_name_input" required placeholder="ใจดี"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
                         </div>
                     </div>
 
@@ -174,10 +192,23 @@
                             ? `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-200"><i class="fa-solid fa-check mr-0.5"></i> ทำงานอยู่</span>`
                             : `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full border border-slate-200">พ้นสภาพ</span>`;
                         
+                        let avatarHtml = '';
+                        if (emp.photo) {
+                            avatarHtml = `<img src="../${emp.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
+                        } else {
+                            let initials = (emp.first_name ? emp.first_name.charAt(0) : '') + (emp.last_name ? emp.last_name.charAt(0) : '');
+                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
+                        }
+
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4 text-xs font-bold text-slate-800">${emp.emp_code}</td>
-                            <td class="px-6 py-4 text-xs font-semibold text-slate-700">${emp.first_name} ${emp.last_name}</td>
+                            <td class="px-6 py-4 text-xs font-semibold text-slate-700">
+                                <div class="flex items-center gap-3">
+                                    ${avatarHtml}
+                                    <span>${emp.first_name} ${emp.last_name}</span>
+                                </div>
+                            </td>
                             <td class="px-6 py-4 text-xs text-slate-600">
                                 <div>${emp.position}</div>
                                 <div class="text-[10px] text-slate-400 mt-0.5">${emp.department}</div>
@@ -219,10 +250,26 @@
         });
     }
 
+    function previewEmployeePhoto(input) {
+        if (input.files && input.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                $('#photo_preview').attr('src', e.target.result).removeClass('hidden');
+                $('#photo_preview_icon').addClass('hidden');
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
     // Modal Operations
     function openEmployeeModal(mode, id = null) {
         $('#employeeForm')[0].reset();
         $('#emp_id').val('');
+        
+        // Reset photo preview
+        $('#photo_preview').attr('src', '').addClass('hidden');
+        $('#photo_preview_icon').removeClass('hidden');
+        $('#photo_input').val('');
         
         // Set default values for leaves
         $('#max_business_leave_input').val(7);
@@ -265,6 +312,12 @@
                     $('#max_annual_leave_input').val(emp.max_annual_leave);
                     $('#max_other_leave_input').val(emp.max_other_leave);
 
+                    // Load photo preview if exists
+                    if (emp.photo) {
+                        $('#photo_preview').attr('src', '../' + emp.photo).removeClass('hidden');
+                        $('#photo_preview_icon').addClass('hidden');
+                    }
+
                     $('#employeeModal').removeClass('hidden');
                 }
             });
@@ -276,11 +329,22 @@
     }
 
     function saveEmployee() {
-        const formData = $('#employeeForm').serialize();
+        const form = $('#employeeForm')[0];
+        
+        // Basic HTML5 validation trigger
+        if (!form.reportValidity()) {
+            return;
+        }
+
+        const formData = new FormData(form);
+        formData.append('action', 'save_employee');
+
         $.ajax({
             url: 'payroll_action.php',
             type: 'POST',
-            data: formData + '&action=save_employee',
+            data: formData,
+            processData: false,
+            contentType: false,
             success: function(res) {
                 if (res.status === 'success') {
                     Swal.fire({

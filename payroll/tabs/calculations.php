@@ -92,12 +92,25 @@
                     return 'bg-blue-600';
                 };
 
+                let avatarHtml = '';
+                if (emp.photo) {
+                    avatarHtml = `<img src="../${emp.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
+                } else {
+                    let initials = emp.name ? emp.name.split(' ').map(n => n.charAt(0)).join('') : '';
+                    avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
+                }
+
                 html += `
                 <tr class="hover:bg-slate-50/50 transition-colors">
                     <td class="px-6 py-4 text-xs font-bold text-slate-800">${emp.emp_code}</td>
                     <td class="px-6 py-4 text-xs font-semibold text-slate-700">
-                        <div>${emp.name}</div>
-                        <div class="text-[10px] text-slate-400 mt-0.5">${emp.position} | ${emp.department}</div>
+                        <div class="flex items-center gap-3">
+                            ${avatarHtml}
+                            <div>
+                                <div>${emp.name}</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">${emp.position} | ${emp.department}</div>
+                            </div>
+                        </div>
                     </td>
                     
                     <!-- Business Leave Column -->
