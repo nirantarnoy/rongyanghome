@@ -12,6 +12,12 @@ if (!$is_admin && !in_array('payroll', $allowed_modules)) {
 }
 
 $company_id = $_SESSION['company_id'] ?? 1;
+
+// Fetch company details for payroll documents
+$comp_query = mysqli_query($conn, "SELECT * FROM company WHERE id = $company_id");
+$company_info = mysqli_fetch_assoc($comp_query);
+$company_name = $company_info['company_name'] ?? 'บริษัท ----';
+$company_address = $company_info['address'] ?? '---';
 ?>
 <!DOCTYPE html>
 <html lang="th">
