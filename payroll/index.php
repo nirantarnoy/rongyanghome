@@ -113,6 +113,11 @@ $company_address = $company_info['address'] ?? '---';
                         <span>คำนวณเงินเดือน</span>
                     </button>
 
+                    <button onclick="switchTab('adjustments')" id="btn-adjustments" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-tags w-5"></i>
+                        <span>เงินเพิ่ม - เงินหัก (Master)</span>
+                    </button>
+
                     <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
                         <i class="fa-solid fa-sliders w-5"></i>
                         <span>ตั้งค่าระบบ</span>
@@ -199,6 +204,11 @@ $company_address = $company_info['address'] ?? '---';
                     <?php include 'tabs/payroll_calc.php'; ?>
                 </div>
 
+                <!-- TAB: ADJUSTMENTS -->
+                <div id="tab-adjustments" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/adjustments.php'; ?>
+                </div>
+
                 <!-- TAB: SETTINGS -->
                 <div id="tab-settings" class="tab-pane hidden space-y-6">
                     <?php include 'tabs/settings.php'; ?>
@@ -248,6 +258,11 @@ $company_address = $company_info['address'] ?? '---';
                     title = 'คำนวณเงินเดือน';
                     subtitle = 'คำนวณค่าจ้างประจำเดือน พิมพ์สลิป และดูยอดสรุป';
                     loadPayrollCalc();
+                    break;
+                case 'adjustments':
+                    title = 'เงินเพิ่ม - เงินหัก (Master)';
+                    subtitle = 'จัดการรายการเงินเพิ่มและเงินหักสำหรับพนักงาน';
+                    loadAdjustmentsTable();
                     break;
                 case 'settings':
                     title = 'ตั้งค่าระบบ';

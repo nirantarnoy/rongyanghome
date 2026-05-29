@@ -191,6 +191,44 @@ if ($check_detail_allowance && mysqli_num_rows($check_detail_allowance) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN allowance DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
 }
 
+// Create master adjustments and daily adjustments tables
+$createMasterAdjustmentsTable = "CREATE TABLE IF NOT EXISTS payroll_adjustment_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type ENUM('allowance', 'deduction') NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createMasterAdjustmentsTable);
+
+$createAttendanceAdjustmentsTable = "CREATE TABLE IF NOT EXISTS payroll_attendance_adjustments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    work_date DATE NOT NULL,
+    adjustment_item_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    note VARCHAR(255) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_emp_date_item (employee_id, work_date, adjustment_item_id),
+    FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE,
+    FOREIGN KEY (adjustment_item_id) REFERENCES payroll_adjustment_items(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createAttendanceAdjustmentsTable);
+
+// Insert default adjustment items if none exist
+$checkAdjustmentItems = mysqli_query($conn, "SELECT id FROM payroll_adjustment_items WHERE company_id = $company_id");
+if ($checkAdjustmentItems && mysqli_num_rows($checkAdjustmentItems) == 0) {
+    mysqli_query($conn, "INSERT IGNORE INTO payroll_adjustment_items (company_id, name, type) VALUES 
+        ($company_id, 'ค่าน้ำมัน', 'allowance'),
+        ($company_id, 'ค่าเดินทาง', 'allowance'),
+        ($company_id, 'ค่าอาหาร', 'allowance'),
+        ($company_id, 'เงินเพิ่มอื่นๆ', 'allowance'),
+        ($company_id, 'ค่าของเสียหาย', 'deduction'),
+        ($company_id, 'เงินหักอื่นๆ', 'deduction')");
+}
+
 // Insert default setting if not exist
 $checkSetting = mysqli_query($conn, "SELECT id FROM payroll_settings WHERE company_id = $company_id");
 if (mysqli_num_rows($checkSetting) == 0) {
@@ -235,6 +273,65 @@ switch ($action) {
         mysqli_stmt_bind_param($stmt, "is", $company_id, $pay_day_saved);
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['status' => 'success', 'message' => 'บันทึกการตั้งค่าระบบเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    // -------------------------------------------------------------
+    // MASTER ADJUSTMENT ACTIONS
+    // -------------------------------------------------------------
+    case 'list_adjustment_items':
+        $sql = "SELECT * FROM payroll_adjustment_items WHERE company_id = ? ORDER BY id ASC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $items = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $items[] = $row;
+        }
+        header('Content-Type: application/json');
+        echo json_encode($items);
+        break;
+
+    case 'save_adjustment_item':
+        $id = (int)($_POST['id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $type = $_POST['type'] ?? 'allowance';
+
+        if (empty($name)) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกชื่อรายการ']);
+            exit();
+        }
+
+        if ($id > 0) {
+            $sql = "UPDATE payroll_adjustment_items SET name = ?, type = ? WHERE id = ? AND company_id = ?";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "ssii", $name, $type, $id, $company_id);
+        } else {
+            $sql = "INSERT INTO payroll_adjustment_items (company_id, name, type) VALUES (?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "iss", $company_id, $name, $type);
+        }
+
+        header('Content-Type: application/json');
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'บันทึกข้อมูลรายการเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    case 'delete_adjustment_item':
+        $id = (int)($_POST['id'] ?? 0);
+        $sql = "DELETE FROM payroll_adjustment_items WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        header('Content-Type: application/json');
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'ลบข้อมูลรายการเรียบร้อยแล้ว']);
         } else {
             echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
         }
@@ -671,6 +768,71 @@ switch ($action) {
         break;
 
     // -------------------------------------------------------------
+    // DAILY ADJUSTMENT ACTIONS
+    // -------------------------------------------------------------
+    case 'list_daily_adjustments':
+        $employee_id = (int)($_GET['employee_id'] ?? 0);
+        $work_date = $_GET['work_date'] ?? '';
+
+        $sql = "SELECT adj.id, adj.adjustment_item_id, adj.amount, adj.note, item.name, item.type 
+                FROM payroll_attendance_adjustments adj
+                JOIN payroll_adjustment_items item ON adj.adjustment_item_id = item.id
+                WHERE adj.employee_id = ? AND adj.work_date = ?
+                ORDER BY adj.id ASC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "is", $employee_id, $work_date);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $adjustments = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $adjustments[] = $row;
+        }
+        header('Content-Type: application/json');
+        echo json_encode($adjustments);
+        break;
+
+    case 'add_daily_adjustment':
+        $employee_id = (int)($_POST['employee_id'] ?? 0);
+        $work_date = $_POST['work_date'] ?? '';
+        $adjustment_item_id = (int)($_POST['adjustment_item_id'] ?? 0);
+        $amount = (float)($_POST['amount'] ?? 0.00);
+        $note = trim($_POST['note'] ?? '');
+
+        if ($employee_id <= 0 || empty($work_date) || $adjustment_item_id <= 0) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'ข้อมูลไม่ครบถ้วนหรือไม่ถูกต้อง']);
+            exit();
+        }
+
+        $sql = "INSERT INTO payroll_attendance_adjustments (employee_id, work_date, adjustment_item_id, amount, note)
+                VALUES (?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE amount = VALUES(amount), note = VALUES(note)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "isids", $employee_id, $work_date, $adjustment_item_id, $amount, $note);
+        
+        header('Content-Type: application/json');
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'บันทึกรายการสำเร็จ']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    case 'delete_daily_adjustment':
+        $id = (int)($_POST['id'] ?? 0);
+        $sql = "DELETE FROM payroll_attendance_adjustments WHERE id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $id);
+        
+        header('Content-Type: application/json');
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'ลบรายการสำเร็จ']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    // -------------------------------------------------------------
     // LEAVE CALCULATIONS & DASHBOARD SUMMARY ACTIONS
     // -------------------------------------------------------------
     case 'calculate_leaves':
@@ -859,11 +1021,9 @@ switch ($action) {
             mysqli_stmt_execute($emp_stmt);
             $emp_res = mysqli_stmt_get_result($emp_stmt);
             
-            // Get attendance details for this month to calculate wages based on specific daily positions, allowances, and deductions
+            // Get attendance details for this month
             $att_details_sql = "SELECT a.employee_id, a.work_date, a.status, a.position_id,
-                                       p.position as pos_name, p.wage_type as pos_wage_type, p.salary as pos_salary,
-                                       a.allowance_fuel, a.allowance_travel, a.allowance_food, a.allowance_other,
-                                       a.deduction_damage, a.deduction_other
+                                       p.position as pos_name, p.wage_type as pos_wage_type, p.salary as pos_salary
                                 FROM payroll_attendance a
                                 LEFT JOIN payroll_employee_positions p ON a.position_id = p.id
                                 WHERE a.company_id = ? AND DATE_FORMAT(a.work_date, '%Y-%m') = ?";
@@ -881,6 +1041,31 @@ switch ($action) {
                 $emp_att_map[$emp_id][] = $att_row;
             }
             
+            // Get adjustments for this month
+            $adj_month_sql = "SELECT adj.employee_id, adj.amount, item.type
+                              FROM payroll_attendance_adjustments adj
+                              JOIN payroll_adjustment_items item ON adj.adjustment_item_id = item.id
+                              WHERE DATE_FORMAT(adj.work_date, '%Y-%m') = ?";
+            $adj_month_stmt = mysqli_prepare($conn, $adj_month_sql);
+            mysqli_stmt_bind_param($adj_month_stmt, "s", $month);
+            mysqli_stmt_execute($adj_month_stmt);
+            $adj_month_res = mysqli_stmt_get_result($adj_month_stmt);
+            $adj_map = [];
+            while ($adj_row = mysqli_fetch_assoc($adj_month_res)) {
+                $emp_id = $adj_row['employee_id'];
+                if (!isset($adj_map[$emp_id])) {
+                    $adj_map[$emp_id] = [
+                        'allowance' => 0.00,
+                        'deductions' => 0.00
+                    ];
+                }
+                if ($adj_row['type'] === 'allowance') {
+                    $adj_map[$emp_id]['allowance'] += (float)$adj_row['amount'];
+                } else {
+                    $adj_map[$emp_id]['deductions'] += (float)$adj_row['amount'];
+                }
+            }
+            
             $details = [];
             while ($emp = mysqli_fetch_assoc($emp_res)) {
                 $emp_id = $emp['id'];
@@ -891,21 +1076,13 @@ switch ($action) {
                 $leave_days = 0;
                 
                 $base_earnings = 0.00;
-                $total_allowance = 0.00;
-                $total_deductions = 0.00;
+                $total_allowance = (float)($adj_map[$emp_id]['allowance'] ?? 0.00);
+                $total_deductions = (float)($adj_map[$emp_id]['deductions'] ?? 0.00);
                 
                 $is_monthly = ($emp['wage_type'] === 'monthly');
                 
                 foreach ($att_records as $record) {
                     $status = $record['status'];
-                    
-                    // Sum allowances and deductions for every day
-                    $day_allowance = (float)$record['allowance_fuel'] + (float)$record['allowance_travel'] + 
-                                     (float)$record['allowance_food'] + (float)$record['allowance_other'];
-                    $day_deduction = (float)$record['deduction_damage'] + (float)$record['deduction_other'];
-                    
-                    $total_allowance += $day_allowance;
-                    $total_deductions += $day_deduction;
                     
                     if ($status === 'normal' || $status === 'late') {
                         $present_days++;
@@ -913,10 +1090,10 @@ switch ($action) {
                         // Calculate base wage for daily employees based on today's position
                         if (!$is_monthly) {
                             if (!empty($record['position_id']) && $record['pos_salary'] !== null) {
-                                $base_earnings += (float)$record['pos_salary'];
-                            } else {
-                                $base_earnings += (float)$emp['salary'];
-                            }
+                                        $base_earnings += (float)$record['pos_salary'];
+                                    } else {
+                                        $base_earnings += (float)$emp['salary'];
+                                    }
                         }
                     } else if ($status === 'absent') {
                         $absent_days++;

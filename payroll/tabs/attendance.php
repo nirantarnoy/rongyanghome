@@ -52,22 +52,14 @@
             <span class="text-[10px] text-blue-600 font-bold uppercase">ลางาน</span>
             <h4 class="text-xl font-bold text-blue-700 mt-0.5" id="att-summary-leave">0 คน</h4>
         </div>
-        <i class="fa-solid fa-umbrella-beach text-blue-300 text-2xl"></i>
-    </div>
-</div>
-
-<!-- Attendance Form/Table Card -->
-<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
+        <i class="fa-solid fa-umbrella-beach text-blue-300             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">แผนก / ตำแหน่ง</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">สถานะ</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ตำแหน่งงานวันนี้</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เงินพิเศษ</th>
+                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เงินเพิ่ม-เงินหัก</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เวลาเข้า</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เวลาออก</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ประเภทการลา</th>
@@ -82,72 +74,112 @@
     </div>
 </div>
 
+<!-- Daily Adjustments Modal -->
+<div id="dailyAdjustmentsModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-slate-900/40 backdrop-blur-sm" onclick="closeDailyAdjustmentsModal()"></div>
+        
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">บันทึกเงินเพิ่ม - เงินหักรายวัน</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            พนักงาน: <span id="daily_adj_emp_name" class="font-bold text-slate-700"></span> 
+                            | วันที่: <span id="daily_adj_work_date" class="font-bold text-slate-700"></span>
+                        </p>
+                    </div>
+                    <button onclick="closeDailyAdjustmentsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Form to Add -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
+                    <input type="hidden" id="daily_adj_emp_id">
+                    <div class="md:col-span-4">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">เลือกประเภทรายการ <span class="text-rose-500">*</span></label>
+                        <select id="daily_adj_item_id" required
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs font-semibold text-slate-700">
+                            <!-- Loaded dynamically -->
+                        </select>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">จำนวนเงิน (บาท) <span class="text-rose-500">*</span></label>
+                        <input type="number" step="0.01" min="0.01" id="daily_adj_amount" required placeholder="0.00"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs font-semibold text-slate-700">
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1">หมายเหตุ</label>
+                        <input type="text" id="daily_adj_note" placeholder="ระบุเหตุผล (ถ้ามี)"
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs text-slate-700">
+                    </div>
+                    <div class="md:col-span-2">
+                        <button type="button" onclick="addDailyAdjustmentRow()"
+                                class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>เพิ่ม</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- List of Adjustments table -->
+                <div class="overflow-hidden border border-slate-100 rounded-2xl max-h-60 overflow-y-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-100">
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">รายการ</th>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ประเภท</th>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">จำนวนเงิน</th>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
+                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyAdjTableBody" class="divide-y divide-slate-100">
+                            <!-- Loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 px-6 py-4 flex flex-row-reverse">
+                <button type="button" onclick="closeDailyAdjustmentsModal()"
+                        class="inline-flex justify-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-all">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    function getSpecialPaySummary(row) {
-        let parts = [];
-        let fuel = parseFloat(row.allowance_fuel || 0);
-        let travel = parseFloat(row.allowance_travel || 0);
-        let food = parseFloat(row.allowance_food || 0);
-        let otherAllow = parseFloat(row.allowance_other || 0);
-        let otherAllowNote = row.allowance_other_note || '';
-        let damage = parseFloat(row.deduction_damage || 0);
-        let otherDed = parseFloat(row.deduction_other || 0);
-        let otherDedNote = row.deduction_other_note || '';
-
-        if (fuel > 0) parts.push(`น้ำมัน ${fuel}`);
-        if (travel > 0) parts.push(`เดินทาง ${travel}`);
-        if (food > 0) parts.push(`อาหาร ${food}`);
-        if (otherAllow > 0) {
-            parts.push(otherAllowNote ? `${otherAllowNote} ${otherAllow}` : `เงินเพิ่มอื่นๆ ${otherAllow}`);
-        } else if (otherAllowNote) {
-            parts.push(otherAllowNote);
-        }
-        if (damage > 0) parts.push(`เสียหาย -${damage}`);
-        if (otherDed > 0) {
-            parts.push(otherDedNote ? `${otherDedNote} -${otherDed}` : `เงินหักอื่นๆ -${otherDed}`);
-        } else if (otherDedNote) {
-            parts.push(otherDedNote);
-        }
-
-        return parts.length > 0 ? parts.join(', ') : '';
-    }
-
-    function toggleSpecialPayPanel(el) {
-        $('.special-pay-panel').not($(el).siblings('.special-pay-panel')).addClass('hidden');
-        $(el).siblings('.special-pay-panel').toggleClass('hidden');
-    }
-
-    function closeSpecialPayPanel(btn) {
-        $(btn).closest('.special-pay-panel').addClass('hidden');
-    }
-
-    function confirmSpecialPay(btn) {
-        const panel = $(btn).closest('.special-pay-panel');
-        const container = panel.parent();
-        
-        const rowData = {
-            allowance_fuel: panel.find('.row-allowance-fuel').val() || 0,
-            allowance_travel: panel.find('.row-allowance-travel').val() || 0,
-            allowance_food: panel.find('.row-allowance-food').val() || 0,
-            allowance_other: panel.find('.row-allowance-other').val() || 0,
-            allowance_other_note: panel.find('.row-allowance-other-note').val() || '',
-            deduction_damage: panel.find('.row-deduction-damage').val() || 0,
-            deduction_other: panel.find('.row-deduction-other').val() || 0,
-            deduction_other_note: panel.find('.row-deduction-other-note').val() || ''
-        };
-        
-        const summaryText = getSpecialPaySummary(rowData);
-        container.find('.special-pay-summary').text(summaryText || 'ไม่มีเงินพิเศษ');
-        panel.addClass('hidden');
-    }
-
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('.special-pay-container').length) {
-            $('.special-pay-panel').addClass('hidden');
-        }
-    });
-
     let currentAttendanceList = [];
+    let allMasterAdjustments = [];
+
+    function loadMasterAdjustmentsOptions() {
+        $.ajax({
+            url: 'payroll_action.php',
+            type: 'GET',
+            data: { action: 'list_adjustment_items' },
+            success: function(data) {
+                allMasterAdjustments = data;
+                let html = '<option value="">-- เลือกรายการ --</option>';
+                if (data && data.length > 0) {
+                    data.forEach(function(item) {
+                        const typeLabel = item.type === 'allowance' ? 'เงินเพิ่ม' : 'เงินหัก';
+                        html += `<option value="${item.id}">${item.name} (${typeLabel})</option>`;
+                    });
+                }
+                $('#daily_adj_item_id').html(html);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        loadMasterAdjustmentsOptions();
+    });
 
     function loadAttendanceList() {
         const dateStr = $('#attendance_date_input').val();
@@ -160,7 +192,7 @@
                 let html = '';
                 
                 let sumNormal = 0, sumLate = 0, sumAbsent = 0, sumLeave = 0;
- 
+
                 if (data.length > 0) {
                     data.forEach(function(row) {
                         let status = row.status || 'normal';
@@ -168,29 +200,29 @@
                         let checkOut = row.check_out ? row.check_out.substring(0, 5) : '';
                         let leaveType = row.leave_type || '';
                         let note = row.note || '';
- 
+
                         // Count sums
                         if (status === 'normal') sumNormal++;
                         if (status === 'late') sumLate++;
                         if (status === 'absent') sumAbsent++;
                         if (status === 'leave') sumLeave++;
- 
+
                         // Build statuses options
                         let optNormal = status === 'normal' ? 'selected' : '';
                         let optLate = status === 'late' ? 'selected' : '';
                         let optAbsent = status === 'absent' ? 'selected' : '';
                         let optLeave = status === 'leave' ? 'selected' : '';
- 
+
                         // Build leave types options
                         let loptBusiness = leaveType === 'business' ? 'selected' : '';
                         let loptSick = leaveType === 'sick' ? 'selected' : '';
                         let loptAnnual = leaveType === 'annual' ? 'selected' : '';
                         let loptOther = leaveType === 'other' ? 'selected' : '';
- 
+
                         // Disable time inputs for absent/leave
                         let timeDisabled = (status === 'absent' || status === 'leave') ? 'disabled' : '';
                         let leaveDisabled = (status !== 'leave') ? 'disabled' : '';
- 
+
                         let avatarHtml = '';
                         if (row.photo) {
                             avatarHtml = `<img src="../${row.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
@@ -215,17 +247,8 @@
                             optionsHtml += `<option value="" selected>${row.position || '-'} (${defaultRateBadge} ${parseFloat(row.salary || 0).toLocaleString()} บ.)</option>`;
                         }
 
-                        let specialPaySummary = getSpecialPaySummary({
-                            allowance_fuel: row.allowance_fuel,
-                            allowance_travel: row.allowance_travel,
-                            allowance_food: row.allowance_food,
-                            allowance_other: row.allowance_other,
-                            allowance_other_note: row.allowance_other_note,
-                            deduction_damage: row.deduction_damage,
-                            deduction_other: row.deduction_other,
-                            deduction_other_note: row.deduction_other_note
-                        });
- 
+                        const adjCount = row.adjustments ? row.adjustments.length : 0;
+
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors" data-employee-id="${row.employee_id}">
                             <td class="px-4 py-3 text-xs font-bold text-slate-800">${row.emp_code}</td>
@@ -253,70 +276,12 @@
                                 </select>
                             </td>
                             <td class="px-4 py-3 text-xs">
-                                <div class="relative special-pay-container">
-                                    <div onclick="toggleSpecialPayPanel(this)" class="special-pay-trigger flex items-center justify-between px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs text-slate-700 cursor-pointer w-44 hover:bg-slate-100 transition-all select-none">
-                                        <span class="special-pay-summary truncate text-left pr-2 font-medium">${specialPaySummary || 'ไม่มีเงินพิเศษ'}</span>
-                                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 flex-shrink-0"></i>
-                                    </div>
-                                    <!-- Floating Panel -->
-                                    <div class="special-pay-panel hidden absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-3 text-slate-700">
-                                        <h5 class="text-xs font-bold text-slate-800 mb-2 border-b border-slate-100 pb-1.5 flex justify-between items-center">
-                                            <span>บันทึกเงินพิเศษประจำวัน</span>
-                                            <button type="button" onclick="closeSpecialPayPanel(this)" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
-                                        </h5>
-                                        
-                                        <div class="space-y-2 max-h-60 overflow-y-auto text-left text-[11px] pr-1">
-                                            <!-- Allowances -->
-                                            <div class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-plus"></i> รายการเงินเพิ่ม (บาท)</div>
-                                            <div class="grid grid-cols-2 gap-1.5">
-                                                <div>
-                                                    <label class="text-[10px] text-slate-400">ค่าน้ำมัน</label>
-                                                    <input type="number" step="0.01" min="0" value="${row.allowance_fuel > 0 ? row.allowance_fuel : ''}" class="row-allowance-fuel w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                                </div>
-                                                <div>
-                                                    <label class="text-[10px] text-slate-400">ค่าเดินทาง</label>
-                                                    <input type="number" step="0.01" min="0" value="${row.allowance_travel > 0 ? row.allowance_travel : ''}" class="row-allowance-travel w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                                </div>
-                                                <div class="col-span-2">
-                                                    <label class="text-[10px] text-slate-400">ค่าอาหาร</label>
-                                                    <input type="number" step="0.01" min="0" value="${row.allowance_food > 0 ? row.allowance_food : ''}" class="row-allowance-food w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="border-t border-dashed border-slate-100 my-1.5"></div>
-                                            
-                                            <div>
-                                                <label class="text-[10px] text-slate-400">เงินเพิ่มอื่นๆ (บาท)</label>
-                                                <input type="number" step="0.01" min="0" value="${row.allowance_other > 0 ? row.allowance_other : ''}" class="row-allowance-other w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] text-slate-400">ระบุเงินเพิ่มอื่นๆ</label>
-                                                <input type="text" placeholder="เช่น ค่าอาหารไปต่างจังหวัด" value="${row.allowance_other_note || ''}" class="row-allowance-other-note w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                            </div>
-                                            
-                                            <div class="border-t border-slate-100 my-2"></div>
-                                            
-                                            <!-- Deductions -->
-                                            <div class="font-bold text-rose-600 flex items-center gap-1"><i class="fa-solid fa-circle-minus"></i> รายการเงินหัก (บาท)</div>
-                                            <div>
-                                                <label class="text-[10px] text-slate-400">ค่าของเสียหาย</label>
-                                                <input type="number" step="0.01" min="0" value="${row.deduction_damage > 0 ? row.deduction_damage : ''}" class="row-deduction-damage w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-rose-600 font-semibold">
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] text-slate-400">เงินหักอื่นๆ (บาท)</label>
-                                                <input type="number" step="0.01" min="0" value="${row.deduction_other > 0 ? row.deduction_other : ''}" class="row-deduction-other w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-rose-600 font-semibold">
-                                            </div>
-                                            <div>
-                                                <label class="text-[10px] text-slate-400">ระบุเงินหักอื่นๆ</label>
-                                                <input type="text" placeholder="เช่น ค่าอุปกรณ์เสียหาย" value="${row.deduction_other_note || ''}" class="row-deduction-other-note w-full px-1.5 py-1 border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex justify-end gap-1.5">
-                                            <button type="button" onclick="confirmSpecialPay(this)" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-bold transition-all">ตกลง</button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <button type="button" onclick="openDailyAdjustmentsModal(${row.employee_id}, '${row.first_name} ${row.last_name}')" 
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl border border-slate-200 hover:border-blue-200 transition-all font-semibold select-none">
+                                    <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i>
+                                    <span>จัดการ</span>
+                                    <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[9px] rounded-full font-extrabold" id="adj-count-${row.employee_id}">${adjCount}</span>
+                                </button>
                             </td>
                             <td class="px-4 py-3 text-xs">
                                 <input type="time" value="${checkIn}" ${timeDisabled}
@@ -405,12 +370,135 @@
         });
     }
 
+    // Quick checkout tool
     function setAllCheckout() {
         $('#attendanceTableBody tr').each(function() {
             const row = $(this);
             const status = row.find('.row-status').val();
             if (status === 'normal' || status === 'late') {
                 row.find('.row-check-out').val('17:00');
+            }
+        });
+    }
+
+    // Open Daily Adjustments Modal
+    function openDailyAdjustmentsModal(empId, empName) {
+        const dateStr = $('#attendance_date_input').val();
+        $('#daily_adj_emp_id').val(empId);
+        $('#daily_adj_emp_name').text(empName);
+        $('#daily_adj_work_date').text(dateStr);
+        $('#dailyAdjForm').closest('div').find('input[type="number"]').val('');
+        $('#daily_adj_item_id').val('');
+        $('#daily_adj_note').val('');
+        
+        loadDailyAdjustmentsTable(empId, dateStr);
+        $('#dailyAdjustmentsModal').removeClass('hidden');
+    }
+
+    function closeDailyAdjustmentsModal() {
+        $('#dailyAdjustmentsModal').addClass('hidden');
+        loadAttendanceList();
+    }
+
+    function loadDailyAdjustmentsTable(empId, dateStr) {
+        $.ajax({
+            url: 'payroll_action.php',
+            type: 'GET',
+            data: { 
+                action: 'list_daily_adjustments', 
+                employee_id: empId, 
+                work_date: dateStr 
+            },
+            success: function(data) {
+                let html = '';
+                if (data && data.length > 0) {
+                    $(`#adj-count-${empId}`).text(data.length);
+                    
+                    data.forEach(function(item) {
+                        const typeBadge = item.type === 'allowance'
+                            ? `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-100">เงินเพิ่ม</span>`
+                            : `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-full border border-rose-100">เงินหัก</span>`;
+
+                        html += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-4 py-2 text-xs font-semibold text-slate-700">${item.name}</td>
+                            <td class="px-4 py-2 text-xs">${typeBadge}</td>
+                            <td class="px-4 py-2 text-xs font-bold text-right ${item.type === 'allowance' ? 'text-emerald-600' : 'text-rose-600'}">
+                                ${item.type === 'allowance' ? '+' : '-'}${parseFloat(item.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                            </td>
+                            <td class="px-4 py-2 text-xs text-slate-500">${item.note || '-'}</td>
+                            <td class="px-4 py-2 text-xs text-center">
+                                <button type="button" onclick="deleteDailyAdjustmentRow(${item.id}, ${empId}, '${dateStr}')" 
+                                        class="p-1 text-rose-600 hover:bg-rose-50 rounded transition-all">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>`;
+                    });
+                } else {
+                    $(`#adj-count-${empId}`).text(0);
+                    html = `
+                    <tr>
+                        <td colspan="5" class="px-4 py-8 text-center text-slate-400 text-xs">
+                            ยังไม่มีรายการเงินเพิ่ม/หัก ของวันนี้
+                        </td>
+                    </tr>`;
+                }
+                $('#dailyAdjTableBody').html(html);
+            }
+        });
+    }
+
+    function addDailyAdjustmentRow() {
+        const empId = $('#daily_adj_emp_id').val();
+        const dateStr = $('#daily_adj_work_date').text();
+        const itemId = $('#daily_adj_item_id').val();
+        const amount = $('#daily_adj_amount').val();
+        const note = $('#daily_adj_note').val();
+
+        if (!itemId || !amount) {
+            Swal.fire('ข้อผิดพลาด', 'กรุณาระบุประเภทรายการและจำนวนเงิน', 'warning');
+            return;
+        }
+
+        $.ajax({
+            url: 'payroll_action.php',
+            type: 'POST',
+            data: {
+                action: 'add_daily_adjustment',
+                employee_id: empId,
+                work_date: dateStr,
+                adjustment_item_id: itemId,
+                amount: amount,
+                note: note
+            },
+            success: function(res) {
+                if (res.status === 'success') {
+                    $('#daily_adj_item_id').val('');
+                    $('#daily_adj_amount').val('');
+                    $('#daily_adj_note').val('');
+                    loadDailyAdjustmentsTable(empId, dateStr);
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                }
+            }
+        });
+    }
+
+    function deleteDailyAdjustmentRow(id, empId, dateStr) {
+        $.ajax({
+            url: 'payroll_action.php',
+            type: 'POST',
+            data: {
+                action: 'delete_daily_adjustment',
+                id: id
+            },
+            success: function(res) {
+                if (res.status === 'success') {
+                    loadDailyAdjustmentsTable(empId, dateStr);
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                }
             }
         });
     }
@@ -426,14 +514,6 @@
         const leaveType = row.find('.row-leave-type').val();
         const note = row.find('.row-note').val();
         const positionId = row.find('.row-position-id').val();
-        const fuel = row.find('.row-allowance-fuel').val() || 0;
-        const travel = row.find('.row-allowance-travel').val() || 0;
-        const food = row.find('.row-allowance-food').val() || 0;
-        const allowOther = row.find('.row-allowance-other').val() || 0;
-        const allowOtherNote = row.find('.row-allowance-other-note').val() || '';
-        const damage = row.find('.row-deduction-damage').val() || 0;
-        const dedOther = row.find('.row-deduction-other').val() || 0;
-        const dedOtherNote = row.find('.row-deduction-other-note').val() || '';
  
         if (status === 'leave' && !leaveType) {
             Swal.fire('คำเตือน', 'กรุณาระบุประเภทการลาหยุด', 'warning');
@@ -452,15 +532,7 @@
                 check_out: checkOut,
                 leave_type: leaveType,
                 note: note,
-                position_id: positionId,
-                allowance_fuel: fuel,
-                allowance_travel: travel,
-                allowance_food: food,
-                allowance_other: allowOther,
-                allowance_other_note: allowOtherNote,
-                deduction_damage: damage,
-                deduction_other: dedOther,
-                deduction_other_note: dedOtherNote
+                position_id: positionId
             },
             success: function(res) {
                 if (res.status === 'success') {
@@ -495,14 +567,6 @@
                 const leaveType = row.find('.row-leave-type').val();
                 const note = row.find('.row-note').val();
                 const positionId = row.find('.row-position-id').val();
-                const fuel = row.find('.row-allowance-fuel').val() || 0;
-                const travel = row.find('.row-allowance-travel').val() || 0;
-                const food = row.find('.row-allowance-food').val() || 0;
-                const allowOther = row.find('.row-allowance-other').val() || 0;
-                const allowOtherNote = row.find('.row-allowance-other-note').val() || '';
-                const damage = row.find('.row-deduction-damage').val() || 0;
-                const dedOther = row.find('.row-deduction-other').val() || 0;
-                const dedOtherNote = row.find('.row-deduction-other-note').val() || '';
  
                 if (status === 'leave' && !leaveType) {
                     validationError = true;
@@ -518,15 +582,7 @@
                     check_out: checkOut,
                     leave_type: leaveType,
                     note: note,
-                    position_id: positionId,
-                    allowance_fuel: fuel,
-                    allowance_travel: travel,
-                    allowance_food: food,
-                    allowance_other: allowOther,
-                    allowance_other_note: allowOtherNote,
-                    deduction_damage: damage,
-                    deduction_other: dedOther,
-                    deduction_other_note: dedOtherNote
+                    position_id: positionId
                 });
             }
         });
