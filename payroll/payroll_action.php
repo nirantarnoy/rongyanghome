@@ -235,6 +235,58 @@ if (mysqli_num_rows($checkSetting) == 0) {
     mysqli_query($conn, "INSERT IGNORE INTO payroll_settings (company_id, pay_day) VALUES ($company_id, '10')");
 }
 
+// Create commission tables
+$createCommSettingsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_settings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL UNIQUE,
+    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 3.50,
+    helper_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createCommSettingsTable);
+
+// Ensure default settings exist for company
+$checkCommSettings = mysqli_query($conn, "SELECT id FROM payroll_commission_settings WHERE company_id = $company_id");
+if ($checkCommSettings && mysqli_num_rows($checkCommSettings) == 0) {
+    mysqli_query($conn, "INSERT IGNORE INTO payroll_commission_settings (company_id, sales_rate, helper_rate) VALUES ($company_id, 3.50, 0.50)");
+}
+
+$createCommissionsTable = "CREATE TABLE IF NOT EXISTS payroll_commissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    transaction_date DATE NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    status ENUM('draft', 'approved') NOT NULL DEFAULT 'draft',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createCommissionsTable);
+
+$createCommissionItemsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    commission_id INT NOT NULL,
+    product_code VARCHAR(100) NULL,
+    product_name VARCHAR(255) NOT NULL,
+    unit VARCHAR(50) NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    sales_employee_id INT NOT NULL,
+    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 3.50,
+    sales_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    helper1_employee_id INT NULL,
+    helper1_rate DECIMAL(5,2) NOT NULL DEFAULT 0.25,
+    helper1_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    helper2_employee_id INT NULL,
+    helper2_rate DECIMAL(5,2) NOT NULL DEFAULT 0.25,
+    helper2_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    item_total_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    FOREIGN KEY (commission_id) REFERENCES payroll_commissions(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createCommissionItemsTable);
+
 $action = $_REQUEST['action'] ?? '';
 
 switch ($action) {
@@ -1066,6 +1118,53 @@ switch ($action) {
                 }
             }
             
+            // Get approved commission earnings for this month
+            $comm_month_sql = "SELECT 
+                                    item.sales_employee_id as emp_id, 
+                                    SUM(item.sales_commission) as total_comm
+                               FROM payroll_commission_items item
+                               JOIN payroll_commissions comm ON item.commission_id = comm.id
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               GROUP BY item.sales_employee_id
+                               
+                               UNION ALL
+                               
+                               SELECT 
+                                    item.helper1_employee_id as emp_id, 
+                                    SUM(item.helper1_commission) as total_comm
+                               FROM payroll_commission_items item
+                               JOIN payroll_commissions comm ON item.commission_id = comm.id
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper1_employee_id IS NOT NULL AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               GROUP BY item.helper1_employee_id
+                               
+                               UNION ALL
+                               
+                               SELECT 
+                                    item.helper2_employee_id as emp_id, 
+                                    SUM(item.helper2_commission) as total_comm
+                               FROM payroll_commission_items item
+                               JOIN payroll_commissions comm ON item.commission_id = comm.id
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper2_employee_id IS NOT NULL AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               GROUP BY item.helper2_employee_id";
+
+            $comm_stmt = mysqli_prepare($conn, $comm_month_sql);
+            mysqli_stmt_bind_param($comm_stmt, "isisis", $company_id, $month, $company_id, $month, $company_id, $month);
+            if (mysqli_stmt_execute($comm_stmt)) {
+                $comm_res = mysqli_stmt_get_result($comm_stmt);
+                while ($comm_row = mysqli_fetch_assoc($comm_res)) {
+                    $emp_id = $comm_row['emp_id'];
+                    if (!empty($emp_id)) {
+                        if (!isset($adj_map[$emp_id])) {
+                            $adj_map[$emp_id] = [
+                                'allowance' => 0.00,
+                                'deductions' => 0.00
+                            ];
+                        }
+                        $adj_map[$emp_id]['allowance'] += (float)$comm_row['total_comm'];
+                    }
+                }
+            }
+            
             $details = [];
             while ($emp = mysqli_fetch_assoc($emp_res)) {
                 $emp_id = $emp['id'];
@@ -1213,6 +1312,193 @@ switch ($action) {
         } else {
             mysqli_rollback($conn);
             echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $error_msg]);
+        }
+        break;
+
+    case 'get_commission_settings':
+        $sql = "SELECT sales_rate, helper_rate FROM payroll_commission_settings WHERE company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $settings = mysqli_fetch_assoc($res);
+        if (!$settings) {
+            $settings = ['sales_rate' => 3.50, 'helper_rate' => 0.50];
+        }
+        echo json_encode($settings);
+        break;
+
+    case 'save_commission_settings':
+        $sales_rate = (float)($_POST['sales_rate'] ?? 3.50);
+        $helper_rate = (float)($_POST['helper_rate'] ?? 0.50);
+        $sql = "INSERT INTO payroll_commission_settings (company_id, sales_rate, helper_rate) VALUES (?, ?, ?)
+                ON DUPLICATE KEY UPDATE sales_rate = VALUES(sales_rate), helper_rate = VALUES(helper_rate)";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "idd", $company_id, $sales_rate, $helper_rate);
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'บันทึกอัตราค่าคอมมิชชั่นเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    case 'get_commission_employees':
+        $sql = "SELECT id, emp_code, first_name, last_name, position FROM payroll_employees WHERE company_id = ? AND status = 'active' ORDER BY emp_code ASC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $emps = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $row['name'] = $row['emp_code'] . ' | ' . $row['first_name'] . ' ' . $row['last_name'];
+            $emps[] = $row;
+        }
+        echo json_encode($emps);
+        break;
+
+    case 'save_commission_transaction':
+        $comm_id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+        $transaction_date = mysqli_real_escape_string($conn, $_POST['transaction_date'] ?? date('Y-m-d'));
+        $total_amount = (float)($_POST['total_amount'] ?? 0.00);
+        $total_commission = (float)($_POST['total_commission'] ?? 0.00);
+        $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'draft');
+        $items_json = $_POST['items'] ?? '[]';
+        $items = json_decode($items_json, true);
+
+        if (!is_array($items)) {
+            echo json_encode(['status' => 'error', 'message' => 'ข้อมูลรายการสินค้าไม่ถูกต้อง']);
+            exit();
+        }
+
+        mysqli_begin_transaction($conn);
+        try {
+            if ($comm_id > 0) {
+                // Update
+                $sql = "UPDATE payroll_commissions SET transaction_date = ?, total_amount = ?, total_commission = ?, status = ? WHERE id = ? AND company_id = ?";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "sdddii", $transaction_date, $total_amount, $total_commission, $status, $comm_id, $company_id);
+                mysqli_stmt_execute($stmt);
+                
+                // Delete old items
+                mysqli_query($conn, "DELETE FROM payroll_commission_items WHERE commission_id = $comm_id");
+            } else {
+                // Insert
+                $sql = "INSERT INTO payroll_commissions (company_id, transaction_date, total_amount, total_commission, status) VALUES (?, ?, ?, ?, ?)";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "issds", $company_id, $transaction_date, $total_amount, $total_commission, $status);
+                mysqli_stmt_execute($stmt);
+                $comm_id = mysqli_insert_id($conn);
+            }
+
+            // Insert items
+            $item_sql = "INSERT INTO payroll_commission_items (
+                commission_id, product_code, product_name, unit, quantity, unit_price, total_price,
+                sales_employee_id, sales_rate, sales_commission,
+                helper1_employee_id, helper1_rate, helper1_commission,
+                helper2_employee_id, helper2_rate, helper2_commission,
+                item_total_commission
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $item_stmt = mysqli_prepare($conn, $item_sql);
+
+            foreach ($items as $item) {
+                $p_code = !empty($item['product_code']) ? $item['product_code'] : null;
+                $p_name = $item['product_name'] ?? '';
+                $unit = !empty($item['unit']) ? $item['unit'] : null;
+                $qty = (int)($item['quantity'] ?? 1);
+                $u_price = (float)($item['unit_price'] ?? 0.00);
+                $t_price = (float)($item['total_price'] ?? 0.00);
+                
+                $sales_emp = (int)($item['sales_employee_id'] ?? 0);
+                $sales_rate = (float)($item['sales_rate'] ?? 3.50);
+                $sales_comm = (float)($item['sales_commission'] ?? 0.00);
+                
+                $h1_emp = !empty($item['helper1_employee_id']) ? (int)$item['helper1_employee_id'] : null;
+                $h1_rate = (float)($item['helper1_rate'] ?? 0.25);
+                $h1_comm = (float)($item['helper1_commission'] ?? 0.00);
+                
+                $h2_emp = !empty($item['helper2_employee_id']) ? (int)$item['helper2_employee_id'] : null;
+                $h2_rate = (float)($item['helper2_rate'] ?? 0.25);
+                $h2_comm = (float)($item['helper2_commission'] ?? 0.00);
+                
+                $item_total_comm = (float)($item['item_total_commission'] ?? 0.00);
+
+                mysqli_stmt_bind_param($item_stmt, "isssiddiiddiddidd",
+                    $comm_id, $p_code, $p_name, $unit, $qty, $u_price, $t_price,
+                    $sales_emp, $sales_rate, $sales_comm,
+                    $h1_emp, $h1_rate, $h1_comm,
+                    $h2_emp, $h2_rate, $h2_comm,
+                    $item_total_comm
+                );
+                mysqli_stmt_execute($item_stmt);
+            }
+
+            mysqli_commit($conn);
+            echo json_encode(['status' => 'success', 'message' => 'บันทึกข้อมูลค่าคอมมิชชั่นเรียบร้อยแล้ว']);
+        } catch (Exception $e) {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage()]);
+        }
+        break;
+
+    case 'list_commission_transactions':
+        $sql = "SELECT c.*, 
+                      (SELECT COUNT(*) FROM payroll_commission_items WHERE commission_id = c.id) as total_items
+               FROM payroll_commissions c
+               WHERE c.company_id = ?
+               ORDER BY c.transaction_date DESC, c.id DESC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $list = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $list[] = $row;
+        }
+        echo json_encode($list);
+        break;
+
+    case 'get_commission_transaction':
+        $comm_id = (int)($_GET['id'] ?? 0);
+        // Get parent
+        $sql = "SELECT * FROM payroll_commissions WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $comm_id, $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $comm = mysqli_fetch_assoc($res);
+        
+        if (!$comm) {
+            echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูล']);
+            exit();
+        }
+        
+        // Get items
+        $item_sql = "SELECT * FROM payroll_commission_items WHERE commission_id = ? ORDER BY id ASC";
+        $item_stmt = mysqli_prepare($conn, $item_sql);
+        mysqli_stmt_bind_param($item_stmt, "i", $comm_id);
+        mysqli_stmt_execute($item_stmt);
+        $item_res = mysqli_stmt_get_result($item_stmt);
+        $items = [];
+        while ($row = mysqli_fetch_assoc($item_res)) {
+            $items[] = $row;
+        }
+        
+        echo json_encode([
+            'status' => 'success',
+            'commission' => $comm,
+            'items' => $items
+        ]);
+        break;
+
+    case 'delete_commission_transaction':
+        $comm_id = (int)($_POST['id'] ?? 0);
+        $sql = "DELETE FROM payroll_commissions WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $comm_id, $company_id);
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'ลบประวัติค่าคอมมิชชั่นเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
         }
         break;
 

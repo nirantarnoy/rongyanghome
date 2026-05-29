@@ -122,6 +122,24 @@ $company_address = $company_info['address'] ?? '---';
                         <i class="fa-solid fa-sliders w-5"></i>
                         <span>ตั้งค่าระบบ</span>
                     </button>
+
+                    <div class="h-px bg-slate-800 my-2"></div>
+                    <div class="px-4 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ระบบค่าคอมมิชชั่น</div>
+
+                    <button onclick="switchTab('commission_rates')" id="btn-commission_rates" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-percent w-5"></i>
+                        <span>อัตราค่าคอมมิชชั่น</span>
+                    </button>
+
+                    <button onclick="switchTab('commission_calc')" id="btn-commission_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-calculator w-5"></i>
+                        <span>คิดค่าคอมรายชิ้น</span>
+                    </button>
+
+                    <button onclick="switchTab('commission_history')" id="btn-commission_history" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-clock-rotate-left w-5"></i>
+                        <span>ประวัติค่าคอมรายชิ้น</span>
+                    </button>
                 </div>
             </div>
 
@@ -213,6 +231,21 @@ $company_address = $company_info['address'] ?? '---';
                 <div id="tab-settings" class="tab-pane hidden space-y-6">
                     <?php include 'tabs/settings.php'; ?>
                 </div>
+
+                <!-- TAB: COMMISSION RATES -->
+                <div id="tab-commission_rates" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/commission_rates.php'; ?>
+                </div>
+
+                <!-- TAB: COMMISSION CALCULATION -->
+                <div id="tab-commission_calc" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/commission_calc.php'; ?>
+                </div>
+
+                <!-- TAB: COMMISSION HISTORY -->
+                <div id="tab-commission_history" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/commission_history.php'; ?>
+                </div>
             </main>
         </div>
     </div>
@@ -268,6 +301,21 @@ $company_address = $company_info['address'] ?? '---';
                     title = 'ตั้งค่าระบบ';
                     subtitle = 'กำหนดวันหยุดประจำปีและข้อมูลทั่วไป';
                     loadSettings();
+                    break;
+                case 'commission_rates':
+                    title = 'อัตราค่าคอมมิชชั่น';
+                    subtitle = 'จัดการอัตราการจ่ายเปอร์เซ็นต์ค่าคอมมิชชั่น';
+                    loadCommissionSettings();
+                    break;
+                case 'commission_calc':
+                    title = 'คิดค่าคอมรายตัว';
+                    subtitle = 'คำนวณและปันส่วนค่าคอมมิชชั่นเฟอร์นิเจอร์รายตัว';
+                    loadCommissionCalc();
+                    break;
+                case 'commission_history':
+                    title = 'ประวัติค่าคอมรายชิ้น';
+                    subtitle = 'เรียกดู แก้ไข หรือตรวจสอบรายละเอียดค่าคอมมิชชั่นย้อนหลัง';
+                    loadCommissionHistory();
                     break;
             }
             $('#page-title').text(title);
