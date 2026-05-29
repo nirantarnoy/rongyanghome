@@ -687,6 +687,24 @@ switch ($action) {
                 $positions[] = $pos_row;
             }
             $row['positions'] = $positions;
+
+            // Fetch daily adjustments for this employee on this date
+            $adj_sql = "SELECT adj.id, adj.adjustment_item_id, adj.amount, adj.note, item.name, item.type 
+                        FROM payroll_attendance_adjustments adj
+                        JOIN payroll_adjustment_items item ON adj.adjustment_item_id = item.id
+                        WHERE adj.employee_id = ? AND adj.work_date = ?
+                        ORDER BY adj.id ASC";
+            $adj_stmt = mysqli_prepare($conn, $adj_sql);
+            mysqli_stmt_bind_param($adj_stmt, "is", $emp_id, $work_date);
+            mysqli_stmt_execute($adj_stmt);
+            $adj_res = mysqli_stmt_get_result($adj_stmt);
+            
+            $adjustments = [];
+            while ($adj_row = mysqli_fetch_assoc($adj_res)) {
+                $adjustments[] = $adj_row;
+            }
+            $row['adjustments'] = $adjustments;
+
             $attendance[] = $row;
         }
         echo json_encode($attendance);
@@ -1029,6 +1047,7 @@ switch ($action) {
 
     case 'get_payroll_run':
         $month = mysqli_real_escape_string($conn, $_GET['month_period'] ?? date('Y-m'));
+        $recalculate = isset($_GET['recalculate']) && $_GET['recalculate'] === 'true';
         
         // Check if run already exists in DB
         $run_sql = "SELECT * FROM payroll_runs WHERE company_id = ? AND month_period = ?";
@@ -1038,7 +1057,7 @@ switch ($action) {
         $run_res = mysqli_stmt_get_result($run_stmt);
         $run = mysqli_fetch_assoc($run_res);
         
-        if ($run) {
+        if ($run && !$recalculate) {
             // Retrieve saved details
             $details_sql = "SELECT d.*, e.emp_code, e.first_name, e.last_name, e.department, e.position, e.photo 
                             FROM payroll_run_details d

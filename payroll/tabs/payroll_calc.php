@@ -74,6 +74,9 @@
             </h4>
 
             <div class="flex gap-2">
+                <button onclick="loadPayrollCalculation(true)" id="btn-recalculate" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5" title="ดึงข้อมูลลงเวลาและเงินเพิ่มหักล่าสุดเพื่อคำนวณใหม่">
+                    <i class="fa-solid fa-arrows-rotate"></i> ดึงข้อมูลคำนวณใหม่
+                </button>
                 <button onclick="savePayrollRun('pending')" id="btn-save-draft" class="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold rounded-xl text-xs transition-all flex items-center gap-1.5">
                     <i class="fa-solid fa-floppy-disk"></i> บันทึกร่างแบบร่าง
                 </button>
@@ -170,17 +173,32 @@
         switchCalcSubTab('calculator');
     }
 
-    function loadPayrollCalculation() {
+    function loadPayrollCalculation(recalculate = false) {
         const monthPeriod = $('#payroll_month_input').val();
         if (!monthPeriod) return;
 
         $.ajax({
             url: 'payroll_action.php',
             type: 'GET',
-            data: { action: 'get_payroll_run', month_period: monthPeriod },
+            data: { 
+                action: 'get_payroll_run', 
+                month_period: monthPeriod,
+                recalculate: recalculate ? 'true' : 'false'
+            },
             success: function(res) {
                 computedDetails = res.details || [];
                 currentPayrollRun = res;
+
+                // Toggle action buttons based on status
+                if (res.status === 'saved' && res.run_status === 'approved') {
+                    $('#btn-recalculate').addClass('hidden');
+                    $('#btn-save-draft').addClass('hidden');
+                    $('#btn-save-approve').addClass('hidden');
+                } else {
+                    $('#btn-recalculate').removeClass('hidden');
+                    $('#btn-save-draft').removeClass('hidden');
+                    $('#btn-save-approve').removeClass('hidden');
+                }
 
                 // Render badge status
                 let badge = '';
