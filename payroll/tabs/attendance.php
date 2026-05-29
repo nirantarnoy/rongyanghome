@@ -52,7 +52,15 @@
             <span class="text-[10px] text-blue-600 font-bold uppercase">ลางาน</span>
             <h4 class="text-xl font-bold text-blue-700 mt-0.5" id="att-summary-leave">0 คน</h4>
         </div>
-        <i class="fa-solid fa-umbrella-beach text-blue-300             <thead>
+        <i class="fa-solid fa-umbrella-beach text-blue-300 text-2xl"></i>
+    </div>
+</div>
+
+<!-- Attendance Form/Table Card -->
+<div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
                     <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
