@@ -92,7 +92,8 @@
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ประเภท/อัตรา</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center">สถิติงาน (มา/ขาด/ลา)</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-slate-600">เงินได้พื้นฐาน</th>
-                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-rose-600">หักขาดงาน</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-emerald-600">เงินเพิ่มพิเศษ</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-rose-600">เงินหักทั้งหมด</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-blue-600">ยอดสุทธิที่จ่าย</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">สลิปเงินเดือน</th>
                     </tr>
@@ -236,6 +237,7 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-xs text-right font-bold text-slate-700">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                            <td class="px-6 py-4 text-xs text-right font-semibold text-emerald-500">${parseFloat(row.allowance || 0) > 0 ? '+' + parseFloat(row.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
                             <td class="px-6 py-4 text-xs text-right font-semibold text-rose-500">${parseFloat(row.deductions) > 0 ? '-' + parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
                             <td class="px-6 py-4 text-xs text-right font-bold text-blue-600">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                             <td class="px-6 py-4 text-xs text-right">
@@ -248,7 +250,7 @@
                 } else {
                     html = `
                     <tr>
-                        <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+                        <td colspan="9" class="px-6 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center">
                                 <i class="fa-solid fa-users-slash text-3xl mb-2 opacity-30"></i>
                                 <div>ไม่พบข้อมูลพนักงานในระบบสำหรับงวดนี้</div>
@@ -594,13 +596,15 @@
                             <td>เงินเดือนประจำ / ค่าจ้างขั้นต้น</td>
                             <td class="text-right">${parseFloat(emp.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                         </tr>
-                        <tr style="height: 60px;">
-                            <td></td>
-                            <td></td>
+                        ${parseFloat(emp.allowance || 0) > 0 ? `
+                        <tr>
+                            <td>เงินเพิ่มพิเศษ (ค่าเดินทาง, ค่าน้ำมัน, ค่าอาหาร, อื่นๆ)</td>
+                            <td class="text-right">+${parseFloat(emp.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                         </tr>
+                        ` : ''}
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td>รวมเงินได้ทั้งหมด (Total Earnings)</td>
-                            <td class="text-right">${parseFloat(emp.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                            <td class="text-right">${(parseFloat(emp.base_earnings) + parseFloat(emp.allowance || 0)).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                         </tr>
                     </tbody>
                 </table>

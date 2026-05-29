@@ -77,6 +77,36 @@ if (mysqli_num_rows($wtRes) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN wage_type ENUM('monthly', 'daily') NOT NULL DEFAULT 'monthly' AFTER salary");
 }
 
+// Ensure multiple positions table exists
+$createPositionsTable = "CREATE TABLE IF NOT EXISTS payroll_employee_positions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id INT NOT NULL,
+    position VARCHAR(100) NOT NULL,
+    wage_type ENUM('monthly', 'daily') NOT NULL DEFAULT 'daily',
+    salary DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createPositionsTable);
+
+// Populate payroll_employee_positions from existing employees if it's empty
+$checkEmptyPositions = mysqli_query($conn, "SELECT id FROM payroll_employee_positions LIMIT 1");
+if ($checkEmptyPositions && mysqli_num_rows($checkEmptyPositions) == 0) {
+    $existingEmp = mysqli_query($conn, "SELECT id, position, wage_type, salary FROM payroll_employees");
+    if ($existingEmp) {
+        while ($emp_row = mysqli_fetch_assoc($existingEmp)) {
+            if (!empty($emp_row['position'])) {
+                $ins_mig = "INSERT INTO payroll_employee_positions (employee_id, position, wage_type, salary) VALUES (?, ?, ?, ?)";
+                $stmt_mig = mysqli_prepare($conn, $ins_mig);
+                mysqli_stmt_bind_param($stmt_mig, "issd", $emp_row['id'], $emp_row['position'], $emp_row['wage_type'], $emp_row['salary']);
+                mysqli_stmt_execute($stmt_mig);
+            }
+        }
+    }
+}
+
+
 $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
@@ -87,12 +117,41 @@ $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     status ENUM('normal', 'late', 'absent', 'leave') NOT NULL DEFAULT 'normal',
     leave_type ENUM('business', 'sick', 'annual', 'other') NULL,
     note VARCHAR(255) NULL,
+    position_id INT NULL DEFAULT NULL,
+    allowance_fuel DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    allowance_travel DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    allowance_food DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    allowance_other DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    allowance_other_note VARCHAR(255) NULL DEFAULT NULL,
+    deduction_damage DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    deduction_other DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    deduction_other_note VARCHAR(255) NULL DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_emp_date (employee_id, work_date),
     FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createAttendanceTable);
+
+// Ensure the new columns exist (in case the table was created before)
+$cols_to_add = [
+    'position_id' => "INT NULL DEFAULT NULL",
+    'allowance_fuel' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'allowance_travel' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'allowance_food' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'allowance_other' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'allowance_other_note' => "VARCHAR(255) NULL DEFAULT NULL",
+    'deduction_damage' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'deduction_other' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00",
+    'deduction_other_note' => "VARCHAR(255) NULL DEFAULT NULL"
+];
+foreach ($cols_to_add as $col_name => $col_definition) {
+    $check_col = mysqli_query($conn, "SHOW COLUMNS FROM payroll_attendance LIKE '$col_name'");
+    if ($check_col && mysqli_num_rows($check_col) == 0) {
+        mysqli_query($conn, "ALTER TABLE payroll_attendance ADD COLUMN $col_name $col_definition");
+    }
+}
+
 
 $createPayrollRunsTable = "CREATE TABLE IF NOT EXISTS payroll_runs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -112,6 +171,7 @@ $createPayrollRunDetailsTable = "CREATE TABLE IF NOT EXISTS payroll_run_details 
     wage_type ENUM('monthly', 'daily') NOT NULL,
     rate DECIMAL(10, 2) NOT NULL,
     base_earnings DECIMAL(10, 2) NOT NULL,
+    allowance DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     present_days INT NOT NULL DEFAULT 0,
     absent_days INT NOT NULL DEFAULT 0,
     leave_days INT NOT NULL DEFAULT 0,
@@ -124,6 +184,12 @@ $createPayrollRunDetailsTable = "CREATE TABLE IF NOT EXISTS payroll_run_details 
     FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createPayrollRunDetailsTable);
+
+// Ensure the allowance column exists in payroll_run_details
+$check_detail_allowance = mysqli_query($conn, "SHOW COLUMNS FROM payroll_run_details LIKE 'allowance'");
+if ($check_detail_allowance && mysqli_num_rows($check_detail_allowance) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN allowance DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+}
 
 // Insert default setting if not exist
 $checkSetting = mysqli_query($conn, "SELECT id FROM payroll_settings WHERE company_id = $company_id");
@@ -239,6 +305,15 @@ switch ($action) {
         $res = mysqli_query($conn, $sql);
         $employees = [];
         while ($row = mysqli_fetch_assoc($res)) {
+            // Fetch multiple positions
+            $emp_id = $row['id'];
+            $pos_sql = "SELECT position, wage_type, salary FROM payroll_employee_positions WHERE employee_id = $emp_id ORDER BY id ASC";
+            $pos_res = mysqli_query($conn, $pos_sql);
+            $positions = [];
+            while ($pos_row = mysqli_fetch_assoc($pos_res)) {
+                $positions[] = $pos_row;
+            }
+            $row['positions'] = $positions;
             $employees[] = $row;
         }
         echo json_encode($employees);
@@ -252,7 +327,22 @@ switch ($action) {
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $data = mysqli_fetch_assoc($res);
-        echo json_encode($data ?: ['status' => 'error', 'message' => 'ไม่พบข้อมูลพนักงาน']);
+        if ($data) {
+            // Fetch multiple positions
+            $pos_sql = "SELECT position, wage_type, salary FROM payroll_employee_positions WHERE employee_id = ? ORDER BY id ASC";
+            $pos_stmt = mysqli_prepare($conn, $pos_sql);
+            mysqli_stmt_bind_param($pos_stmt, "i", $id);
+            mysqli_stmt_execute($pos_stmt);
+            $pos_res = mysqli_stmt_get_result($pos_stmt);
+            $positions = [];
+            while ($pos_row = mysqli_fetch_assoc($pos_res)) {
+                $positions[] = $pos_row;
+            }
+            $data['positions'] = $positions;
+            echo json_encode($data);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลพนักงาน']);
+        }
         break;
 
     case 'save_employee':
@@ -261,8 +351,6 @@ switch ($action) {
         $first_name = $_POST['first_name'] ?? '';
         $last_name = $_POST['last_name'] ?? '';
         $department = $_POST['department'] ?? '';
-        $position = $_POST['position'] ?? '';
-        $salary = (float)($_POST['salary'] ?? 0.00);
         $start_date = $_POST['start_date'] ?? '';
         $phone = $_POST['phone'] ?? '';
         $max_business_leave = (int)($_POST['max_business_leave'] ?? 7);
@@ -270,6 +358,13 @@ switch ($action) {
         $max_annual_leave = (int)($_POST['max_annual_leave'] ?? 6);
         $max_other_leave = (int)($_POST['max_other_leave'] ?? 15);
         $status = $_POST['status'] ?? 'active';
+
+        // Extract first position for main payroll_employees fields (fallback compatibility)
+        $positions_post = $_POST['positions'] ?? [];
+        $first_pos_item = $positions_post[0] ?? [];
+        $position = trim($first_pos_item['position'] ?? $_POST['position'] ?? '');
+        $wage_type = $first_pos_item['wage_type'] ?? $_POST['wage_type'] ?? 'daily';
+        $salary = (float)($first_pos_item['salary'] ?? $_POST['salary'] ?? 0.00);
 
         if (empty($emp_code) || empty($first_name) || empty($last_name) || empty($department) || empty($position) || empty($start_date)) {
             echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน']);
@@ -329,8 +424,6 @@ switch ($action) {
             }
         }
 
-        $wage_type = $_POST['wage_type'] ?? 'monthly';
-
         if ($id > 0) {
             $sql = "UPDATE payroll_employees SET 
                     emp_code = ?, first_name = ?, last_name = ?, department = ?, position = ?, 
@@ -358,6 +451,26 @@ switch ($action) {
         }
 
         if (mysqli_stmt_execute($stmt)) {
+            $employee_id = ($id > 0) ? $id : mysqli_insert_id($conn);
+            
+            // Delete old positions and insert new ones
+            mysqli_query($conn, "DELETE FROM payroll_employee_positions WHERE employee_id = $employee_id");
+            
+            foreach ($positions_post as $p) {
+                $p_pos = trim($p['position'] ?? '');
+                $p_wage = $p['wage_type'] ?? 'daily';
+                $p_sal = (float)($p['salary'] ?? 0.00);
+                
+                if (empty($p_pos)) {
+                    continue;
+                }
+                
+                $pos_ins = "INSERT INTO payroll_employee_positions (employee_id, position, wage_type, salary) VALUES (?, ?, ?, ?)";
+                $pos_stmt = mysqli_prepare($conn, $pos_ins);
+                mysqli_stmt_bind_param($pos_stmt, "issd", $employee_id, $p_pos, $p_wage, $p_sal);
+                mysqli_stmt_execute($pos_stmt);
+            }
+            
             echo json_encode(['status' => 'success', 'message' => 'บันทึกข้อมูลพนักงานเรียบร้อยแล้ว']);
         } else {
             echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
@@ -396,8 +509,10 @@ switch ($action) {
     case 'list_attendance':
         $work_date = $_GET['work_date'] ?? date('Y-m-d');
         
-        $sql = "SELECT e.id as employee_id, e.emp_code, e.first_name, e.last_name, e.department, e.position, e.photo,
-                       a.id as attendance_id, a.work_date, a.check_in, a.check_out, a.status, a.leave_type, a.note
+        $sql = "SELECT e.id as employee_id, e.emp_code, e.first_name, e.last_name, e.department, e.position, e.photo, e.salary, e.wage_type,
+                       a.id as attendance_id, a.work_date, a.check_in, a.check_out, a.status, a.leave_type, a.note,
+                       a.position_id, a.allowance_fuel, a.allowance_travel, a.allowance_food, a.allowance_other, a.allowance_other_note,
+                       a.deduction_damage, a.deduction_other, a.deduction_other_note
                 FROM payroll_employees e
                 LEFT JOIN payroll_attendance a ON e.id = a.employee_id AND a.work_date = ?
                 WHERE e.company_id = ? AND e.status = 'active'
@@ -410,6 +525,19 @@ switch ($action) {
         
         $attendance = [];
         while ($row = mysqli_fetch_assoc($res)) {
+            // Fetch all available positions for this employee
+            $emp_id = $row['employee_id'];
+            $pos_sql = "SELECT id, position, wage_type, salary FROM payroll_employee_positions WHERE employee_id = ? ORDER BY id ASC";
+            $pos_stmt = mysqli_prepare($conn, $pos_sql);
+            mysqli_stmt_bind_param($pos_stmt, "i", $emp_id);
+            mysqli_stmt_execute($pos_stmt);
+            $pos_res = mysqli_stmt_get_result($pos_stmt);
+            
+            $positions = [];
+            while ($pos_row = mysqli_fetch_assoc($pos_res)) {
+                $positions[] = $pos_row;
+            }
+            $row['positions'] = $positions;
             $attendance[] = $row;
         }
         echo json_encode($attendance);
@@ -423,23 +551,45 @@ switch ($action) {
         $check_out = (!empty($_POST['check_out']) && $status !== 'absent' && $status !== 'leave') ? $_POST['check_out'] : null;
         $leave_type = ($status === 'leave') ? ($_POST['leave_type'] ?? 'business') : null;
         $note = $_POST['note'] ?? '';
+        $position_id = !empty($_POST['position_id']) ? (int)$_POST['position_id'] : null;
+        $allowance_fuel = (float)($_POST['allowance_fuel'] ?? 0.00);
+        $allowance_travel = (float)($_POST['allowance_travel'] ?? 0.00);
+        $allowance_food = (float)($_POST['allowance_food'] ?? 0.00);
+        $allowance_other = (float)($_POST['allowance_other'] ?? 0.00);
+        $allowance_other_note = !empty($_POST['allowance_other_note']) ? $_POST['allowance_other_note'] : null;
+        $deduction_damage = (float)($_POST['deduction_damage'] ?? 0.00);
+        $deduction_other = (float)($_POST['deduction_other'] ?? 0.00);
+        $deduction_other_note = !empty($_POST['deduction_other_note']) ? $_POST['deduction_other_note'] : null;
 
         if ($employee_id <= 0 || empty($work_date)) {
             echo json_encode(['status' => 'error', 'message' => 'ข้อมูลผู้ใช้หรือวันที่ไม่ถูกต้อง']);
             exit();
         }
 
-        $sql = "INSERT INTO payroll_attendance (company_id, employee_id, work_date, check_in, check_out, status, leave_type, note)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        $sql = "INSERT INTO payroll_attendance (company_id, employee_id, work_date, check_in, check_out, status, leave_type, note,
+                                                position_id, allowance_fuel, allowance_travel, allowance_food, allowance_other, allowance_other_note,
+                                                deduction_damage, deduction_other, deduction_other_note)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                 check_in = VALUES(check_in),
                 check_out = VALUES(check_out),
                 status = VALUES(status),
                 leave_type = VALUES(leave_type),
-                note = VALUES(note)";
+                note = VALUES(note),
+                position_id = VALUES(position_id),
+                allowance_fuel = VALUES(allowance_fuel),
+                allowance_travel = VALUES(allowance_travel),
+                allowance_food = VALUES(allowance_food),
+                allowance_other = VALUES(allowance_other),
+                allowance_other_note = VALUES(allowance_other_note),
+                deduction_damage = VALUES(deduction_damage),
+                deduction_other = VALUES(deduction_other),
+                deduction_other_note = VALUES(deduction_other_note)";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "iissssss", $company_id, $employee_id, $work_date, $check_in, $check_out, $status, $leave_type, $note);
+        mysqli_stmt_bind_param($stmt, "iissssssiddddsdds", $company_id, $employee_id, $work_date, $check_in, $check_out, $status, $leave_type, $note,
+                               $position_id, $allowance_fuel, $allowance_travel, $allowance_food, $allowance_other, $allowance_other_note,
+                               $deduction_damage, $deduction_other, $deduction_other_note);
         
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['status' => 'success', 'message' => 'บันทึกเวลาทำงานเรียบร้อยแล้ว']);
@@ -469,18 +619,40 @@ switch ($action) {
             $check_out = (!empty($item['check_out']) && $status !== 'absent' && $status !== 'leave') ? $item['check_out'] : null;
             $leave_type = ($status === 'leave') ? ($item['leave_type'] ?? 'business') : null;
             $note = $item['note'] ?? '';
+            $position_id = !empty($item['position_id']) ? (int)$item['position_id'] : null;
+            $allowance_fuel = (float)($item['allowance_fuel'] ?? 0.00);
+            $allowance_travel = (float)($item['allowance_travel'] ?? 0.00);
+            $allowance_food = (float)($item['allowance_food'] ?? 0.00);
+            $allowance_other = (float)($item['allowance_other'] ?? 0.00);
+            $allowance_other_note = !empty($item['allowance_other_note']) ? $item['allowance_other_note'] : null;
+            $deduction_damage = (float)($item['deduction_damage'] ?? 0.00);
+            $deduction_other = (float)($item['deduction_other'] ?? 0.00);
+            $deduction_other_note = !empty($item['deduction_other_note']) ? $item['deduction_other_note'] : null;
 
             if ($employee_id > 0) {
-                $sql = "INSERT INTO payroll_attendance (company_id, employee_id, work_date, check_in, check_out, status, leave_type, note)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                $sql = "INSERT INTO payroll_attendance (company_id, employee_id, work_date, check_in, check_out, status, leave_type, note,
+                                                        position_id, allowance_fuel, allowance_travel, allowance_food, allowance_other, allowance_other_note,
+                                                        deduction_damage, deduction_other, deduction_other_note)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         ON DUPLICATE KEY UPDATE
                         check_in = VALUES(check_in),
                         check_out = VALUES(check_out),
                         status = VALUES(status),
                         leave_type = VALUES(leave_type),
-                        note = VALUES(note)";
+                        note = VALUES(note),
+                        position_id = VALUES(position_id),
+                        allowance_fuel = VALUES(allowance_fuel),
+                        allowance_travel = VALUES(allowance_travel),
+                        allowance_food = VALUES(allowance_food),
+                        allowance_other = VALUES(allowance_other),
+                        allowance_other_note = VALUES(allowance_other_note),
+                        deduction_damage = VALUES(deduction_damage),
+                        deduction_other = VALUES(deduction_other),
+                        deduction_other_note = VALUES(deduction_other_note)";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "iissssss", $company_id, $employee_id, $work_date, $check_in, $check_out, $status, $leave_type, $note);
+                mysqli_stmt_bind_param($stmt, "iissssssiddddsdds", $company_id, $employee_id, $work_date, $check_in, $check_out, $status, $leave_type, $note,
+                                       $position_id, $allowance_fuel, $allowance_travel, $allowance_food, $allowance_other, $allowance_other_note,
+                                       $deduction_damage, $deduction_other, $deduction_other_note);
                 if (!mysqli_stmt_execute($stmt)) {
                     $success = false;
                     $error_msg = mysqli_error($conn);
@@ -687,54 +859,81 @@ switch ($action) {
             mysqli_stmt_execute($emp_stmt);
             $emp_res = mysqli_stmt_get_result($emp_stmt);
             
-            // Get attendance stats for this month
-            $att_sql = "SELECT employee_id, status, COUNT(*) as count 
-                        FROM payroll_attendance 
-                        WHERE company_id = ? AND DATE_FORMAT(work_date, '%Y-%m') = ?
-                        GROUP BY employee_id, status";
-            $att_stmt = mysqli_prepare($conn, $att_sql);
-            mysqli_stmt_bind_param($att_stmt, "is", $company_id, $month);
-            mysqli_stmt_execute($att_stmt);
-            $att_res = mysqli_stmt_get_result($att_stmt);
+            // Get attendance details for this month to calculate wages based on specific daily positions, allowances, and deductions
+            $att_details_sql = "SELECT a.employee_id, a.work_date, a.status, a.position_id,
+                                       p.position as pos_name, p.wage_type as pos_wage_type, p.salary as pos_salary,
+                                       a.allowance_fuel, a.allowance_travel, a.allowance_food, a.allowance_other,
+                                       a.deduction_damage, a.deduction_other
+                                FROM payroll_attendance a
+                                LEFT JOIN payroll_employee_positions p ON a.position_id = p.id
+                                WHERE a.company_id = ? AND DATE_FORMAT(a.work_date, '%Y-%m') = ?";
+            $att_details_stmt = mysqli_prepare($conn, $att_details_sql);
+            mysqli_stmt_bind_param($att_details_stmt, "is", $company_id, $month);
+            mysqli_stmt_execute($att_details_stmt);
+            $att_details_res = mysqli_stmt_get_result($att_details_stmt);
             
-            $att_map = [];
-            while ($row = mysqli_fetch_assoc($att_res)) {
-                $emp_id = $row['employee_id'];
-                $status = $row['status'];
-                $count = (int)$row['count'];
-                if (!isset($att_map[$emp_id])) {
-                    $att_map[$emp_id] = ['present' => 0, 'absent' => 0, 'leave' => 0];
+            $emp_att_map = [];
+            while ($att_row = mysqli_fetch_assoc($att_details_res)) {
+                $emp_id = $att_row['employee_id'];
+                if (!isset($emp_att_map[$emp_id])) {
+                    $emp_att_map[$emp_id] = [];
                 }
-                if ($status === 'normal' || $status === 'late') {
-                    $att_map[$emp_id]['present'] += $count;
-                } else if ($status === 'absent') {
-                    $att_map[$emp_id]['absent'] = $count;
-                } else if ($status === 'leave') {
-                    $att_map[$emp_id]['leave'] = $count;
-                }
+                $emp_att_map[$emp_id][] = $att_row;
             }
             
             $details = [];
             while ($emp = mysqli_fetch_assoc($emp_res)) {
                 $emp_id = $emp['id'];
-                $stats = $att_map[$emp_id] ?? ['present' => 0, 'absent' => 0, 'leave' => 0];
+                $att_records = $emp_att_map[$emp_id] ?? [];
                 
-                $wage_type = $emp['wage_type'];
-                $rate = (float)$emp['salary'];
-                $present_days = $stats['present'];
-                $absent_days = $stats['absent'];
-                $leave_days = $stats['leave'];
+                $present_days = 0;
+                $absent_days = 0;
+                $leave_days = 0;
                 
-                if ($wage_type === 'monthly') {
-                    $base_earnings = $rate;
-                    // Deduct for absences: (salary / 30) * absent_days
-                    $deductions = round(($rate / 30) * $absent_days, 2);
-                    $net_pay = $base_earnings - $deductions;
-                } else {
-                    $base_earnings = $rate * $present_days;
-                    $deductions = 0.00;
-                    $net_pay = $base_earnings;
+                $base_earnings = 0.00;
+                $total_allowance = 0.00;
+                $total_deductions = 0.00;
+                
+                $is_monthly = ($emp['wage_type'] === 'monthly');
+                
+                foreach ($att_records as $record) {
+                    $status = $record['status'];
+                    
+                    // Sum allowances and deductions for every day
+                    $day_allowance = (float)$record['allowance_fuel'] + (float)$record['allowance_travel'] + 
+                                     (float)$record['allowance_food'] + (float)$record['allowance_other'];
+                    $day_deduction = (float)$record['deduction_damage'] + (float)$record['deduction_other'];
+                    
+                    $total_allowance += $day_allowance;
+                    $total_deductions += $day_deduction;
+                    
+                    if ($status === 'normal' || $status === 'late') {
+                        $present_days++;
+                        
+                        // Calculate base wage for daily employees based on today's position
+                        if (!$is_monthly) {
+                            if (!empty($record['position_id']) && $record['pos_salary'] !== null) {
+                                $base_earnings += (float)$record['pos_salary'];
+                            } else {
+                                $base_earnings += (float)$emp['salary'];
+                            }
+                        }
+                    } else if ($status === 'absent') {
+                        $absent_days++;
+                    } else if ($status === 'leave') {
+                        $leave_days++;
+                    }
                 }
+                
+                // For monthly employees, base earnings is flat monthly salary
+                if ($is_monthly) {
+                    $base_earnings = (float)$emp['salary'];
+                    // Deduct for absences: (salary / 30) * absent_days
+                    $absence_deduction = round(($emp['salary'] / 30) * $absent_days, 2);
+                    $total_deductions += $absence_deduction;
+                }
+                
+                $net_pay = $base_earnings + $total_allowance - $total_deductions;
                 
                 $details[] = [
                     'employee_id' => $emp_id,
@@ -745,13 +944,14 @@ switch ($action) {
                     'department' => $emp['department'],
                     'position' => $emp['position'],
                     'photo' => $emp['photo'],
-                    'wage_type' => $wage_type,
-                    'rate' => $rate,
+                    'wage_type' => $emp['wage_type'],
+                    'rate' => (float)$emp['salary'],
                     'base_earnings' => $base_earnings,
+                    'allowance' => $total_allowance,
                     'present_days' => $present_days,
                     'absent_days' => $absent_days,
                     'leave_days' => $leave_days,
-                    'deductions' => $deductions,
+                    'deductions' => $total_deductions,
                     'net_pay' => $net_pay
                 ];
             }
@@ -764,7 +964,7 @@ switch ($action) {
             ]);
         }
         break;
-
+ 
     case 'save_payroll_run':
         $month = mysqli_real_escape_string($conn, $_POST['month_period'] ?? '');
         $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'pending');
@@ -807,6 +1007,7 @@ switch ($action) {
             $wage_type = $item['wage_type'];
             $rate = (float)$item['rate'];
             $base_earnings = (float)$item['base_earnings'];
+            $allowance = (float)($item['allowance'] ?? 0.00);
             $present_days = (int)$item['present_days'];
             $absent_days = (int)$item['absent_days'];
             $leave_days = (int)$item['leave_days'];
@@ -814,12 +1015,12 @@ switch ($action) {
             $net_pay = (float)$item['net_pay'];
             
             $detail_sql = "INSERT INTO payroll_run_details (
-                                payroll_run_id, employee_id, wage_type, rate, base_earnings, 
+                                payroll_run_id, employee_id, wage_type, rate, base_earnings, allowance,
                                 present_days, absent_days, leave_days, deductions, net_pay
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $detail_stmt = mysqli_prepare($conn, $detail_sql);
-            mysqli_stmt_bind_param($detail_stmt, "iissdiiidd", 
-                $run_id, $employee_id, $wage_type, $rate, $base_earnings, 
+            mysqli_stmt_bind_param($detail_stmt, "iissddiiidd", 
+                $run_id, $employee_id, $wage_type, $rate, $base_earnings, $allowance,
                 $present_days, $absent_days, $leave_days, $deductions, $net_pay
             );
             if (!mysqli_stmt_execute($detail_stmt)) {

@@ -93,31 +93,61 @@
                         </div>
                     </div>
 
-                    <!-- Position & Salary Row -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">แผนก <span class="text-rose-500">*</span></label>
-                            <input type="text" name="department" id="department_input" required placeholder="เช่น ฝ่ายผลิต, บัญชี"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                    <!-- Department & Multi-Positions & Salary Rows -->
+                    <div class="space-y-4">
+                        <!-- Row 0: Department and First Position (Required) -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">แผนก <span class="text-rose-500">*</span></label>
+                                <input type="text" name="department" id="department_input" required placeholder="เช่น ฝ่ายผลิต"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                                <input type="text" name="positions[0][position]" id="position_input_0" required placeholder="เช่น โโกไม้"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
+                                <select name="positions[0][wage_type]" id="wage_type_input_0" required onchange="toggleWageTypeLabelMulti(0, this.value)"
+                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                    <option value="daily" selected>ค่าแรง (รายวัน)</option>
+                                    <option value="monthly">เงินเดือน (รายเดือน)</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5" id="salary_label_0">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
+                                <input type="number" step="0.01" name="positions[0][salary]" id="salary_input_0" required placeholder="600"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
-                            <input type="text" name="position" id="position_input" required placeholder="เช่น ช่างเทคนิค, เสมียน"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+
+                        <!-- Rows 1 to 4: Additional Positions (Optional) -->
+                        <?php for ($i = 1; $i < 5; $i++): ?>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div class="hidden md:block md:col-span-3">
+                                <!-- Empty space under Department -->
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                                <input type="text" name="positions[<?= $i ?>][position]" id="position_input_<?= $i ?>" placeholder="เช่น ช่างเก็บงานต่างจังหวัด"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
+                                <select name="positions[<?= $i ?>][wage_type]" id="wage_type_input_<?= $i ?>" onchange="toggleWageTypeLabelMulti(<?= $i ?>, this.value)"
+                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                    <option value="daily" selected>ค่าแรง (รายวัน)</option>
+                                    <option value="monthly">เงินเดือน (รายเดือน)</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5" id="salary_label_<?= $i ?>">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
+                                <input type="number" step="0.01" name="positions[<?= $i ?>][salary]" id="salary_input_<?= $i ?>" placeholder="0"
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
-                            <select name="wage_type" id="wage_type_input" required onchange="toggleWageTypeLabel(this.value)"
-                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
-                                <option value="monthly">เงินเดือน (รายเดือน)</option>
-                                <option value="daily">ค่าแรง (รายวัน)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5" id="salary_label">อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span></label>
-                            <input type="number" step="0.01" name="salary" id="salary_input" required placeholder="15000"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
-                        </div>
+                        <?php endfor; ?>
                     </div>
 
                     <!-- Contact & Start Date -->
@@ -208,26 +238,39 @@
                             avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
                         }
 
-                        let wageTypeBadge = emp.wage_type === 'daily' 
-                            ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold">รายวัน</span>`
-                            : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-bold">รายเดือน</span>`;
+                        let positionsHtml = '';
+                        let salariesHtml = '';
+                        if (emp.positions && emp.positions.length > 0) {
+                            emp.positions.forEach(function(pos) {
+                                let pwtBadge = pos.wage_type === 'daily' 
+                                    ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded font-bold ml-1">รายวัน</span>`
+                                    : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
+                                positionsHtml += `<div class="font-medium text-slate-700">${pos.position}</div>`;
+                                salariesHtml += `<div class="font-bold text-slate-800">${formatCurrency(pos.salary)} ${pwtBadge}</div>`;
+                            });
+                        } else {
+                            let wageTypeBadge = emp.wage_type === 'daily' 
+                                ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold ml-1">รายวัน</span>`
+                                : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
+                            positionsHtml = `<div class="font-medium text-slate-700">${emp.position || '-'}</div>`;
+                            salariesHtml += `<div class="font-bold text-slate-800">${formatCurrency(emp.salary)} ${wageTypeBadge}</div>`;
+                        }
 
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="px-6 py-4 text-xs font-bold text-slate-800">${emp.emp_code}</td>
                             <td class="px-6 py-4 text-xs font-semibold text-slate-700">
                                 <div class="flex items-center gap-3">
-                                    ${avatarHtml}
-                                    <span>${emp.first_name} ${emp.last_name}</span>
+                                     ${avatarHtml}
+                                     <span>${emp.first_name} ${emp.last_name}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-600">
-                                <div>${emp.position}</div>
+                                ${positionsHtml}
                                 <div class="text-[10px] text-slate-400 mt-0.5">${emp.department}</div>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-700 font-bold">
-                                <div>${formatCurrency(emp.salary)}</div>
-                                <div class="mt-1">${wageTypeBadge}</div>
+                                ${salariesHtml}
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-500">${formatThaiDate(emp.start_date)}</td>
                             <td class="px-6 py-4 text-xs text-slate-500">
@@ -276,14 +319,18 @@
         }
     }
 
-    function toggleWageTypeLabel(val) {
+    function toggleWageTypeLabelMulti(idx, val) {
         if (val === 'daily') {
-            $('#salary_label').html('ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span>');
-            $('#salary_input').attr('placeholder', '500');
+            $(`#salary_label_${idx}`).html(idx === 0 ? 'ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span>' : 'ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span>');
+            $(`#salary_input_${idx}`).attr('placeholder', '600');
         } else {
-            $('#salary_label').html('อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span>');
-            $('#salary_input').attr('placeholder', '15000');
+            $(`#salary_label_${idx}`).html(idx === 0 ? 'อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span>' : 'อัตราเงินเดือน (บาท) <span class="text-rose-500">*</span>');
+            $(`#salary_input_${idx}`).attr('placeholder', '15000');
         }
+    }
+
+    function toggleWageTypeLabel(val) {
+        toggleWageTypeLabelMulti(0, val);
     }
 
     // Modal Operations
@@ -302,8 +349,14 @@
         $('#max_annual_leave_input').val(6);
         $('#max_other_leave_input').val(15);
         $('#status_input').val('active');
-        $('#wage_type_input').val('monthly');
-        toggleWageTypeLabel('monthly');
+        
+        // Reset all 5 positions
+        for (let i = 0; i < 5; i++) {
+            $(`#position_input_${i}`).val('');
+            $(`#wage_type_input_${i}`).val('daily');
+            toggleWageTypeLabelMulti(i, 'daily');
+            $(`#salary_input_${i}`).val('');
+        }
         
         if (mode === 'add') {
             $('#employeeModalTitle').text('เพิ่มพนักงานใหม่');
@@ -328,14 +381,9 @@
                     $('#first_name_input').val(emp.first_name);
                     $('#last_name_input').val(emp.last_name);
                     $('#department_input').val(emp.department);
-                    $('#position_input').val(emp.position);
-                    $('#salary_input').val(emp.salary);
                     $('#phone_input').val(emp.phone);
                     $('#start_date_input').val(emp.start_date);
                     $('#status_input').val(emp.status);
-                    
-                    $('#wage_type_input').val(emp.wage_type);
-                    toggleWageTypeLabel(emp.wage_type);
                     
                     $('#max_business_leave_input').val(emp.max_business_leave);
                     $('#max_sick_leave_input').val(emp.max_sick_leave);
@@ -346,6 +394,24 @@
                     if (emp.photo) {
                         $('#photo_preview').attr('src', '../' + emp.photo).removeClass('hidden');
                         $('#photo_preview_icon').addClass('hidden');
+                    }
+
+                    // Populate positions
+                    if (emp.positions && emp.positions.length > 0) {
+                        emp.positions.forEach((pos, idx) => {
+                            if (idx < 5) {
+                                $(`#position_input_${idx}`).val(pos.position);
+                                $(`#wage_type_input_${idx}`).val(pos.wage_type);
+                                toggleWageTypeLabelMulti(idx, pos.wage_type);
+                                $(`#salary_input_${idx}`).val(pos.salary);
+                            }
+                        });
+                    } else {
+                        // Fallback using single position from main record
+                        $(`#position_input_0`).val(emp.position);
+                        $(`#wage_type_input_0`).val(emp.wage_type);
+                        toggleWageTypeLabelMulti(0, emp.wage_type);
+                        $(`#salary_input_0`).val(emp.salary);
                     }
 
                     $('#employeeModal').removeClass('hidden');
