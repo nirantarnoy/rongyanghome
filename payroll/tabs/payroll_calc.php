@@ -113,6 +113,7 @@
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-slate-600">เงินได้พื้นฐาน</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-emerald-600">เงินเพิ่มพิเศษ</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-rose-600">เงินหักทั้งหมด</th>
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right text-amber-600">หักเงินกู้/ยืม</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-blue-600">ยอดสุทธิที่จ่าย</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">สลิปเงินเดือน</th>
                     </tr>
@@ -285,6 +286,7 @@
                             <td class="px-6 py-4 text-xs text-right font-bold text-slate-700">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                             <td class="px-6 py-4 text-xs text-right font-semibold text-emerald-500">${parseFloat(row.allowance || 0) > 0 ? '+' + parseFloat(row.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
                             <td class="px-6 py-4 text-xs text-right font-semibold text-rose-500">${parseFloat(row.deductions) > 0 ? '-' + parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                            <td class="px-6 py-4 text-xs text-right font-semibold text-amber-600">${parseFloat(row.loan_deduction || 0) > 0 ? '-' + parseFloat(row.loan_deduction).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
                             <td class="px-6 py-4 text-xs text-right font-bold text-blue-600">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                             <td class="px-6 py-4 text-xs text-right">
                                 <button onclick="printPaySlip(${row.employee_id})" class="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-blue-600 text-slate-600 hover:text-white rounded-lg transition-all text-[11px] font-bold gap-1 shadow-sm">
@@ -683,13 +685,19 @@
                             <td>หักลางาน/ขาดงาน (Absence deductions)</td>
                             <td class="text-right text-rose-500">${parseFloat(emp.deductions) > 0 ? '-' + parseFloat(emp.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
                         </tr>
+                        ${parseFloat(emp.loan_deduction || 0) > 0 ? `
+                        <tr>
+                            <td>หักชำระเงินกู้ / เงินยืม (Loan/Borrow payment)</td>
+                            <td class="text-right text-rose-500">-${parseFloat(emp.loan_deduction).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                        </tr>
+                        ` : ''}
                         <tr style="height: 60px;">
                             <td></td>
                             <td></td>
                         </tr>
                         <tr style="font-weight: bold; background-color: #f2f2f2;">
                             <td>รวมเงินหักทั้งหมด (Total Deductions)</td>
-                            <td class="text-right">${parseFloat(emp.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                            <td class="text-right">${(parseFloat(emp.deductions) + parseFloat(emp.loan_deduction || 0)).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                         </tr>
                     </tbody>
                 </table>

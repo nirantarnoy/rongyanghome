@@ -118,6 +118,11 @@ $company_address = $company_info['address'] ?? '---';
                         <span>เงินเพิ่ม - เงินหัก (Master)</span>
                     </button>
 
+                    <button onclick="switchTab('loans')" id="btn-loans" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                        <i class="fa-solid fa-hand-holding-dollar w-5"></i>
+                        <span>เงินกู้ / เงินยืมพนักงาน</span>
+                    </button>
+
                     <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
                         <i class="fa-solid fa-sliders w-5"></i>
                         <span>ตั้งค่าระบบ</span>
@@ -227,6 +232,11 @@ $company_address = $company_info['address'] ?? '---';
                     <?php include 'tabs/adjustments.php'; ?>
                 </div>
 
+                <!-- TAB: LOANS & BORROWS -->
+                <div id="tab-loans" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/loans.php'; ?>
+                </div>
+
                 <!-- TAB: SETTINGS -->
                 <div id="tab-settings" class="tab-pane hidden space-y-6">
                     <?php include 'tabs/settings.php'; ?>
@@ -296,6 +306,11 @@ $company_address = $company_info['address'] ?? '---';
                     title = 'เงินเพิ่ม - เงินหัก (Master)';
                     subtitle = 'จัดการรายการเงินเพิ่มและเงินหักสำหรับพนักงาน';
                     loadAdjustmentsTable();
+                    break;
+                case 'loans':
+                    title = 'เงินกู้ / เงินยืมพนักงาน';
+                    subtitle = 'จัดการสัญญาเงินกู้และเงินยืมพนักงาน บันทึกการหักชำระและประวัติ';
+                    loadLoansTab();
                     break;
                 case 'settings':
                     title = 'ตั้งค่าระบบ';

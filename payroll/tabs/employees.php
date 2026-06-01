@@ -44,7 +44,7 @@
         
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         
-        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
             <div class="bg-white px-6 pt-6 pb-4">
                 <div class="flex items-center justify-between mb-6">
                     <h3 id="employeeModalTitle" class="text-lg font-bold text-slate-800">เพิ่มพนักงานใหม่</h3>
@@ -288,6 +288,9 @@
                             </td>
                             <td class="px-6 py-4">${statusBadge}</td>
                             <td class="px-6 py-4 text-xs text-right space-x-2">
+                                <button onclick="openEmployeeLoansModal(${emp.id}, '${emp.first_name} ${emp.last_name}')" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="เงินกู้ / เงินยืม">
+                                    <i class="fa-solid fa-hand-holding-dollar"></i>
+                                </button>
                                 <button onclick="openEmployeeModal('edit', ${emp.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="แก้ไข">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
@@ -492,5 +495,12 @@
                 });
             }
         });
+    }
+
+    function openEmployeeLoansModal(empId, empName) {
+        switchTab('loans');
+        setTimeout(() => {
+            openLoanModal('add', null, empId);
+        }, 200);
     }
 </script>

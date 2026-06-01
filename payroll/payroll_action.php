@@ -219,6 +219,45 @@ if ($check_detail_allowance && mysqli_num_rows($check_detail_allowance) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN allowance DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
 }
 
+// Ensure the loan_deduction column exists in payroll_run_details
+$check_detail_loan_deduction = mysqli_query($conn, "SHOW COLUMNS FROM payroll_run_details LIKE 'loan_deduction'");
+if ($check_detail_loan_deduction && mysqli_num_rows($check_detail_loan_deduction) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN loan_deduction DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+}
+
+// Create loans and loan payments tables
+$createLoansTable = "CREATE TABLE IF NOT EXISTS payroll_loans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    employee_id INT NOT NULL,
+    type ENUM('loan', 'borrow') NOT NULL,
+    contract_no VARCHAR(100) NOT NULL,
+    loan_date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    remaining_balance DECIMAL(10, 2) NOT NULL,
+    total_installments INT NULL,
+    monthly_deduction DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    due_date DATE NULL,
+    status ENUM('active', 'paid_off') NOT NULL DEFAULT 'active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createLoansTable);
+
+$createLoanPaymentsTable = "CREATE TABLE IF NOT EXISTS payroll_loan_payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    loan_id INT NOT NULL,
+    payroll_run_id INT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    note VARCHAR(255) NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (loan_id) REFERENCES payroll_loans(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+mysqli_query($conn, $createLoanPaymentsTable);
+
+
 // Create master adjustments and daily adjustments tables
 $createMasterAdjustmentsTable = "CREATE TABLE IF NOT EXISTS payroll_adjustment_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1265,6 +1304,23 @@ switch ($action) {
                 }
             }
             
+            // Get active loans/borrows for this company
+            $loans_sql = "SELECT id, employee_id, type, remaining_balance, monthly_deduction, contract_no
+                          FROM payroll_loans 
+                          WHERE company_id = ? AND status = 'active'";
+            $loans_stmt = mysqli_prepare($conn, $loans_sql);
+            mysqli_stmt_bind_param($loans_stmt, "i", $company_id);
+            mysqli_stmt_execute($loans_stmt);
+            $loans_res = mysqli_stmt_get_result($loans_stmt);
+            $emp_loans_map = [];
+            while ($loan_row = mysqli_fetch_assoc($loans_res)) {
+                $l_emp_id = $loan_row['employee_id'];
+                if (!isset($emp_loans_map[$l_emp_id])) {
+                    $emp_loans_map[$l_emp_id] = [];
+                }
+                $emp_loans_map[$l_emp_id][] = $loan_row;
+            }
+            
             $details = [];
             while ($emp = mysqli_fetch_assoc($emp_res)) {
                 $emp_id = $emp['id'];
@@ -1319,7 +1375,14 @@ switch ($action) {
                     }
                 }
                 
-                $net_pay = $base_earnings + $total_allowance - $total_deductions;
+                $loan_deduction = 0.00;
+                $emp_loans = $emp_loans_map[$emp_id] ?? [];
+                foreach ($emp_loans as $loan) {
+                    $deduct = min((float)$loan['monthly_deduction'], (float)$loan['remaining_balance']);
+                    $loan_deduction += $deduct;
+                }
+
+                $net_pay = $base_earnings + $total_allowance - $total_deductions - $loan_deduction;
                 
                 $details[] = [
                     'employee_id' => $emp_id,
@@ -1338,6 +1401,7 @@ switch ($action) {
                     'absent_days' => $absent_days,
                     'leave_days' => $leave_days,
                     'deductions' => $total_deductions,
+                    'loan_deduction' => $loan_deduction,
                     'net_pay' => $net_pay
                 ];
             }
@@ -1411,21 +1475,58 @@ switch ($action) {
             $absent_days = (int)$item['absent_days'];
             $leave_days = (int)$item['leave_days'];
             $deductions = (float)$item['deductions'];
+            $loan_deduction = (float)($item['loan_deduction'] ?? 0.00);
             $net_pay = (float)$item['net_pay'];
             
             $detail_sql = "INSERT INTO payroll_run_details (
                                 payroll_run_id, employee_id, wage_type, rate, base_earnings, allowance,
-                                present_days, absent_days, leave_days, deductions, net_pay
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                present_days, absent_days, leave_days, deductions, loan_deduction, net_pay
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $detail_stmt = mysqli_prepare($conn, $detail_sql);
-            mysqli_stmt_bind_param($detail_stmt, "iissddiiidd", 
+            mysqli_stmt_bind_param($detail_stmt, "iissddiiiddd", 
                 $run_id, $employee_id, $wage_type, $rate, $base_earnings, $allowance,
-                $present_days, $absent_days, $leave_days, $deductions, $net_pay
+                $present_days, $absent_days, $leave_days, $deductions, $loan_deduction, $net_pay
             );
             if (!mysqli_stmt_execute($detail_stmt)) {
                 $success = false;
                 $error_msg = mysqli_error($conn);
                 break;
+            }
+        }
+        
+        if ($success && $status === 'approved') {
+            // Process loan payments
+            foreach ($details_list as $item) {
+                $employee_id = (int)$item['employee_id'];
+                $loan_ded_amt = (float)($item['loan_deduction'] ?? 0.00);
+                if ($loan_ded_amt <= 0) continue;
+                
+                // Fetch active loans/borrows for this employee ordered by type, then date
+                $l_query = mysqli_query($conn, "SELECT * FROM payroll_loans WHERE employee_id = $employee_id AND status = 'active' ORDER BY type ASC, loan_date ASC");
+                if ($l_query) {
+                    $remaining_to_deduct = $loan_ded_amt;
+                    while ($loan = mysqli_fetch_assoc($l_query)) {
+                        if ($remaining_to_deduct <= 0) break;
+                        
+                        $deduct = min((float)$loan['monthly_deduction'], (float)$loan['remaining_balance']);
+                        $deduct = min($deduct, $remaining_to_deduct);
+                        
+                        if ($deduct > 0) {
+                            $new_bal = (float)$loan['remaining_balance'] - $deduct;
+                            $new_status = ($new_bal <= 0.005) ? 'paid_off' : 'active';
+                            $new_bal = max(0.00, $new_bal);
+                            
+                            // Update loan
+                            mysqli_query($conn, "UPDATE payroll_loans SET remaining_balance = $new_bal, status = '$new_status' WHERE id = {$loan['id']}");
+                            
+                            // Insert payment log
+                            $note = "หักชำระผ่านเงินเดือนงวด $month";
+                            mysqli_query($conn, "INSERT INTO payroll_loan_payments (loan_id, payroll_run_id, payment_date, amount, note) VALUES ({$loan['id']}, $run_id, CURDATE(), $deduct, '$note')");
+                            
+                            $remaining_to_deduct -= $deduct;
+                        }
+                    }
+                }
             }
         }
         
@@ -1629,6 +1730,232 @@ switch ($action) {
             echo json_encode(['status' => 'success', 'message' => 'ลบประวัติค่าคอมมิชชั่นเรียบร้อยแล้ว']);
         } else {
             echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    // -------------------------------------------------------------
+    // LOAN & BORROW MANAGEMENT ACTIONS
+    // -------------------------------------------------------------
+    case 'list_loans':
+        $sql = "SELECT l.*, e.first_name, e.last_name, e.emp_code, e.position, e.department, e.photo
+                FROM payroll_loans l
+                JOIN payroll_employees e ON l.employee_id = e.id
+                WHERE l.company_id = ?
+                ORDER BY l.loan_date DESC, l.id DESC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $loans = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $row['name'] = $row['first_name'] . ' ' . $row['last_name'];
+            $loans[] = $row;
+        }
+        echo json_encode($loans);
+        break;
+
+    case 'get_loan':
+        $loan_id = (int)($_GET['id'] ?? 0);
+        $sql = "SELECT l.*, e.first_name, e.last_name, e.emp_code, e.position, e.department
+                FROM payroll_loans l
+                JOIN payroll_employees e ON l.employee_id = e.id
+                WHERE l.id = ? AND l.company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $loan_id, $company_id);
+        mysqli_stmt_execute($stmt);
+        $loan = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+        if ($loan) {
+            $loan['name'] = $loan['first_name'] . ' ' . $loan['last_name'];
+            echo json_encode($loan);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลสัญญา']);
+        }
+        break;
+
+    case 'save_loan':
+        $id = (int)($_POST['id'] ?? 0);
+        $employee_id = (int)($_POST['employee_id'] ?? 0);
+        $type = mysqli_real_escape_string($conn, $_POST['type'] ?? 'loan');
+        $contract_no = mysqli_real_escape_string($conn, $_POST['contract_no'] ?? '');
+        $loan_date = mysqli_real_escape_string($conn, $_POST['loan_date'] ?? date('Y-m-d'));
+        $amount = (float)($_POST['amount'] ?? 0.00);
+        $monthly_deduction = (float)($_POST['monthly_deduction'] ?? 0.00);
+        $total_installments = !empty($_POST['total_installments']) ? (int)$_POST['total_installments'] : null;
+        $due_date = !empty($_POST['due_date']) ? mysqli_real_escape_string($conn, $_POST['due_date']) : null;
+        $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'active');
+
+        if ($employee_id <= 0 || empty($contract_no) || $amount <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน']);
+            exit();
+        }
+
+        if ($id > 0) {
+            // Edit existing
+            // Fetch old amount/remaining to adjust balance
+            $old_sql = mysqli_query($conn, "SELECT amount, remaining_balance FROM payroll_loans WHERE id = $id AND company_id = $company_id");
+            $old = mysqli_fetch_assoc($old_sql);
+            if ($old) {
+                $diff = $amount - (float)$old['amount'];
+                $new_rem = (float)$old['remaining_balance'] + $diff;
+                $new_rem = max(0.00, $new_rem);
+                
+                $sql = "UPDATE payroll_loans SET 
+                            employee_id = ?, type = ?, contract_no = ?, loan_date = ?, 
+                            amount = ?, remaining_balance = ?, total_installments = ?, 
+                            monthly_deduction = ?, due_date = ?, status = ?
+                        WHERE id = ? AND company_id = ?";
+                $stmt = mysqli_prepare($conn, $sql);
+                mysqli_stmt_bind_param($stmt, "isssddidssii", 
+                    $employee_id, $type, $contract_no, $loan_date, 
+                    $amount, $new_rem, $total_installments, 
+                    $monthly_deduction, $due_date, $status, $id, $company_id
+                );
+                if (mysqli_stmt_execute($stmt)) {
+                    echo json_encode(['status' => 'success', 'message' => 'แก้ไขข้อมูลสัญญาเรียบร้อยแล้ว']);
+                } else {
+                    echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+                }
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลสัญญา']);
+            }
+        } else {
+            // Create new
+            $remaining_balance = $amount;
+            $sql = "INSERT INTO payroll_loans (
+                        company_id, employee_id, type, contract_no, loan_date, 
+                        amount, remaining_balance, total_installments, 
+                        monthly_deduction, due_date, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "iisssddidss", 
+                $company_id, $employee_id, $type, $contract_no, $loan_date, 
+                $amount, $remaining_balance, $total_installments, 
+                $monthly_deduction, $due_date, $status
+            );
+            if (mysqli_stmt_execute($stmt)) {
+                echo json_encode(['status' => 'success', 'message' => 'สร้างสัญญาเงินกู้/ยืมเรียบร้อยแล้ว']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+            }
+        }
+        break;
+
+    case 'delete_loan':
+        $id = (int)($_POST['id'] ?? 0);
+        $sql = "DELETE FROM payroll_loans WHERE id = ? AND company_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "ii", $id, $company_id);
+        if (mysqli_stmt_execute($stmt)) {
+            echo json_encode(['status' => 'success', 'message' => 'ลบข้อมูลสัญญาเงินกู้/ยืมเรียบร้อยแล้ว']);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+        }
+        break;
+
+    case 'list_loan_payments':
+        $loan_id = (int)($_GET['loan_id'] ?? 0);
+        $sql = "SELECT p.*, r.month_period
+                FROM payroll_loan_payments p
+                LEFT JOIN payroll_runs r ON p.payroll_run_id = r.id
+                WHERE p.loan_id = ?
+                ORDER BY p.payment_date DESC, p.id DESC";
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $loan_id);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $payments = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $payments[] = $row;
+        }
+        echo json_encode($payments);
+        break;
+
+    case 'save_loan_payment':
+        $loan_id = (int)($_POST['loan_id'] ?? 0);
+        $payment_date = mysqli_real_escape_string($conn, $_POST['payment_date'] ?? date('Y-m-d'));
+        $amount = (float)($_POST['amount'] ?? 0.00);
+        $note = mysqli_real_escape_string($conn, $_POST['note'] ?? 'ชำระเป็นเงินสด');
+
+        if ($loan_id <= 0 || $amount <= 0) {
+            echo json_encode(['status' => 'error', 'message' => 'กรุณาระบุจำนวนเงินกู้ยืมที่ถูกต้อง']);
+            exit();
+        }
+
+        mysqli_begin_transaction($conn);
+
+        // Fetch loan to update remaining balance
+        $l_query = mysqli_query($conn, "SELECT remaining_balance, status FROM payroll_loans WHERE id = $loan_id AND company_id = $company_id");
+        $loan = mysqli_fetch_assoc($l_query);
+        if ($loan) {
+            $new_rem = (float)$loan['remaining_balance'] - $amount;
+            $new_status = ($new_rem <= 0.005) ? 'paid_off' : 'active';
+            $new_rem = max(0.00, $new_rem);
+
+            // Update loan remaining balance and status
+            $up_sql = "UPDATE payroll_loans SET remaining_balance = ?, status = ? WHERE id = ?";
+            $up_stmt = mysqli_prepare($conn, $up_sql);
+            mysqli_stmt_bind_param($up_stmt, "dsi", $new_rem, $new_status, $loan_id);
+            
+            // Insert payment log
+            $pay_sql = "INSERT INTO payroll_loan_payments (loan_id, payment_date, amount, note) VALUES (?, ?, ?, ?)";
+            $pay_stmt = mysqli_prepare($conn, $pay_sql);
+            mysqli_stmt_bind_param($pay_stmt, "isds", $loan_id, $payment_date, $amount, $note);
+
+            if (mysqli_stmt_execute($up_stmt) && mysqli_stmt_execute($pay_stmt)) {
+                mysqli_commit($conn);
+                echo json_encode(['status' => 'success', 'message' => 'บันทึกการชำระเงินเรียบร้อยแล้ว']);
+            } else {
+                mysqli_rollback($conn);
+                echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+            }
+        } else {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลสัญญา']);
+        }
+        break;
+
+    case 'delete_loan_payment':
+        $id = (int)($_POST['id'] ?? 0);
+        
+        mysqli_begin_transaction($conn);
+        
+        // Fetch payment details first
+        $p_query = mysqli_query($conn, "SELECT loan_id, amount FROM payroll_loan_payments WHERE id = $id");
+        $payment = mysqli_fetch_assoc($p_query);
+        if ($payment) {
+            $loan_id = $payment['loan_id'];
+            $amount = (float)$payment['amount'];
+            
+            // Revert remaining balance on loan
+            $l_query = mysqli_query($conn, "SELECT remaining_balance, status FROM payroll_loans WHERE id = $loan_id");
+            $loan = mysqli_fetch_assoc($l_query);
+            if ($loan) {
+                $new_rem = (float)$loan['remaining_balance'] + $amount;
+                $new_status = 'active'; // Since we reverted, it's active again
+                
+                $up_sql = "UPDATE payroll_loans SET remaining_balance = ?, status = ? WHERE id = ?";
+                $up_stmt = mysqli_prepare($conn, $up_sql);
+                mysqli_stmt_bind_param($up_stmt, "dsi", $new_rem, $new_status, $loan_id);
+                
+                // Delete payment record
+                $del_sql = "DELETE FROM payroll_loan_payments WHERE id = ?";
+                $del_stmt = mysqli_prepare($conn, $del_sql);
+                mysqli_stmt_bind_param($del_stmt, "i", $id);
+                
+                if (mysqli_stmt_execute($up_stmt) && mysqli_stmt_execute($del_stmt)) {
+                    mysqli_commit($conn);
+                    echo json_encode(['status' => 'success', 'message' => 'ยกเลิกรายการชำระเงินเรียบร้อยแล้ว']);
+                } else {
+                    mysqli_rollback($conn);
+                    echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+                }
+            } else {
+                mysqli_rollback($conn);
+                echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลสัญญาที่เกี่ยวข้อง']);
+            }
+        } else {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => 'ไม่พบข้อมูลการชำระเงิน']);
         }
         break;
 
