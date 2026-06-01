@@ -77,6 +77,13 @@ if (mysqli_num_rows($wtRes) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN wage_type ENUM('monthly', 'daily') NOT NULL DEFAULT 'monthly' AFTER salary");
 }
 
+// Ensure description column exists
+$checkDescSQL = "SHOW COLUMNS FROM payroll_employees LIKE 'description'";
+$descRes = mysqli_query($conn, $checkDescSQL);
+if (mysqli_num_rows($descRes) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_employees ADD COLUMN description TEXT DEFAULT NULL AFTER photo");
+}
+
 // Ensure multiple positions table exists
 $createPositionsTable = "CREATE TABLE IF NOT EXISTS payroll_employee_positions (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -157,12 +164,33 @@ $createPayrollRunsTable = "CREATE TABLE IF NOT EXISTS payroll_runs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     month_period VARCHAR(7) NOT NULL, -- Format YYYY-MM
+    start_date DATE NULL,
+    end_date DATE NULL,
     status ENUM('pending', 'approved') NOT NULL DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uniq_company_month (company_id, month_period)
+    UNIQUE KEY uniq_company_month_range (company_id, month_period, start_date, end_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createPayrollRunsTable);
+
+// Ensure columns exist and unique key is upgraded
+$checkRunStartCol = mysqli_query($conn, "SHOW COLUMNS FROM payroll_runs LIKE 'start_date'");
+if ($checkRunStartCol && mysqli_num_rows($checkRunStartCol) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_runs ADD COLUMN start_date DATE NULL AFTER month_period");
+}
+$checkRunEndCol = mysqli_query($conn, "SHOW COLUMNS FROM payroll_runs LIKE 'end_date'");
+if ($checkRunEndCol && mysqli_num_rows($checkRunEndCol) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_runs ADD COLUMN end_date DATE NULL AFTER start_date");
+}
+
+$checkUniqueKey = mysqli_query($conn, "SHOW INDEX FROM payroll_runs WHERE Key_name = 'uniq_company_month'");
+if ($checkUniqueKey && mysqli_num_rows($checkUniqueKey) > 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_runs DROP KEY uniq_company_month");
+}
+$checkNewUniqueKey = mysqli_query($conn, "SHOW INDEX FROM payroll_runs WHERE Key_name = 'uniq_company_month_range'");
+if ($checkNewUniqueKey && mysqli_num_rows($checkNewUniqueKey) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_runs ADD UNIQUE KEY uniq_company_month_range (company_id, month_period, start_date, end_date)");
+}
 
 $createPayrollRunDetailsTable = "CREATE TABLE IF NOT EXISTS payroll_run_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -239,17 +267,24 @@ if (mysqli_num_rows($checkSetting) == 0) {
 $createCommSettingsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL UNIQUE,
-    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 3.50,
+    admin_rate DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 2.00,
     helper_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createCommSettingsTable);
 
+// Ensure admin_rate column exists in payroll_commission_settings
+$checkAdminRateCol = mysqli_query($conn, "SHOW COLUMNS FROM payroll_commission_settings LIKE 'admin_rate'");
+if ($checkAdminRateCol && mysqli_num_rows($checkAdminRateCol) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_commission_settings ADD COLUMN admin_rate DECIMAL(5,2) NOT NULL DEFAULT 1.00 AFTER company_id");
+}
+
 // Ensure default settings exist for company
 $checkCommSettings = mysqli_query($conn, "SELECT id FROM payroll_commission_settings WHERE company_id = $company_id");
 if ($checkCommSettings && mysqli_num_rows($checkCommSettings) == 0) {
-    mysqli_query($conn, "INSERT IGNORE INTO payroll_commission_settings (company_id, sales_rate, helper_rate) VALUES ($company_id, 3.50, 0.50)");
+    mysqli_query($conn, "INSERT IGNORE INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate) VALUES ($company_id, 1.00, 2.00, 0.50)");
 }
 
 $createCommissionsTable = "CREATE TABLE IF NOT EXISTS payroll_commissions (
@@ -273,8 +308,11 @@ $createCommissionItemsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_ite
     quantity INT NOT NULL DEFAULT 1,
     unit_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     total_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    admin_employee_id INT NULL,
+    admin_rate DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+    admin_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     sales_employee_id INT NOT NULL,
-    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 3.50,
+    sales_rate DECIMAL(5,2) NOT NULL DEFAULT 2.00,
     sales_commission DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     helper1_employee_id INT NULL,
     helper1_rate DECIMAL(5,2) NOT NULL DEFAULT 0.25,
@@ -286,6 +324,19 @@ $createCommissionItemsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_ite
     FOREIGN KEY (commission_id) REFERENCES payroll_commissions(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createCommissionItemsTable);
+
+// Ensure admin columns exist in payroll_commission_items
+$admin_cols_to_add = [
+    'admin_employee_id' => "INT NULL DEFAULT NULL AFTER total_price",
+    'admin_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 1.00 AFTER admin_employee_id",
+    'admin_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER admin_rate"
+];
+foreach ($admin_cols_to_add as $col_name => $col_definition) {
+    $check_col = mysqli_query($conn, "SHOW COLUMNS FROM payroll_commission_items LIKE '$col_name'");
+    if ($check_col && mysqli_num_rows($check_col) == 0) {
+        mysqli_query($conn, "ALTER TABLE payroll_commission_items ADD COLUMN $col_name $col_definition");
+    }
+}
 
 $action = $_REQUEST['action'] ?? '';
 
@@ -507,6 +558,7 @@ switch ($action) {
         $max_annual_leave = (int)($_POST['max_annual_leave'] ?? 6);
         $max_other_leave = (int)($_POST['max_other_leave'] ?? 15);
         $status = $_POST['status'] ?? 'active';
+        $description = $_POST['description'] ?? '';
 
         // Extract first position for main payroll_employees fields (fallback compatibility)
         $positions_post = $_POST['positions'] ?? [];
@@ -577,25 +629,25 @@ switch ($action) {
             $sql = "UPDATE payroll_employees SET 
                     emp_code = ?, first_name = ?, last_name = ?, department = ?, position = ?, 
                     salary = ?, wage_type = ?, start_date = ?, phone = ?, max_business_leave = ?, max_sick_leave = ?, 
-                    max_annual_leave = ?, max_other_leave = ?, status = ?, photo = ?
+                    max_annual_leave = ?, max_other_leave = ?, status = ?, photo = ?, description = ?
                     WHERE id = ? AND company_id = ?";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "sssssdsssiiiissii", 
+            mysqli_stmt_bind_param($stmt, "sssssdsssiiiisssii", 
                 $emp_code, $first_name, $last_name, $department, $position, 
                 $salary, $wage_type, $start_date, $phone, $max_business_leave, $max_sick_leave, 
-                $max_annual_leave, $max_other_leave, $status, $photo_path, $id, $company_id
+                $max_annual_leave, $max_other_leave, $status, $photo_path, $description, $id, $company_id
             );
         } else {
             $sql = "INSERT INTO payroll_employees (
                         company_id, emp_code, first_name, last_name, department, position, 
                         salary, wage_type, start_date, phone, max_business_leave, max_sick_leave, 
-                        max_annual_leave, max_other_leave, status, photo
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        max_annual_leave, max_other_leave, status, photo, description
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "isssssdsssiiiiss", 
+            mysqli_stmt_bind_param($stmt, "isssssdsssiiiisss", 
                 $company_id, $emp_code, $first_name, $last_name, $department, $position, 
                 $salary, $wage_type, $start_date, $phone, $max_business_leave, $max_sick_leave, 
-                $max_annual_leave, $max_other_leave, $status, $photo_path
+                $max_annual_leave, $max_other_leave, $status, $photo_path, $description
             );
         }
 
@@ -1049,10 +1101,27 @@ switch ($action) {
         $month = mysqli_real_escape_string($conn, $_GET['month_period'] ?? date('Y-m'));
         $recalculate = isset($_GET['recalculate']) && $_GET['recalculate'] === 'true';
         
+        $start_date = $_GET['start_date'] ?? null;
+        $end_date = $_GET['end_date'] ?? null;
+        
+        // If not provided, calculate first and last days of the month
+        if (empty($start_date) || empty($end_date)) {
+            $start_date = $month . '-01';
+            $end_date = date('Y-m-t', strtotime($start_date));
+        } else {
+            $start_date = mysqli_real_escape_string($conn, $start_date);
+            $end_date = mysqli_real_escape_string($conn, $end_date);
+        }
+        
         // Check if run already exists in DB
-        $run_sql = "SELECT * FROM payroll_runs WHERE company_id = ? AND month_period = ?";
+        $run_sql = "SELECT * FROM payroll_runs 
+                    WHERE company_id = ? 
+                      AND (
+                           (month_period = ? AND start_date = ? AND end_date = ?) OR
+                           (month_period = ? AND start_date IS NULL AND end_date IS NULL)
+                          )";
         $run_stmt = mysqli_prepare($conn, $run_sql);
-        mysqli_stmt_bind_param($run_stmt, "is", $company_id, $month);
+        mysqli_stmt_bind_param($run_stmt, "isssss", $company_id, $month, $start_date, $end_date, $month);
         mysqli_stmt_execute($run_stmt);
         $run_res = mysqli_stmt_get_result($run_stmt);
         $run = mysqli_fetch_assoc($run_res);
@@ -1077,6 +1146,8 @@ switch ($action) {
                 'status' => 'saved',
                 'run_id' => $run['id'],
                 'month_period' => $run['month_period'],
+                'start_date' => $run['start_date'] ?: $start_date,
+                'end_date' => $run['end_date'] ?: $end_date,
                 'run_status' => $run['status'],
                 'details' => $details
             ]);
@@ -1092,14 +1163,14 @@ switch ($action) {
             mysqli_stmt_execute($emp_stmt);
             $emp_res = mysqli_stmt_get_result($emp_stmt);
             
-            // Get attendance details for this month
+            // Get attendance details for this range
             $att_details_sql = "SELECT a.employee_id, a.work_date, a.status, a.position_id,
                                        p.position as pos_name, p.wage_type as pos_wage_type, p.salary as pos_salary
                                 FROM payroll_attendance a
                                 LEFT JOIN payroll_employee_positions p ON a.position_id = p.id
-                                WHERE a.company_id = ? AND DATE_FORMAT(a.work_date, '%Y-%m') = ?";
+                                WHERE a.company_id = ? AND a.work_date BETWEEN ? AND ?";
             $att_details_stmt = mysqli_prepare($conn, $att_details_sql);
-            mysqli_stmt_bind_param($att_details_stmt, "is", $company_id, $month);
+            mysqli_stmt_bind_param($att_details_stmt, "iss", $company_id, $start_date, $end_date);
             mysqli_stmt_execute($att_details_stmt);
             $att_details_res = mysqli_stmt_get_result($att_details_stmt);
             
@@ -1112,13 +1183,13 @@ switch ($action) {
                 $emp_att_map[$emp_id][] = $att_row;
             }
             
-            // Get adjustments for this month
+            // Get adjustments for this range
             $adj_month_sql = "SELECT adj.employee_id, adj.amount, item.type
                               FROM payroll_attendance_adjustments adj
                               JOIN payroll_adjustment_items item ON adj.adjustment_item_id = item.id
-                              WHERE DATE_FORMAT(adj.work_date, '%Y-%m') = ?";
+                              WHERE adj.work_date BETWEEN ? AND ?";
             $adj_month_stmt = mysqli_prepare($conn, $adj_month_sql);
-            mysqli_stmt_bind_param($adj_month_stmt, "s", $month);
+            mysqli_stmt_bind_param($adj_month_stmt, "ss", $start_date, $end_date);
             mysqli_stmt_execute($adj_month_stmt);
             $adj_month_res = mysqli_stmt_get_result($adj_month_stmt);
             $adj_map = [];
@@ -1137,13 +1208,23 @@ switch ($action) {
                 }
             }
             
-            // Get approved commission earnings for this month
+            // Get approved commission earnings for this range
             $comm_month_sql = "SELECT 
+                                    item.admin_employee_id as emp_id, 
+                                    SUM(item.admin_commission) as total_comm
+                               FROM payroll_commission_items item
+                               JOIN payroll_commissions comm ON item.commission_id = comm.id
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.admin_employee_id IS NOT NULL AND comm.transaction_date BETWEEN ? AND ?
+                               GROUP BY item.admin_employee_id
+
+                               UNION ALL
+
+                               SELECT 
                                     item.sales_employee_id as emp_id, 
                                     SUM(item.sales_commission) as total_comm
                                FROM payroll_commission_items item
                                JOIN payroll_commissions comm ON item.commission_id = comm.id
-                               WHERE comm.company_id = ? AND comm.status = 'approved' AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND comm.transaction_date BETWEEN ? AND ?
                                GROUP BY item.sales_employee_id
                                
                                UNION ALL
@@ -1153,7 +1234,7 @@ switch ($action) {
                                     SUM(item.helper1_commission) as total_comm
                                FROM payroll_commission_items item
                                JOIN payroll_commissions comm ON item.commission_id = comm.id
-                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper1_employee_id IS NOT NULL AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper1_employee_id IS NOT NULL AND comm.transaction_date BETWEEN ? AND ?
                                GROUP BY item.helper1_employee_id
                                
                                UNION ALL
@@ -1163,11 +1244,11 @@ switch ($action) {
                                     SUM(item.helper2_commission) as total_comm
                                FROM payroll_commission_items item
                                JOIN payroll_commissions comm ON item.commission_id = comm.id
-                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper2_employee_id IS NOT NULL AND DATE_FORMAT(comm.transaction_date, '%Y-%m') = ?
+                               WHERE comm.company_id = ? AND comm.status = 'approved' AND item.helper2_employee_id IS NOT NULL AND comm.transaction_date BETWEEN ? AND ?
                                GROUP BY item.helper2_employee_id";
 
             $comm_stmt = mysqli_prepare($conn, $comm_month_sql);
-            mysqli_stmt_bind_param($comm_stmt, "isisis", $company_id, $month, $company_id, $month, $company_id, $month);
+            mysqli_stmt_bind_param($comm_stmt, "ississississ", $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date);
             if (mysqli_stmt_execute($comm_stmt)) {
                 $comm_res = mysqli_stmt_get_result($comm_stmt);
                 while ($comm_row = mysqli_fetch_assoc($comm_res)) {
@@ -1220,12 +1301,22 @@ switch ($action) {
                     }
                 }
                 
-                // For monthly employees, base earnings is flat monthly salary
+                // For monthly employees, base earnings is flat monthly salary or proportional to the range
                 if ($is_monthly) {
-                    $base_earnings = (float)$emp['salary'];
-                    // Deduct for absences: (salary / 30) * absent_days
-                    $absence_deduction = round(($emp['salary'] / 30) * $absent_days, 2);
-                    $total_deductions += $absence_deduction;
+                    $is_full_month = (date('d', strtotime($start_date)) === '01' && date('d', strtotime($end_date)) === date('t', strtotime($start_date)));
+                    if ($is_full_month) {
+                        $base_earnings = (float)$emp['salary'];
+                        // Deduct for absences: (salary / 30) * absent_days
+                        $absence_deduction = round(($emp['salary'] / 30) * $absent_days, 2);
+                        $total_deductions += $absence_deduction;
+                    } else {
+                        // Custom date range: proportional base earnings
+                        $days_in_range = round((strtotime($end_date) - strtotime($start_date)) / 86400) + 1;
+                        $base_earnings = round(($emp['salary'] / 30) * $days_in_range, 2);
+                        // Deduct for absences within this custom range
+                        $absence_deduction = round(($emp['salary'] / 30) * $absent_days, 2);
+                        $total_deductions += $absence_deduction;
+                    }
                 }
                 
                 $net_pay = $base_earnings + $total_allowance - $total_deductions;
@@ -1254,6 +1345,8 @@ switch ($action) {
             echo json_encode([
                 'status' => 'calculated',
                 'month_period' => $month,
+                'start_date' => $start_date,
+                'end_date' => $end_date,
                 'run_status' => 'pending',
                 'details' => $details
             ]);
@@ -1266,18 +1359,29 @@ switch ($action) {
         $details_json = $_POST['details'] ?? '[]';
         $details_list = json_decode($details_json, true);
         
+        $start_date = $_POST['start_date'] ?? '';
+        $end_date = $_POST['end_date'] ?? '';
+        
         if (empty($month) || !is_array($details_list)) {
             echo json_encode(['status' => 'error', 'message' => 'ข้อมูลที่ส่งมาไม่ถูกต้อง']);
             exit();
         }
         
+        if (empty($start_date) || empty($end_date)) {
+            $start_date = $month . '-01';
+            $end_date = date('Y-m-t', strtotime($start_date));
+        } else {
+            $start_date = mysqli_real_escape_string($conn, $start_date);
+            $end_date = mysqli_real_escape_string($conn, $end_date);
+        }
+        
         mysqli_begin_transaction($conn);
         
         // Insert or update run
-        $run_sql = "INSERT INTO payroll_runs (company_id, month_period, status) VALUES (?, ?, ?)
+        $run_sql = "INSERT INTO payroll_runs (company_id, month_period, start_date, end_date, status) VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE status = VALUES(status)";
         $run_stmt = mysqli_prepare($conn, $run_sql);
-        mysqli_stmt_bind_param($run_stmt, "iss", $company_id, $month, $status);
+        mysqli_stmt_bind_param($run_stmt, "issss", $company_id, $month, $start_date, $end_date, $status);
         if (!mysqli_stmt_execute($run_stmt)) {
             mysqli_rollback($conn);
             echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
@@ -1285,9 +1389,9 @@ switch ($action) {
         }
         
         // Get run ID
-        $get_id_sql = "SELECT id FROM payroll_runs WHERE company_id = ? AND month_period = ?";
+        $get_id_sql = "SELECT id FROM payroll_runs WHERE company_id = ? AND month_period = ? AND start_date = ? AND end_date = ?";
         $get_id_stmt = mysqli_prepare($conn, $get_id_sql);
-        mysqli_stmt_bind_param($get_id_stmt, "is", $company_id, $month);
+        mysqli_stmt_bind_param($get_id_stmt, "isss", $company_id, $month, $start_date, $end_date);
         mysqli_stmt_execute($get_id_stmt);
         $run_id = mysqli_fetch_assoc(mysqli_stmt_get_result($get_id_stmt))['id'];
         
@@ -1335,25 +1439,26 @@ switch ($action) {
         break;
 
     case 'get_commission_settings':
-        $sql = "SELECT sales_rate, helper_rate FROM payroll_commission_settings WHERE company_id = ?";
+        $sql = "SELECT admin_rate, sales_rate, helper_rate FROM payroll_commission_settings WHERE company_id = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $company_id);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $settings = mysqli_fetch_assoc($res);
         if (!$settings) {
-            $settings = ['sales_rate' => 3.50, 'helper_rate' => 0.50];
+            $settings = ['admin_rate' => 1.00, 'sales_rate' => 2.00, 'helper_rate' => 0.50];
         }
         echo json_encode($settings);
         break;
 
     case 'save_commission_settings':
-        $sales_rate = (float)($_POST['sales_rate'] ?? 3.50);
+        $admin_rate = (float)($_POST['admin_rate'] ?? 1.00);
+        $sales_rate = (float)($_POST['sales_rate'] ?? 2.00);
         $helper_rate = (float)($_POST['helper_rate'] ?? 0.50);
-        $sql = "INSERT INTO payroll_commission_settings (company_id, sales_rate, helper_rate) VALUES (?, ?, ?)
-                ON DUPLICATE KEY UPDATE sales_rate = VALUES(sales_rate), helper_rate = VALUES(helper_rate)";
+        $sql = "INSERT INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate) VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE admin_rate = VALUES(admin_rate), sales_rate = VALUES(sales_rate), helper_rate = VALUES(helper_rate)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "idd", $company_id, $sales_rate, $helper_rate);
+        mysqli_stmt_bind_param($stmt, "iddd", $company_id, $admin_rate, $sales_rate, $helper_rate);
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['status' => 'success', 'message' => 'บันทึกอัตราค่าคอมมิชชั่นเรียบร้อยแล้ว']);
         } else {
@@ -1412,11 +1517,12 @@ switch ($action) {
             // Insert items
             $item_sql = "INSERT INTO payroll_commission_items (
                 commission_id, product_code, product_name, unit, quantity, unit_price, total_price,
+                admin_employee_id, admin_rate, admin_commission,
                 sales_employee_id, sales_rate, sales_commission,
                 helper1_employee_id, helper1_rate, helper1_commission,
                 helper2_employee_id, helper2_rate, helper2_commission,
                 item_total_commission
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $item_stmt = mysqli_prepare($conn, $item_sql);
 
             foreach ($items as $item) {
@@ -1427,8 +1533,12 @@ switch ($action) {
                 $u_price = (float)($item['unit_price'] ?? 0.00);
                 $t_price = (float)($item['total_price'] ?? 0.00);
                 
+                $admin_emp = !empty($item['admin_employee_id']) ? (int)$item['admin_employee_id'] : null;
+                $admin_rate = (float)($item['admin_rate'] ?? 1.00);
+                $admin_comm = (float)($item['admin_commission'] ?? 0.00);
+
                 $sales_emp = (int)($item['sales_employee_id'] ?? 0);
-                $sales_rate = (float)($item['sales_rate'] ?? 3.50);
+                $sales_rate = (float)($item['sales_rate'] ?? 2.00);
                 $sales_comm = (float)($item['sales_commission'] ?? 0.00);
                 
                 $h1_emp = !empty($item['helper1_employee_id']) ? (int)$item['helper1_employee_id'] : null;
@@ -1441,8 +1551,9 @@ switch ($action) {
                 
                 $item_total_comm = (float)($item['item_total_commission'] ?? 0.00);
 
-                mysqli_stmt_bind_param($item_stmt, "isssiddiiddiddidd",
+                mysqli_stmt_bind_param($item_stmt, "isssiddiidddiddidddd",
                     $comm_id, $p_code, $p_name, $unit, $qty, $u_price, $t_price,
+                    $admin_emp, $admin_rate, $admin_comm,
                     $sales_emp, $sales_rate, $sales_comm,
                     $h1_emp, $h1_rate, $h1_comm,
                     $h2_emp, $h2_rate, $h2_comm,

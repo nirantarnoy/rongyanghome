@@ -59,7 +59,8 @@
 
 <script>
     let employeesList = [];
-    let defaultSalesRate = 3.50;
+    let defaultAdminRate = 1.00;
+    let defaultSalesRate = 2.00;
     let defaultHelperRate = 0.50;
     let commItemIndex = 0;
     let activeEditCommId = 0;
@@ -72,8 +73,9 @@
             data: { action: 'get_commission_settings' },
             success: function(rates) {
                 if (rates) {
-                    defaultSalesRate = parseFloat(rates.sales_rate);
-                    defaultHelperRate = parseFloat(rates.helper_rate);
+                    defaultAdminRate = parseFloat(rates.admin_rate || 1.00);
+                    defaultSalesRate = parseFloat(rates.sales_rate || 2.00);
+                    defaultHelperRate = parseFloat(rates.helper_rate || 0.50);
                 }
                 
                 $.ajax({
@@ -146,21 +148,57 @@
             </div>
 
             <!-- Row 2: Sub-panels for Commissions -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
                 
-                <!-- Col A: Salesperson -->
+                <!-- Col A: Admin -->
                 <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                            <i class="fa-solid fa-user-tie text-blue-500"></i>
-                            <span>ข้อมูลพนักงานเปิดการขาย</span>
+                            <i class="fa-solid fa-user-gear text-purple-500"></i>
+                            <span>แอดมินรับลูกค้า/ช่วยตอบ</span>
                         </span>
-                        <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">รับ <span class="sales-label-rate">3.5</span>%</span>
+                        <span class="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">รับ <span class="admin-label-rate">${defaultAdminRate}</span>%</span>
                     </div>
 
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">พนักงานเปิดการขาย *</label>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">แอดมิน (เลือกหรือไม่เลือกก็ได้)</label>
+                            <select class="admin-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
+                                ${employeeOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">ตำแหน่ง</label>
+                            <input type="text" readonly class="admin-emp-position w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 outline-none">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">อัตราค่าคอม (%)</label>
+                                <input type="number" step="0.01" class="admin-rate-input w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-700 text-center transition-all" value="${defaultAdminRate}">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
+                                <div class="admin-commission-box text-center py-1.5 px-3 bg-purple-50/50 border border-purple-200 text-purple-600 font-extrabold text-xs rounded-xl">
+                                    0.00 บาท
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Col B: Salesperson -->
+                <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-tie text-blue-500"></i>
+                            <span>คนปิดการขาย</span>
+                        </span>
+                        <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">รับ <span class="sales-label-rate">${defaultSalesRate}</span>%</span>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 mb-1">คนปิดการขาย *</label>
                             <select class="sales-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
                                 ${employeeOptions}
                             </select>
@@ -176,7 +214,7 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
-                                <div class="sales-commission-box text-center py-1.5 px-3 bg-blue-50/50 border border-blue-200 text-blue-600 font-extrabold text-sm rounded-xl">
+                                <div class="sales-commission-box text-center py-1.5 px-3 bg-blue-50/50 border border-blue-200 text-blue-600 font-extrabold text-xs rounded-xl">
                                     0.00 บาท
                                 </div>
                             </div>
@@ -184,14 +222,14 @@
                     </div>
                 </div>
 
-                <!-- Col B: Helpers -->
+                <!-- Col C: Helpers -->
                 <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-users text-amber-500"></i>
                             <span>ผู้ช่วยติดตามงานช่าง</span>
                         </span>
-                        <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">รวม <span class="helper-label-rate">0.5</span>%</span>
+                        <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">รวม <span class="helper-label-rate">${defaultHelperRate}</span>%</span>
                     </div>
 
                     <div class="space-y-3">
@@ -220,7 +258,7 @@
                     </div>
                 </div>
 
-                <!-- Col C: Summary Card -->
+                <!-- Col D: Summary Card -->
                 <div class="bg-slate-50/30 rounded-2xl p-5 border border-slate-100 flex flex-col justify-between">
                     <div>
                         <span class="text-xs font-bold text-slate-700 block mb-3 uppercase tracking-wider">สรุปค่าคอมมิชชั่น</span>
@@ -230,11 +268,15 @@
                                 <span class="font-bold text-slate-700"><span class="sum-card-sales">0.00</span> บาท</span>
                             </div>
                             <div class="flex items-center justify-between text-xs text-slate-500">
-                                <span>ค่าคอมพนักงาน <span class="sales-sum-pct">3.50</span>%</span>
+                                <span>ค่าคอมแอดมิน <span class="admin-sum-pct">1.00</span>%</span>
+                                <span class="font-bold text-slate-700"><span class="sum-card-admin-comm">0.00</span> บาท</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-slate-500">
+                                <span>ค่าคอมคนปิดการขาย <span class="sales-sum-pct">2.00</span>%</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-sales-comm">0.00</span> บาท</span>
                             </div>
                             <div class="flex items-center justify-between text-xs text-slate-500">
-                                <span>ค่าคอมผู้ช่วยติดตามงานช่าง <span class="helper-sum-pct">0.50</span>%</span>
+                                <span>ค่าคอมผู้ช่วยติดตาม <span class="helper-sum-pct">0.50</span>%</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-helper-comm">0.00</span> บาท</span>
                             </div>
                         </div>
@@ -242,7 +284,7 @@
 
                     <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 text-center mt-4">
                         <div class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-0.5">รวมค่าคอมทั้งหมด</div>
-                        <div class="text-emerald-700 font-extrabold text-lg sum-card-total">0.00 บาท</div>
+                        <div class="text-emerald-700 font-extrabold text-sm sum-card-total">0.00 บาท</div>
                     </div>
                 </div>
 
@@ -259,12 +301,18 @@
             row.find('.prod-unit').val(data.unit);
             row.find('.prod-qty').val(data.quantity);
             row.find('.prod-price').val(data.unit_price);
+
+            row.find('.admin-emp-select').val(data.admin_employee_id || '');
+            row.find('.admin-rate-input').val(data.admin_rate || defaultAdminRate);
             row.find('.sales-emp-select').val(data.sales_employee_id);
             row.find('.sales-rate-input').val(data.sales_rate);
             row.find('.helper1-emp-select').val(data.helper1_employee_id || '');
             row.find('.helper2-emp-select').val(data.helper2_employee_id || '');
             
-            // Set position
+            // Set positions
+            const adminEmp = employeesList.find(e => e.id == data.admin_employee_id);
+            if (adminEmp) row.find('.admin-emp-position').val(adminEmp.position);
+
             const emp = employeesList.find(e => e.id == data.sales_employee_id);
             if (emp) row.find('.sales-emp-position').val(emp.position);
         }
@@ -294,6 +342,18 @@
         const price = parseFloat(row.find('.prod-price').val()) || 0.00;
         const total = qty * price;
         row.find('.prod-total').val(total.toFixed(2));
+
+        // Admin calculation
+        const adminEmpSelected = !!row.find('.admin-emp-select').val();
+        let adminComm = 0;
+        let adminRate = 0;
+        if (adminEmpSelected) {
+            adminRate = parseFloat(row.find('.admin-rate-input').val()) || 0.00;
+            adminComm = (total * adminRate) / 100;
+        }
+        row.find('.admin-commission-box').text(adminComm.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+        row.find('.admin-label-rate').text(adminRate.toFixed(2));
+        row.find('.admin-sum-pct').text(adminRate.toFixed(2));
 
         // Salesperson calculation
         const salesRate = parseFloat(row.find('.sales-rate-input').val()) || 0.00;
@@ -327,10 +387,11 @@
 
         // Sum Card values
         row.find('.sum-card-sales').text(total.toLocaleString('th-TH', {minimumFractionDigits: 2}));
+        row.find('.sum-card-admin-comm').text(adminComm.toLocaleString('th-TH', {minimumFractionDigits: 2}));
         row.find('.sum-card-sales-comm').text(salesComm.toLocaleString('th-TH', {minimumFractionDigits: 2}));
         row.find('.sum-card-helper-comm').text(helperCommTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}));
         
-        const rowTotalComm = salesComm + helperCommTotal;
+        const rowTotalComm = adminComm + salesComm + helperCommTotal;
         row.find('.sum-card-total').text(rowTotalComm.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
 
         updateInvoiceTotals();
@@ -343,10 +404,18 @@
         $('.item-block').each(function() {
             const qty = parseInt($(this).find('.prod-qty').val()) || 0;
             const price = parseFloat($(this).find('.prod-price').val()) || 0.00;
-            totalSales += (qty * price);
+            const total = qty * price;
+            totalSales += total;
+
+            const adminEmp = $(this).find('.admin-emp-select').val();
+            let adminComm = 0;
+            if (adminEmp) {
+                const adminRate = parseFloat($(this).find('.admin-rate-input').val()) || 0.00;
+                adminComm = (total * adminRate) / 100;
+            }
 
             const salesRate = parseFloat($(this).find('.sales-rate-input').val()) || 0.00;
-            const salesComm = ((qty * price) * salesRate) / 100;
+            const salesComm = (total * salesRate) / 100;
 
             const h1 = $(this).find('.helper1-emp-select').val();
             const h2 = $(this).find('.helper2-emp-select').val();
@@ -356,10 +425,10 @@
             
             let helperComm = 0;
             if (helperCount > 0) {
-                helperComm = ((qty * price) * defaultHelperRate) / 100;
+                helperComm = (total * defaultHelperRate) / 100;
             }
             
-            totalComm += (salesComm + helperComm);
+            totalComm += (adminComm + salesComm + helperComm);
         });
 
         $('#invoice_total_sales').val(totalSales.toLocaleString('th-TH', {minimumFractionDigits: 2}));
@@ -382,6 +451,8 @@
             const pName = row.find('.prod-name').val();
             const qty = parseInt(row.find('.prod-qty').val()) || 0;
             const price = parseFloat(row.find('.prod-price').val()) || 0;
+            const adminEmp = row.find('.admin-emp-select').val();
+            const adminRate = parseFloat(row.find('.admin-rate-input').val()) || 0;
             const salesEmp = row.find('.sales-emp-select').val();
             const salesRate = parseFloat(row.find('.sales-rate-input').val()) || 0;
 
@@ -397,11 +468,12 @@
             }
             if (!salesEmp) {
                 validationError = true;
-                validationMsg = 'กรุณาเลือกพนักงานเปิดการขายสำหรับทุกแถว';
+                validationMsg = 'กรุณาเลือกพนักงานคนปิดการขายสำหรับทุกแถว';
                 return false;
             }
 
             const total = qty * price;
+            const adminComm = adminEmp ? (total * adminRate) / 100 : 0;
             const salesComm = (total * salesRate) / 100;
 
             const h1 = row.find('.helper1-emp-select').val();
@@ -428,6 +500,9 @@
                 quantity: qty,
                 unit_price: price,
                 total_price: total,
+                admin_employee_id: adminEmp || null,
+                admin_rate: adminRate,
+                admin_commission: adminComm,
                 sales_employee_id: salesEmp,
                 sales_rate: salesRate,
                 sales_commission: salesComm,
@@ -437,7 +512,7 @@
                 helper2_employee_id: h2 || null,
                 helper2_rate: helperRatePerPerson,
                 helper2_commission: helperCommPerPerson,
-                item_total_commission: salesComm + helperCommTotal
+                item_total_commission: adminComm + salesComm + helperCommTotal
             });
         });
 
@@ -504,8 +579,20 @@
     }
 
     // Attach real-time listeners for updates
-    $(document).on('change keyup', '.prod-qty, .prod-price, .sales-rate-input', function() {
+    $(document).on('change keyup', '.prod-qty, .prod-price, .admin-rate-input, .sales-rate-input', function() {
         const row = $(this).closest('.item-block');
+        calculateItem(row);
+    });
+
+    $(document).on('change', '.admin-emp-select', function() {
+        const empId = $(this).val();
+        const row = $(this).closest('.item-block');
+        const emp = employeesList.find(e => e.id == empId);
+        if (emp) {
+            row.find('.admin-emp-position').val(emp.position);
+        } else {
+            row.find('.admin-emp-position').val('');
+        }
         calculateItem(row);
     });
 

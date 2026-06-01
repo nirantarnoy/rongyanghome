@@ -10,10 +10,22 @@
     </div>
 
     <!-- Date selector (Only shows when on calculator tab) -->
-    <div id="calcPeriodSelector" class="flex items-center gap-3">
-        <span class="text-xs font-semibold text-slate-500 uppercase">เลือกงวดเงินเดือน:</span>
-        <input type="month" id="payroll_month_input" value="<?= date('Y-m') ?>" onchange="loadPayrollCalculation()"
-               class="px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-xs outline-none font-bold text-slate-700 transition-all">
+    <div id="calcPeriodSelector" class="flex items-center gap-4 flex-wrap">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500 uppercase">เลือกงวดเงินเดือน:</span>
+            <input type="month" id="payroll_month_input" value="<?= date('Y-m') ?>" onchange="onMonthChange()"
+                   class="px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-xs outline-none font-bold text-slate-700 transition-all">
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500 uppercase">จากวันที่:</span>
+            <input type="date" id="payroll_start_date" onchange="loadPayrollCalculation()"
+                   class="px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-xs outline-none font-bold text-slate-700 transition-all">
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-slate-500 uppercase">ถึงวันที่:</span>
+            <input type="date" id="payroll_end_date" onchange="loadPayrollCalculation()"
+                   class="px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-xs outline-none font-bold text-slate-700 transition-all">
+        </div>
     </div>
 </div>
 
@@ -90,6 +102,10 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
+                        <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center w-12">
+                            <input type="checkbox" id="selectAllEmployees" checked onchange="toggleSelectAllEmployees(this)"
+                                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer">
+                        </th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
                         <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ประเภท/อัตรา</th>
@@ -175,7 +191,9 @@
 
     function loadPayrollCalculation(recalculate = false) {
         const monthPeriod = $('#payroll_month_input').val();
-        if (!monthPeriod) return;
+        const startDate = $('#payroll_start_date').val();
+        const endDate = $('#payroll_end_date').val();
+        if (!monthPeriod || !startDate || !endDate) return;
 
         $.ajax({
             url: 'payroll_action.php',
@@ -183,14 +201,22 @@
             data: { 
                 action: 'get_payroll_run', 
                 month_period: monthPeriod,
+                start_date: startDate,
+                end_date: endDate,
                 recalculate: recalculate ? 'true' : 'false'
             },
             success: function(res) {
                 computedDetails = res.details || [];
                 currentPayrollRun = res;
 
+                if (res.status === 'saved') {
+                    $('#payroll_start_date').val(res.start_date);
+                    $('#payroll_end_date').val(res.end_date);
+                }
+
                 // Toggle action buttons based on status
-                if (res.status === 'saved' && res.run_status === 'approved') {
+                const isLocked = (res.status === 'saved' && res.run_status === 'approved');
+                if (isLocked) {
                     $('#btn-recalculate').addClass('hidden');
                     $('#btn-save-draft').addClass('hidden');
                     $('#btn-save-approve').addClass('hidden');
@@ -215,13 +241,11 @@
 
                 // Render details table
                 let html = '';
-                let totalPayout = 0;
                 let totalEmp = computedDetails.length;
 
                 if (totalEmp > 0) {
+                    const disabledAttr = isLocked ? 'disabled' : '';
                     computedDetails.forEach(function(row) {
-                        totalPayout += parseFloat(row.net_pay);
-                        
                         let avatarHtml = '';
                         if (row.photo) {
                             avatarHtml = `<img src="../${row.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
@@ -236,6 +260,10 @@
 
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 text-center">
+                                <input type="checkbox" class="employee-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer" 
+                                       data-emp-id="${row.employee_id}" checked ${disabledAttr} onchange="onEmployeeCheckboxChange()">
+                            </td>
                             <td class="px-6 py-4 text-xs font-bold text-slate-800">${row.emp_code}</td>
                             <td class="px-6 py-4 text-xs font-semibold text-slate-700">
                                 <div class="flex items-center gap-3">
@@ -268,7 +296,7 @@
                 } else {
                     html = `
                     <tr>
-                        <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+                        <td colspan="10" class="px-6 py-12 text-center text-slate-400">
                             <div class="flex flex-col items-center">
                                 <i class="fa-solid fa-users-slash text-3xl mb-2 opacity-30"></i>
                                 <div>ไม่พบข้อมูลพนักงานในระบบสำหรับงวดนี้</div>
@@ -279,26 +307,29 @@
 
                 $('#payrollTableBody').html(html);
 
-                // Set summary widgets
-                $('#sum-total-payout').text(totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
-                $('#sum-total-employees').text(totalEmp + ' คน');
+                // Set selectAll Employees check state
+                $('#selectAllEmployees').prop('checked', true).prop('disabled', isLocked);
                 
-                let avg = totalEmp > 0 ? (totalPayout / totalEmp) : 0;
-                $('#sum-average-payout').text(avg.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+                // Calculate and update the metrics
+                updatePayrollSummaryAndPayload();
             }
         });
     }
 
     function savePayrollRun(status) {
         const monthPeriod = $('#payroll_month_input').val();
-        if (!monthPeriod || computedDetails.length === 0) {
-            Swal.fire('ข้อผิดพลาด', 'ไม่มีข้อมูลเงินเดือนเพื่อบันทึก', 'warning');
+        const startDate = $('#payroll_start_date').val();
+        const endDate = $('#payroll_end_date').val();
+        const filteredDetails = getFilteredPayrollDetails();
+
+        if (!monthPeriod || !startDate || !endDate || filteredDetails.length === 0) {
+            Swal.fire('ข้อผิดพลาด', 'ไม่มีข้อมูลเงินเดือนที่เลือกเพื่อบันทึก', 'warning');
             return;
         }
 
         Swal.fire({
             title: status === 'approved' ? 'อนุมัติรอบจ่ายเงินเดือน?' : 'บันทึกแบบร่าง?',
-            text: status === 'approved' ? 'การอนุมัติเงินเดือนจะล็อคระบบข้อมูลจ่ายในเดือนนี้' : 'คุณต้องการบันทึกการคำนวณนี้เป็นแบบร่างหรือไม่',
+            text: status === 'approved' ? 'การอนุมัติเงินเดือนจะล็อคระบบข้อมูลจ่ายในงวดนี้' : 'คุณต้องการบันทึกการคำนวณนี้เป็นแบบร่างหรือไม่',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3563e9',
@@ -313,8 +344,10 @@
                     data: {
                         action: 'save_payroll_run',
                         month_period: monthPeriod,
+                        start_date: startDate,
+                        end_date: endDate,
                         status: status,
-                        details: JSON.stringify(computedDetails)
+                        details: JSON.stringify(filteredDetails)
                     },
                     success: function(res) {
                         if (res.status === 'success') {
@@ -354,15 +387,20 @@
                         const months = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
                         const monthText = months[parseInt(parts[1]) - 1] + ' ' + years;
 
+                        let periodText = monthText;
+                        if (row.start_date && row.end_date) {
+                            periodText += `<br><span class="text-[10px] text-slate-400 font-normal">(${formatThaiDate(row.start_date)} - ${formatThaiDate(row.end_date)})</span>`;
+                        }
+
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-6 py-4 text-xs font-bold text-slate-800">${monthText}</td>
+                            <td class="px-6 py-4 text-xs font-bold text-slate-800">${periodText}</td>
                             <td class="px-6 py-4 text-xs text-slate-600">${row.total_employees} คน</td>
                             <td class="px-6 py-4 text-xs text-slate-700 font-bold text-blue-600">${parseFloat(row.total_net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</td>
                             <td class="px-6 py-4">${badge}</td>
                             <td class="px-6 py-4 text-xs text-slate-500">${formatThaiDate(row.updated_at)}</td>
                             <td class="px-6 py-4 text-xs text-right space-x-2">
-                                <button onclick="viewHistoryMonth('${row.month_period}')" class="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all font-bold text-[11px]" title="เรียกดูรายละเอียด">
+                                <button onclick="viewHistoryMonth('${row.month_period}', '${row.start_date || ''}', '${row.end_date || ''}')" class="px-2.5 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white rounded-lg transition-all font-bold text-[11px]" title="เรียกดูรายละเอียด">
                                     <i class="fa-solid fa-eye"></i> ตรวจสอบ
                                 </button>
                                 <button onclick="deletePayrollPeriod(${row.id})" class="px-2.5 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg transition-all font-bold text-[11px]" title="ลบรอบบัญชีนี้">
@@ -387,8 +425,14 @@
         });
     }
 
-    function viewHistoryMonth(month) {
+    function viewHistoryMonth(month, start_date = '', end_date = '') {
         $('#payroll_month_input').val(month);
+        if (start_date && end_date) {
+            $('#payroll_start_date').val(start_date);
+            $('#payroll_end_date').val(end_date);
+        } else {
+            onMonthChange();
+        }
         switchCalcSubTab('calculator');
     }
 
@@ -681,4 +725,74 @@
             printWindow.print();
         }, 500);
     }
+
+    function toggleSelectAllEmployees(masterCheckbox) {
+        $('.employee-checkbox').prop('checked', masterCheckbox.checked);
+        updatePayrollSummaryAndPayload();
+    }
+
+    function onEmployeeCheckboxChange() {
+        const allChecked = $('.employee-checkbox:checked').length === $('.employee-checkbox').length;
+        $('#selectAllEmployees').prop('checked', allChecked);
+        updatePayrollSummaryAndPayload();
+    }
+
+    function updatePayrollSummaryAndPayload() {
+        let totalPayout = 0;
+        let selectedEmpCount = 0;
+        
+        $('.employee-checkbox').each(function() {
+            const empId = $(this).attr('data-emp-id');
+            const isChecked = $(this).is(':checked');
+            
+            const detail = computedDetails.find(d => d.employee_id == empId);
+            if (detail) {
+                if (isChecked) {
+                    totalPayout += parseFloat(detail.net_pay);
+                    selectedEmpCount++;
+                }
+            }
+        });
+
+        $('#sum-total-payout').text(totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+        $('#sum-total-employees').text(selectedEmpCount + ' คน');
+        
+        let avg = selectedEmpCount > 0 ? (totalPayout / selectedEmpCount) : 0;
+        $('#sum-average-payout').text(avg.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+    }
+
+    function getFilteredPayrollDetails() {
+        let filtered = [];
+        $('.employee-checkbox:checked').each(function() {
+            const empId = $(this).attr('data-emp-id');
+            const detail = computedDetails.find(d => d.employee_id == empId);
+            if (detail) {
+                filtered.push(detail);
+            }
+        });
+        return filtered;
+    }
+
+    function onMonthChange() {
+        const monthVal = $('#payroll_month_input').val();
+        if (monthVal) {
+            const parts = monthVal.split('-');
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            
+            const firstDay = `${year}-${String(month).padStart(2, '0')}-01`;
+            const lastDayDate = new Date(year, month, 0);
+            const lastDay = `${year}-${String(month).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+            
+            $('#payroll_start_date').val(firstDay);
+            $('#payroll_end_date').val(lastDay);
+        }
+        loadPayrollCalculation();
+    }
+
+    $(document).ready(function() {
+        if ($('#payroll_month_input').length > 0 && !$('#payroll_start_date').val()) {
+            onMonthChange();
+        }
+    });
 </script>

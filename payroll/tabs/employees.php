@@ -44,7 +44,7 @@
         
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         
-        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             <div class="bg-white px-6 pt-6 pb-4">
                 <div class="flex items-center justify-between mb-6">
                     <h3 id="employeeModalTitle" class="text-lg font-bold text-slate-800">เพิ่มพนักงานใหม่</h3>
@@ -89,6 +89,11 @@
                                 <label class="block text-xs font-semibold text-slate-500 mb-1.5">นามสกุล <span class="text-rose-500">*</span></label>
                                 <input type="text" name="last_name" id="last_name_input" required placeholder="ใจดี"
                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">รายละเอียดพนักงาน</label>
+                                <textarea name="description" id="description_input" rows="2" placeholder="เพิ่มรายละเอียดพนักงาน / หมายเหตุ..."
+                                          class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 resize-none"></textarea>
                             </div>
                         </div>
                     </div>
@@ -384,6 +389,7 @@
                     $('#phone_input').val(emp.phone);
                     $('#start_date_input').val(emp.start_date);
                     $('#status_input').val(emp.status);
+                    $('#description_input').val(emp.description || '');
                     
                     $('#max_business_leave_input').val(emp.max_business_leave);
                     $('#max_sick_leave_input').val(emp.max_sick_leave);

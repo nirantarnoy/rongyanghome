@@ -8,7 +8,16 @@
             
             <form id="commissionSettingsForm" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">อัตราพนักงานเปิดการขาย (%)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">แอดมินรับลูกค้า/ช่วยตอบ</label>
+                    <div class="relative">
+                        <input type="number" step="0.01" min="0" max="100" name="admin_rate" id="comm_admin_rate" required
+                               class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
+                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">คนปิดการขาย(ทำใบเสนอราคา/ใบสั่งขาย/ลูกค้าโอนมัดจำและโอนชำระครบ) (%)</label>
                     <div class="relative">
                         <input type="number" step="0.01" min="0" max="100" name="sales_rate" id="comm_sales_rate" required
                                class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
@@ -17,7 +26,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase mb-2">อัตราผู้ช่วยติดตามงานช่างรวม (%)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">ผู้ช่วยติดตามงานช่าง/QCงาน/ติดต่อขนส่ง /ช่วยตอบลูกค้า</label>
                     <div class="relative">
                         <input type="number" step="0.01" min="0" max="100" name="helper_rate" id="comm_helper_rate" required
                                class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
@@ -43,6 +52,7 @@
             data: { action: 'get_commission_settings' },
             success: function(res) {
                 if (res) {
+                    $('#comm_admin_rate').val(res.admin_rate);
                     $('#comm_sales_rate').val(res.sales_rate);
                     $('#comm_helper_rate').val(res.helper_rate);
                 }
