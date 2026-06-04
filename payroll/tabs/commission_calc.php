@@ -2,13 +2,13 @@
     <!-- Header Controls -->
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h4 class="font-bold text-slate-800 text-base">ระบบคิดค่าคอมมิชชั่นขายเฟอร์นิเจอร์ (รายชิ้น)</h4>
-            <p class="text-xs text-slate-400 mt-0.5">ระบุรายการขายและสัดส่วนพนักงานเพื่อคำนวณค่าคอมมิชชั่น</p>
+            <h4 class="font-bold text-slate-800 text-lg">ระบบคิดค่าคอมมิชชั่นขายเฟอร์นิเจอร์ (รายชิ้น)</h4>
+            <p class="text-sm text-slate-400 mt-0.5">ระบุรายการขายและสัดส่วนพนักงานเพื่อคำนวณค่าคอมมิชชั่น</p>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-xs font-semibold text-slate-500 uppercase">วันที่ปิดการขาย:</span>
+            <span class="text-sm font-semibold text-slate-500 uppercase">วันที่ปิดการขาย:</span>
             <input type="date" id="commission_transaction_date" value="<?= date('Y-m-d') ?>"
-                   class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none font-bold text-slate-700 transition-all">
+                   class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none font-bold text-slate-700 transition-all">
         </div>
     </div>
 
@@ -20,22 +20,22 @@
     <!-- Add Item Button & Totals Panel -->
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <button type="button" onclick="addCommissionItemRow()" 
-                class="inline-flex items-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold rounded-xl text-xs transition-all gap-1.5 border border-blue-100">
+                class="inline-flex items-center px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold rounded-xl text-sm transition-all gap-1.5 border border-blue-100">
             <i class="fa-solid fa-plus"></i>
             <span>เพิ่มรายการสินค้า</span>
         </button>
 
         <div class="flex flex-wrap items-center gap-6">
             <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-slate-500">รวมราคาสินค้า (รวม VAT):</span>
+                <span class="text-sm font-bold text-slate-500">รวมราคาสินค้า (รวม VAT):</span>
                 <input type="text" id="invoice_total_sales" readonly value="0.00"
-                       class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 w-36 text-right outline-none">
+                       class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold text-slate-700 w-36 text-right outline-none">
             </div>
 
             <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-slate-500">รวมค่าคอม:</span>
+                <span class="text-sm font-bold text-slate-500">รวมค่าคอม:</span>
                 <input type="text" id="invoice_total_commission" readonly value="0.00"
-                       class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 w-36 text-right outline-none">
+                       class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-base font-bold text-slate-800 w-36 text-right outline-none">
             </div>
         </div>
     </div>
@@ -43,15 +43,15 @@
     <!-- Action Buttons -->
     <div class="flex justify-end gap-3">
         <button type="button" onclick="resetCommissionForm()"
-                class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-xs transition-all">
+                class="px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm transition-all">
             ยกเลิก
         </button>
         <button type="button" onclick="saveCommission(false)"
-                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10">
+                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10">
             บันทึกชั่วคราว
         </button>
         <button type="button" onclick="saveCommission(true)"
-                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-emerald-500/10">
+                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-500/10">
             บันทึกและยืนยัน
         </button>
     </div>
@@ -84,7 +84,22 @@
                     data: { action: 'get_commission_employees' },
                     success: function(emps) {
                         employeesList = emps || [];
-                        resetCommissionForm();
+                        
+                        if (window.pendingEditCommissionData) {
+                            const res = window.pendingEditCommissionData;
+                            window.pendingEditCommissionData = null;
+                            
+                            activeEditCommId = res.commission.id;
+                            $('#commission_transaction_date').val(res.commission.transaction_date);
+                            $('#commissionItemsContainer').html('');
+                            
+                            res.items.forEach(function(item) {
+                                addCommissionItemRow(item);
+                            });
+                            updateInvoiceTotals();
+                        } else {
+                            resetCommissionForm();
+                        }
                     }
                 });
             }
@@ -112,38 +127,38 @@
         <div class="item-block bg-white rounded-2xl shadow-sm border border-slate-100 p-6 space-y-6 relative" id="item-block-${index}">
             <!-- Delete Row Button -->
             <button onclick="removeItemRow(${index})" class="absolute top-4 right-4 text-slate-300 hover:text-rose-500 transition-colors p-1" title="ลบรายการสินค้า">
-                <i class="fa-solid fa-trash text-sm"></i>
+                <i class="fa-solid fa-trash text-base"></i>
             </button>
 
             <!-- Row 1: Product Fields -->
             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                 <div class="md:col-span-1">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">ลำดับ</label>
-                    <span class="row-number font-bold text-slate-500 text-sm block py-2.5"></span>
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">ลำดับ</label>
+                    <span class="row-number font-bold text-slate-500 text-base block py-2.5"></span>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">รหัสสินค้า</label>
-                    <input type="text" class="prod-code w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-xs transition-all" placeholder="เช่น FUR-001">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">รหัสสินค้า</label>
+                    <input type="text" class="prod-code w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-sm transition-all" placeholder="เช่น FUR-001">
                 </div>
                 <div class="md:col-span-3">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">รายการสินค้า *</label>
-                    <input type="text" class="prod-name w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-xs transition-all" placeholder="เช่น โซฟาเข้ามุม">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">รายการสินค้า *</label>
+                    <input type="text" class="prod-name w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-sm transition-all" placeholder="เช่น โซฟาเข้ามุม">
                 </div>
                 <div class="md:col-span-1">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">หน่วย</label>
-                    <input type="text" class="prod-unit w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-semibold text-slate-700 text-xs transition-all" placeholder="ตัว/ชุด">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">หน่วย</label>
+                    <input type="text" class="prod-unit w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-semibold text-slate-700 text-sm transition-all" placeholder="ตัว/ชุด">
                 </div>
                 <div class="md:col-span-1">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">จำนวน *</label>
-                    <input type="number" class="prod-qty w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-xs transition-all text-center" value="1" min="1">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">จำนวน *</label>
+                    <input type="number" class="prod-qty w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-sm transition-all text-center" value="1" min="1">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">ราคาต่อหน่วย (บาท) *</label>
-                    <input type="number" step="0.01" class="prod-price w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-xs text-right transition-all" placeholder="0.00">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">ราคาต่อหน่วย (บาท) *</label>
+                    <input type="number" step="0.01" class="prod-price w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-sm text-right transition-all" placeholder="0.00">
                 </div>
                 <div class="md:col-span-2">
-                    <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">ราคารวม (บาท)</label>
-                    <input type="text" readonly class="prod-total w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 text-xs text-right outline-none" value="0.00">
+                    <label class="block text-sm font-semibold text-slate-400 uppercase mb-1">ราคารวม (บาท)</label>
+                    <input type="text" readonly class="prod-total w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700 text-sm text-right outline-none" value="0.00">
                 </div>
             </div>
 
@@ -153,32 +168,32 @@
                 <!-- Col A: Admin -->
                 <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-user-gear text-purple-500"></i>
                             <span>แอดมินรับลูกค้า/ช่วยตอบ</span>
                         </span>
-                        <span class="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">รับ <span class="admin-label-rate">${defaultAdminRate}</span>%</span>
+                        <span class="text-xs text-purple-600 font-bold bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">รับ <span class="admin-label-rate">${defaultAdminRate}</span>%</span>
                     </div>
 
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">แอดมิน (เลือกหรือไม่เลือกก็ได้)</label>
-                            <select class="admin-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">แอดมิน (เลือกหรือไม่เลือกก็ได้)</label>
+                            <select class="admin-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 transition-all">
                                 ${employeeOptions}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">ตำแหน่ง</label>
-                            <input type="text" readonly class="admin-emp-position w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 outline-none">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">ตำแหน่ง</label>
+                            <input type="text" readonly class="admin-emp-position w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-500 outline-none">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">อัตราค่าคอม (%)</label>
-                                <input type="number" step="0.01" class="admin-rate-input w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-700 text-center transition-all" value="${defaultAdminRate}">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">อัตราค่าคอม (%)</label>
+                                <input type="number" step="0.01" class="admin-rate-input w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700 text-center transition-all" value="${defaultAdminRate}">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
-                                <div class="admin-commission-box text-center py-1.5 px-3 bg-purple-50/50 border border-purple-200 text-purple-600 font-extrabold text-xs rounded-xl">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
+                                <div class="admin-commission-box text-center py-1.5 px-3 bg-purple-50/50 border border-purple-200 text-purple-600 font-extrabold text-sm rounded-xl">
                                     0.00 บาท
                                 </div>
                             </div>
@@ -189,32 +204,32 @@
                 <!-- Col B: Salesperson -->
                 <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-user-tie text-blue-500"></i>
                             <span>คนปิดการขาย</span>
                         </span>
-                        <span class="text-[10px] text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">รับ <span class="sales-label-rate">${defaultSalesRate}</span>%</span>
+                        <span class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">รับ <span class="sales-label-rate">${defaultSalesRate}</span>%</span>
                     </div>
 
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">คนปิดการขาย *</label>
-                            <select class="sales-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">คนปิดการขาย *</label>
+                            <select class="sales-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 transition-all">
                                 ${employeeOptions}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">ตำแหน่ง</label>
-                            <input type="text" readonly class="sales-emp-position w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs font-semibold text-slate-500 outline-none">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">ตำแหน่ง</label>
+                            <input type="text" readonly class="sales-emp-position w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-semibold text-slate-500 outline-none">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">อัตราค่าคอม (%)</label>
-                                <input type="number" step="0.01" class="sales-rate-input w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-bold text-slate-700 text-center transition-all" value="${defaultSalesRate}">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">อัตราค่าคอม (%)</label>
+                                <input type="number" step="0.01" class="sales-rate-input w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-bold text-slate-700 text-center transition-all" value="${defaultSalesRate}">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
-                                <div class="sales-commission-box text-center py-1.5 px-3 bg-blue-50/50 border border-blue-200 text-blue-600 font-extrabold text-xs rounded-xl">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">ค่าคอมที่ได้รับ</label>
+                                <div class="sales-commission-box text-center py-1.5 px-3 bg-blue-50/50 border border-blue-200 text-blue-600 font-extrabold text-sm rounded-xl">
                                     0.00 บาท
                                 </div>
                             </div>
@@ -225,34 +240,34 @@
                 <!-- Col C: Helpers -->
                 <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 space-y-4">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <span class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-users text-amber-500"></i>
                             <span>ผู้ช่วยติดตามงานช่าง</span>
                         </span>
-                        <span class="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">รวม <span class="helper-label-rate">${defaultHelperRate}</span>%</span>
+                        <span class="text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">รวม <span class="helper-label-rate">${defaultHelperRate}</span>%</span>
                     </div>
 
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">ผู้ช่วยคนที่ 1 (เลือกหรือไม่เลือกก็ได้)</label>
-                            <select class="helper1-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">ผู้ช่วยคนที่ 1 (เลือกหรือไม่เลือกก็ได้)</label>
+                            <select class="helper1-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 transition-all">
                                 ${employeeOptions}
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 mb-1">ผู้ช่วยคนที่ 2 (เลือกหรือไม่เลือกก็ได้)</label>
-                            <select class="helper2-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xs font-semibold text-slate-700 transition-all">
+                            <label class="block text-xs font-bold text-slate-400 mb-1">ผู้ช่วยคนที่ 2 (เลือกหรือไม่เลือกก็ได้)</label>
+                            <select class="helper2-emp-select w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 transition-all">
                                 ${employeeOptions}
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">อัตรา (ต่อคน) (%)</label>
-                                <input type="text" readonly class="helper-rate-per-person w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 text-center outline-none" value="0.00">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">อัตรา (ต่อคน) (%)</label>
+                                <input type="text" readonly class="helper-rate-per-person w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-bold text-slate-500 text-center outline-none" value="0.00">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 mb-1">ค่าคอม (ต่อคน)</label>
-                                <input type="text" readonly class="helper-commission-per-person w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-xs font-bold text-slate-500 text-right outline-none" value="0.00 บาท">
+                                <label class="block text-xs font-bold text-slate-400 mb-1">ค่าคอม (ต่อคน)</label>
+                                <input type="text" readonly class="helper-commission-per-person w-full px-3 py-2 bg-slate-100/70 border border-slate-200 rounded-xl text-sm font-bold text-slate-500 text-right outline-none" value="0.00 บาท">
                             </div>
                         </div>
                     </div>
@@ -261,21 +276,21 @@
                 <!-- Col D: Summary Card -->
                 <div class="bg-slate-50/30 rounded-2xl p-5 border border-slate-100 flex flex-col justify-between">
                     <div>
-                        <span class="text-xs font-bold text-slate-700 block mb-3 uppercase tracking-wider">สรุปค่าคอมมิชชั่น</span>
+                        <span class="text-sm font-bold text-slate-700 block mb-3 uppercase tracking-wider">สรุปค่าคอมมิชชั่น</span>
                         <div class="space-y-2.5">
-                            <div class="flex items-center justify-between text-xs text-slate-500">
+                            <div class="flex items-center justify-between text-sm text-slate-500">
                                 <span>ยอดขายรวม (รวม VAT)</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-sales">0.00</span> บาท</span>
                             </div>
-                            <div class="flex items-center justify-between text-xs text-slate-500">
+                            <div class="flex items-center justify-between text-sm text-slate-500">
                                 <span>ค่าคอมแอดมิน <span class="admin-sum-pct">1.00</span>%</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-admin-comm">0.00</span> บาท</span>
                             </div>
-                            <div class="flex items-center justify-between text-xs text-slate-500">
+                            <div class="flex items-center justify-between text-sm text-slate-500">
                                 <span>ค่าคอมคนปิดการขาย <span class="sales-sum-pct">2.00</span>%</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-sales-comm">0.00</span> บาท</span>
                             </div>
-                            <div class="flex items-center justify-between text-xs text-slate-500">
+                            <div class="flex items-center justify-between text-sm text-slate-500">
                                 <span>ค่าคอมผู้ช่วยติดตาม <span class="helper-sum-pct">0.50</span>%</span>
                                 <span class="font-bold text-slate-700"><span class="sum-card-helper-comm">0.00</span> บาท</span>
                             </div>
@@ -283,8 +298,8 @@
                     </div>
 
                     <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 text-center mt-4">
-                        <div class="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-0.5">รวมค่าคอมทั้งหมด</div>
-                        <div class="text-emerald-700 font-extrabold text-sm sum-card-total">0.00 บาท</div>
+                        <div class="text-xs text-emerald-600 font-bold uppercase tracking-wider mb-0.5">รวมค่าคอมทั้งหมด</div>
+                        <div class="text-emerald-700 font-extrabold text-base sum-card-total">0.00 บาท</div>
                     </div>
                 </div>
 

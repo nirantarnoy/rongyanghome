@@ -364,11 +364,18 @@ $createCommissionItemsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_ite
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createCommissionItemsTable);
 
-// Ensure admin columns exist in payroll_commission_items
+// Ensure new commission columns exist in payroll_commission_items
 $admin_cols_to_add = [
     'admin_employee_id' => "INT NULL DEFAULT NULL AFTER total_price",
     'admin_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 1.00 AFTER admin_employee_id",
-    'admin_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER admin_rate"
+    'admin_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER admin_rate",
+    'helper1_employee_id' => "INT NULL AFTER sales_commission",
+    'helper1_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 0.25 AFTER helper1_employee_id",
+    'helper1_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER helper1_rate",
+    'helper2_employee_id' => "INT NULL AFTER helper1_commission",
+    'helper2_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 0.25 AFTER helper2_employee_id",
+    'helper2_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER helper2_rate",
+    'item_total_commission' => "DECIMAL(10,2) NOT NULL DEFAULT 0.00 AFTER helper2_commission"
 ];
 foreach ($admin_cols_to_add as $col_name => $col_definition) {
     $check_col = mysqli_query($conn, "SHOW COLUMNS FROM payroll_commission_items LIKE '$col_name'");
@@ -377,7 +384,7 @@ foreach ($admin_cols_to_add as $col_name => $col_definition) {
     }
 }
 
-$action = $_REQUEST['action'] ?? '';
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
     // -------------------------------------------------------------
@@ -1160,10 +1167,13 @@ switch ($action) {
                            (month_period = ? AND start_date IS NULL AND end_date IS NULL)
                           )";
         $run_stmt = mysqli_prepare($conn, $run_sql);
-        mysqli_stmt_bind_param($run_stmt, "isssss", $company_id, $month, $start_date, $end_date, $month);
-        mysqli_stmt_execute($run_stmt);
-        $run_res = mysqli_stmt_get_result($run_stmt);
-        $run = mysqli_fetch_assoc($run_res);
+        $run = null;
+        if ($run_stmt) {
+            mysqli_stmt_bind_param($run_stmt, "issss", $company_id, $month, $start_date, $end_date, $month);
+            mysqli_stmt_execute($run_stmt);
+            $run_res = mysqli_stmt_get_result($run_stmt);
+            $run = mysqli_fetch_assoc($run_res);
+        }
         
         if ($run && !$recalculate) {
             // Retrieve saved details
@@ -1173,13 +1183,15 @@ switch ($action) {
                             WHERE d.payroll_run_id = ?
                             ORDER BY e.emp_code ASC";
             $details_stmt = mysqli_prepare($conn, $details_sql);
-            mysqli_stmt_bind_param($details_stmt, "i", $run['id']);
-            mysqli_stmt_execute($details_stmt);
-            $res = mysqli_stmt_get_result($details_stmt);
             $details = [];
-            while ($row = mysqli_fetch_assoc($res)) {
-                $row['name'] = $row['first_name'] . ' ' . $row['last_name'];
-                $details[] = $row;
+            if ($details_stmt) {
+                mysqli_stmt_bind_param($details_stmt, "i", $run['id']);
+                mysqli_stmt_execute($details_stmt);
+                $res = mysqli_stmt_get_result($details_stmt);
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $row['name'] = $row['first_name'] . ' ' . $row['last_name'];
+                    $details[] = $row;
+                }
             }
             echo json_encode([
                 'status' => 'saved',
@@ -1198,9 +1210,13 @@ switch ($action) {
                         WHERE company_id = ? AND status = 'active'
                         ORDER BY emp_code ASC";
             $emp_stmt = mysqli_prepare($conn, $emp_sql);
-            mysqli_stmt_bind_param($emp_stmt, "i", $company_id);
-            mysqli_stmt_execute($emp_stmt);
-            $emp_res = mysqli_stmt_get_result($emp_stmt);
+            if ($emp_stmt) {
+                mysqli_stmt_bind_param($emp_stmt, "i", $company_id);
+                mysqli_stmt_execute($emp_stmt);
+                $emp_res = mysqli_stmt_get_result($emp_stmt);
+            } else {
+                $emp_res = null;
+            }
             
             // Get attendance details for this range
             $att_details_sql = "SELECT a.employee_id, a.work_date, a.status, a.position_id,
@@ -1209,17 +1225,19 @@ switch ($action) {
                                 LEFT JOIN payroll_employee_positions p ON a.position_id = p.id
                                 WHERE a.company_id = ? AND a.work_date BETWEEN ? AND ?";
             $att_details_stmt = mysqli_prepare($conn, $att_details_sql);
-            mysqli_stmt_bind_param($att_details_stmt, "iss", $company_id, $start_date, $end_date);
-            mysqli_stmt_execute($att_details_stmt);
-            $att_details_res = mysqli_stmt_get_result($att_details_stmt);
-            
             $emp_att_map = [];
-            while ($att_row = mysqli_fetch_assoc($att_details_res)) {
-                $emp_id = $att_row['employee_id'];
-                if (!isset($emp_att_map[$emp_id])) {
-                    $emp_att_map[$emp_id] = [];
+            if ($att_details_stmt) {
+                mysqli_stmt_bind_param($att_details_stmt, "iss", $company_id, $start_date, $end_date);
+                mysqli_stmt_execute($att_details_stmt);
+                $att_details_res = mysqli_stmt_get_result($att_details_stmt);
+                
+                while ($att_row = mysqli_fetch_assoc($att_details_res)) {
+                    $emp_id = $att_row['employee_id'];
+                    if (!isset($emp_att_map[$emp_id])) {
+                        $emp_att_map[$emp_id] = [];
+                    }
+                    $emp_att_map[$emp_id][] = $att_row;
                 }
-                $emp_att_map[$emp_id][] = $att_row;
             }
             
             // Get adjustments for this range
@@ -1228,22 +1246,24 @@ switch ($action) {
                               JOIN payroll_adjustment_items item ON adj.adjustment_item_id = item.id
                               WHERE adj.work_date BETWEEN ? AND ?";
             $adj_month_stmt = mysqli_prepare($conn, $adj_month_sql);
-            mysqli_stmt_bind_param($adj_month_stmt, "ss", $start_date, $end_date);
-            mysqli_stmt_execute($adj_month_stmt);
-            $adj_month_res = mysqli_stmt_get_result($adj_month_stmt);
             $adj_map = [];
-            while ($adj_row = mysqli_fetch_assoc($adj_month_res)) {
-                $emp_id = $adj_row['employee_id'];
-                if (!isset($adj_map[$emp_id])) {
-                    $adj_map[$emp_id] = [
-                        'allowance' => 0.00,
-                        'deductions' => 0.00
-                    ];
-                }
-                if ($adj_row['type'] === 'allowance') {
-                    $adj_map[$emp_id]['allowance'] += (float)$adj_row['amount'];
-                } else {
-                    $adj_map[$emp_id]['deductions'] += (float)$adj_row['amount'];
+            if ($adj_month_stmt) {
+                mysqli_stmt_bind_param($adj_month_stmt, "ss", $start_date, $end_date);
+                mysqli_stmt_execute($adj_month_stmt);
+                $adj_month_res = mysqli_stmt_get_result($adj_month_stmt);
+                while ($adj_row = mysqli_fetch_assoc($adj_month_res)) {
+                    $emp_id = $adj_row['employee_id'];
+                    if (!isset($adj_map[$emp_id])) {
+                        $adj_map[$emp_id] = [
+                            'allowance' => 0.00,
+                            'deductions' => 0.00
+                        ];
+                    }
+                    if ($adj_row['type'] === 'allowance') {
+                        $adj_map[$emp_id]['allowance'] += (float)$adj_row['amount'];
+                    } else {
+                        $adj_map[$emp_id]['deductions'] += (float)$adj_row['amount'];
+                    }
                 }
             }
             
@@ -1287,42 +1307,48 @@ switch ($action) {
                                GROUP BY item.helper2_employee_id";
 
             $comm_stmt = mysqli_prepare($conn, $comm_month_sql);
-            mysqli_stmt_bind_param($comm_stmt, "ississississ", $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date);
-            if (mysqli_stmt_execute($comm_stmt)) {
-                $comm_res = mysqli_stmt_get_result($comm_stmt);
-                while ($comm_row = mysqli_fetch_assoc($comm_res)) {
-                    $emp_id = $comm_row['emp_id'];
-                    if (!empty($emp_id)) {
-                        if (!isset($adj_map[$emp_id])) {
-                            $adj_map[$emp_id] = [
-                                'allowance' => 0.00,
-                                'deductions' => 0.00
-                            ];
+            if ($comm_stmt) {
+                mysqli_stmt_bind_param($comm_stmt, "ississississ", $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date, $company_id, $start_date, $end_date);
+                if (mysqli_stmt_execute($comm_stmt)) {
+                    $comm_res = mysqli_stmt_get_result($comm_stmt);
+                    while ($comm_row = mysqli_fetch_assoc($comm_res)) {
+                        $emp_id = $comm_row['emp_id'];
+                        if (!empty($emp_id)) {
+                            if (!isset($adj_map[$emp_id])) {
+                                $adj_map[$emp_id] = [
+                                    'allowance' => 0.00,
+                                    'deductions' => 0.00
+                                ];
+                            }
+                            $adj_map[$emp_id]['allowance'] += (float)$comm_row['total_comm'];
                         }
-                        $adj_map[$emp_id]['allowance'] += (float)$comm_row['total_comm'];
                     }
                 }
             }
             
+
             // Get active loans/borrows for this company
             $loans_sql = "SELECT id, employee_id, type, remaining_balance, monthly_deduction, contract_no
                           FROM payroll_loans 
                           WHERE company_id = ? AND status = 'active'";
             $loans_stmt = mysqli_prepare($conn, $loans_sql);
-            mysqli_stmt_bind_param($loans_stmt, "i", $company_id);
-            mysqli_stmt_execute($loans_stmt);
-            $loans_res = mysqli_stmt_get_result($loans_stmt);
             $emp_loans_map = [];
-            while ($loan_row = mysqli_fetch_assoc($loans_res)) {
-                $l_emp_id = $loan_row['employee_id'];
-                if (!isset($emp_loans_map[$l_emp_id])) {
-                    $emp_loans_map[$l_emp_id] = [];
+            if ($loans_stmt) {
+                mysqli_stmt_bind_param($loans_stmt, "i", $company_id);
+                mysqli_stmt_execute($loans_stmt);
+                $loans_res = mysqli_stmt_get_result($loans_stmt);
+                while ($loan_row = mysqli_fetch_assoc($loans_res)) {
+                    $l_emp_id = $loan_row['employee_id'];
+                    if (!isset($emp_loans_map[$l_emp_id])) {
+                        $emp_loans_map[$l_emp_id] = [];
+                    }
+                    $emp_loans_map[$l_emp_id][] = $loan_row;
                 }
-                $emp_loans_map[$l_emp_id][] = $loan_row;
             }
             
             $details = [];
-            while ($emp = mysqli_fetch_assoc($emp_res)) {
+            if ($emp_res) {
+                while ($emp = mysqli_fetch_assoc($emp_res)) {
                 $emp_id = $emp['id'];
                 $att_records = $emp_att_map[$emp_id] ?? [];
                 
@@ -1404,6 +1430,7 @@ switch ($action) {
                     'loan_deduction' => $loan_deduction,
                     'net_pay' => $net_pay
                 ];
+                }
             }
             
             echo json_encode([
@@ -1445,19 +1472,31 @@ switch ($action) {
         $run_sql = "INSERT INTO payroll_runs (company_id, month_period, start_date, end_date, status) VALUES (?, ?, ?, ?, ?)
                     ON DUPLICATE KEY UPDATE status = VALUES(status)";
         $run_stmt = mysqli_prepare($conn, $run_sql);
-        mysqli_stmt_bind_param($run_stmt, "issss", $company_id, $month, $start_date, $end_date, $status);
-        if (!mysqli_stmt_execute($run_stmt)) {
+        if ($run_stmt) {
+            mysqli_stmt_bind_param($run_stmt, "issss", $company_id, $month, $start_date, $end_date, $status);
+            if (!mysqli_stmt_execute($run_stmt)) {
+                mysqli_rollback($conn);
+                echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+                exit();
+            }
+        } else {
             mysqli_rollback($conn);
-            echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to prepare run_sql']);
             exit();
         }
         
         // Get run ID
         $get_id_sql = "SELECT id FROM payroll_runs WHERE company_id = ? AND month_period = ? AND start_date = ? AND end_date = ?";
         $get_id_stmt = mysqli_prepare($conn, $get_id_sql);
-        mysqli_stmt_bind_param($get_id_stmt, "isss", $company_id, $month, $start_date, $end_date);
-        mysqli_stmt_execute($get_id_stmt);
-        $run_id = mysqli_fetch_assoc(mysqli_stmt_get_result($get_id_stmt))['id'];
+        if ($get_id_stmt) {
+            mysqli_stmt_bind_param($get_id_stmt, "isss", $company_id, $month, $start_date, $end_date);
+            mysqli_stmt_execute($get_id_stmt);
+            $run_id = mysqli_fetch_assoc(mysqli_stmt_get_result($get_id_stmt))['id'];
+        } else {
+            mysqli_rollback($conn);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to prepare get_id_sql']);
+            exit();
+        }
         
         // Delete existing details first (to rebuild)
         mysqli_query($conn, "DELETE FROM payroll_run_details WHERE payroll_run_id = $run_id");
@@ -1483,13 +1522,19 @@ switch ($action) {
                                 present_days, absent_days, leave_days, deductions, loan_deduction, net_pay
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $detail_stmt = mysqli_prepare($conn, $detail_sql);
-            mysqli_stmt_bind_param($detail_stmt, "iissddiiiddd", 
-                $run_id, $employee_id, $wage_type, $rate, $base_earnings, $allowance,
-                $present_days, $absent_days, $leave_days, $deductions, $loan_deduction, $net_pay
-            );
-            if (!mysqli_stmt_execute($detail_stmt)) {
+            if ($detail_stmt) {
+                mysqli_stmt_bind_param($detail_stmt, "iissddiiiddd", 
+                    $run_id, $employee_id, $wage_type, $rate, $base_earnings, $allowance,
+                    $present_days, $absent_days, $leave_days, $deductions, $loan_deduction, $net_pay
+                );
+                if (!mysqli_stmt_execute($detail_stmt)) {
+                    $success = false;
+                    $error_msg = mysqli_error($conn);
+                    break;
+                }
+            } else {
                 $success = false;
-                $error_msg = mysqli_error($conn);
+                $error_msg = "Failed to prepare detail_sql";
                 break;
             }
         }
@@ -1731,6 +1776,37 @@ switch ($action) {
         } else {
             echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
         }
+        break;
+
+    case 'get_commission_dashboard':
+        $month = mysqli_real_escape_string($conn, $_GET['month'] ?? date('Y-m'));
+        $month_like = $month . '-%';
+        
+        $sql = "SELECT c.id as commission_id, c.transaction_date, c.status, i.*,
+                e_admin.first_name as admin_name,
+                e_sales.first_name as sales_name,
+                e_h1.first_name as h1_name,
+                e_h2.first_name as h2_name
+                FROM payroll_commissions c
+                JOIN payroll_commission_items i ON c.id = i.commission_id
+                LEFT JOIN payroll_employees e_admin ON i.admin_employee_id = e_admin.id
+                LEFT JOIN payroll_employees e_sales ON i.sales_employee_id = e_sales.id
+                LEFT JOIN payroll_employees e_h1 ON i.helper1_employee_id = e_h1.id
+                LEFT JOIN payroll_employees e_h2 ON i.helper2_employee_id = e_h2.id
+                WHERE c.company_id = ? AND DATE_FORMAT(c.transaction_date, '%Y-%m') = ?
+                ORDER BY c.transaction_date ASC, i.id ASC";
+                
+        $stmt = mysqli_prepare($conn, $sql);
+        mysqli_stmt_bind_param($stmt, "is", $company_id, $month);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        
+        $data = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            $data[] = $row;
+        }
+        
+        echo json_encode(['status' => 'success', 'data' => $data]);
         break;
 
     // -------------------------------------------------------------

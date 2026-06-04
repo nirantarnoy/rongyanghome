@@ -6,9 +6,9 @@
             <i class="fa-solid fa-users"></i>
         </div>
         <div>
-            <span class="text-xs text-slate-400 font-medium">พนักงานทั้งหมด</span>
+            <span class="text-sm text-slate-400 font-medium">พนักงานทั้งหมด</span>
             <h3 class="text-2xl font-bold text-slate-800 mt-1" id="dash-total-emp">0 คน</h3>
-            <p class="text-[10px] text-emerald-500 font-semibold mt-1"><i class="fa-solid fa-circle-check"></i> สถานะปกติ</p>
+            <p class="text-xs text-emerald-500 font-semibold mt-1"><i class="fa-solid fa-circle-check"></i> สถานะปกติ</p>
         </div>
     </div>
 
@@ -18,9 +18,9 @@
             <i class="fa-solid fa-money-bill-wave"></i>
         </div>
         <div>
-            <span class="text-xs text-slate-400 font-medium">เงินเดือนรวมทั้งหมด</span>
-            <h3 class="text-xl font-bold text-slate-800 mt-1 truncate" id="dash-total-salary">0.00 บาท</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-1">อ้างอิงข้อมูลปัจจุบัน</p>
+            <span class="text-sm text-slate-400 font-medium">เงินเดือนรวมทั้งหมด</span>
+            <h3 class="text-2xl font-bold text-slate-800 mt-1 truncate" id="dash-total-salary">0.00 บาท</h3>
+            <p class="text-xs text-slate-400 font-semibold mt-1">อ้างอิงข้อมูลปัจจุบัน</p>
         </div>
     </div>
 
@@ -30,9 +30,9 @@
             <i class="fa-solid fa-calendar-check"></i>
         </div>
         <div>
-            <span class="text-xs text-slate-400 font-medium">กำหนดจ่ายเงินเดือน</span>
+            <span class="text-sm text-slate-400 font-medium">กำหนดจ่ายเงินเดือน</span>
             <h3 class="text-2xl font-bold text-slate-800 mt-1" id="dash-pay-day">ทุกวันที่ 10</h3>
-            <p class="text-[10px] text-slate-400 font-semibold mt-1">สามารถเปลี่ยนได้ในเมนูตั้งค่า</p>
+            <p class="text-xs text-slate-400 font-semibold mt-1">สามารถเปลี่ยนได้ในเมนูตั้งค่า</p>
         </div>
     </div>
 
@@ -42,9 +42,9 @@
             <i class="fa-solid fa-user-check"></i>
         </div>
         <div>
-            <span class="text-xs text-slate-400 font-medium">มาทำงานวันนี้</span>
+            <span class="text-sm text-slate-400 font-medium">มาทำงานวันนี้</span>
             <h3 class="text-2xl font-bold text-slate-800 mt-1" id="dash-attendance-count">0 คน</h3>
-            <p class="text-[10px] text-purple-500 font-semibold mt-1" id="dash-attendance-rate">คิดเป็น 0% ของทั้งหมด</p>
+            <p class="text-xs text-purple-500 font-semibold mt-1" id="dash-attendance-rate">คิดเป็น 0% ของทั้งหมด</p>
         </div>
     </div>
 </div>
@@ -54,8 +54,8 @@
     <!-- Chart Column (Doughnut) -->
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 lg:col-span-2 space-y-6">
         <div>
-            <h4 class="font-bold text-slate-800 text-base">สัดส่วนการเข้าทำงานวันนี้</h4>
-            <p class="text-xs text-slate-400 mt-0.5">แบ่งตามสถานะการเข้างานของพนักงานทั้งหมดในวันนี้</p>
+            <h4 class="font-bold text-slate-800 text-lg">สัดส่วนการเข้าทำงานวันนี้</h4>
+            <p class="text-sm text-slate-400 mt-0.5">แบ่งตามสถานะการเข้างานของพนักงานทั้งหมดในวันนี้</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <!-- Doughnut Chart Container -->
@@ -68,28 +68,28 @@
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-                        <span class="text-sm font-medium text-slate-600">มาทำงานปกติ</span>
+                        <span class="text-base font-medium text-slate-600">มาทำงานปกติ</span>
                     </div>
                     <span class="font-bold text-slate-800" id="stat-normal">0 คน</span>
                 </div>
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-amber-500"></div>
-                        <span class="text-sm font-medium text-slate-600">มาสาย</span>
+                        <span class="text-base font-medium text-slate-600">มาสาย</span>
                     </div>
                     <span class="font-bold text-slate-800" id="stat-late">0 คน</span>
                 </div>
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-rose-500"></div>
-                        <span class="text-sm font-medium text-slate-600">ขาดงาน</span>
+                        <span class="text-base font-medium text-slate-600">ขาดงาน</span>
                     </div>
                     <span class="font-bold text-slate-800" id="stat-absent">0 คน</span>
                 </div>
                 <div class="flex items-center justify-between pb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-blue-500"></div>
-                        <span class="text-sm font-medium text-slate-600">ลาหยุดงาน</span>
+                        <span class="text-base font-medium text-slate-600">ลาหยุดงาน</span>
                     </div>
                     <span class="font-bold text-slate-800" id="stat-leave">0 คน</span>
                 </div>
@@ -101,21 +101,21 @@
     <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
         <div class="space-y-4">
             <div>
-                <h4 class="font-bold text-slate-800 text-base">วันหยุดบริษัทประจำปี</h4>
-                <p class="text-xs text-slate-400 mt-0.5">วันหยุดนักขัตฤกษ์และวันหยุดพิเศษ</p>
+                <h4 class="font-bold text-slate-800 text-lg">วันหยุดบริษัทประจำปี</h4>
+                <p class="text-sm text-slate-400 mt-0.5">วันหยุดนักขัตฤกษ์และวันหยุดพิเศษ</p>
             </div>
             
             <!-- Holidays list wrapper -->
             <div class="space-y-3 overflow-y-auto max-h-[220px]" id="dash-holidays-list">
                 <!-- Loaded via AJAX -->
-                <div class="text-center py-6 text-slate-400 text-xs">
-                    <i class="fa-solid fa-spinner animate-spin text-lg mb-2"></i>
+                <div class="text-center py-6 text-slate-400 text-sm">
+                    <i class="fa-solid fa-spinner animate-spin text-xl mb-2"></i>
                     <div>กำลังโหลดข้อมูล...</div>
                 </div>
             </div>
         </div>
         
-        <button onclick="switchTab('settings')" class="w-full mt-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 hover:border-slate-300 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-2">
+        <button onclick="switchTab('settings')" class="w-full mt-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 hover:border-slate-300 font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
             <span>จัดการวันหยุดระบบ</span>
             <i class="fa-solid fa-chevron-right"></i>
         </button>
@@ -186,19 +186,19 @@
                         <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex flex-col items-center justify-center leading-none">
-                                    <span class="text-[10px] font-bold uppercase">${new Date(h.holiday_date).toLocaleString('th-TH', { month: 'short' })}</span>
-                                    <span class="text-sm font-bold mt-0.5">${new Date(h.holiday_date).getDate()}</span>
+                                    <span class="text-xs font-bold uppercase">${new Date(h.holiday_date).toLocaleString('th-TH', { month: 'short' })}</span>
+                                    <span class="text-base font-bold mt-0.5">${new Date(h.holiday_date).getDate()}</span>
                                 </div>
                                 <div>
-                                    <div class="text-xs font-bold text-slate-700">${h.name}</div>
-                                    <div class="text-[10px] text-slate-400 mt-0.5">${formatThaiDate(h.holiday_date)}</div>
+                                    <div class="text-sm font-bold text-slate-700">${h.name}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">${formatThaiDate(h.holiday_date)}</div>
                                 </div>
                             </div>
                         </div>`;
                     });
                 } else {
                     html = `
-                    <div class="text-center py-8 text-slate-400 text-xs">
+                    <div class="text-center py-8 text-slate-400 text-sm">
                         <i class="fa-solid fa-calendar-xmark text-2xl mb-2 opacity-30"></i>
                         <div>ยังไม่มีข้อมูลวันหยุดบริษัท</div>
                     </div>`;

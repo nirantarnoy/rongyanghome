@@ -78,70 +78,70 @@ $company_address = $company_info['address'] ?? '---';
                 <!-- Brand Header -->
                 <div class="p-6 border-b border-slate-800 flex items-center gap-3">
                     <div class="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/20">
-                        <i class="fa-solid fa-wallet text-xl"></i>
+                        <i class="fa-solid fa-wallet text-2xl"></i>
                     </div>
                     <div>
-                        <h2 class="font-bold text-white text-lg tracking-tight leading-none">Pell Payroll</h2>
-                        <span class="text-xs text-slate-500 font-medium">ระบบจ่ายเงินเดือน</span>
+                        <h2 class="font-bold text-white text-xl tracking-tight leading-none">Pell Payroll</h2>
+                        <span class="text-sm text-slate-500 font-medium">ระบบจ่ายเงินเดือน</span>
                     </div>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="px-4 py-6 space-y-1.5">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-link active-tab flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-link active-tab flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-chart-line w-5"></i>
                         <span>แดชบอร์ด</span>
                     </button>
                     
-                    <button onclick="switchTab('employees')" id="btn-employees" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('employees')" id="btn-employees" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-users w-5"></i>
                         <span>ประวัติพนักงาน</span>
                     </button>
 
-                    <button onclick="switchTab('attendance')" id="btn-attendance" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('attendance')" id="btn-attendance" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-clock-rotate-left w-5"></i>
                         <span>บันทึกการเข้าทำงาน</span>
                     </button>
 
-                    <button onclick="switchTab('calculations')" id="btn-calculations" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('calculations')" id="btn-calculations" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-calculator w-5"></i>
                         <span>แฟ้มคำนวณวันลา</span>
                     </button>
 
-                    <button onclick="switchTab('payroll_calc')" id="btn-payroll_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('payroll_calc')" id="btn-payroll_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-money-check-dollar w-5"></i>
                         <span>คำนวณเงินเดือน</span>
                     </button>
 
-                    <button onclick="switchTab('adjustments')" id="btn-adjustments" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('adjustments')" id="btn-adjustments" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-tags w-5"></i>
                         <span>เงินเพิ่ม - เงินหัก (Master)</span>
                     </button>
 
-                    <button onclick="switchTab('loans')" id="btn-loans" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('loans')" id="btn-loans" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-hand-holding-dollar w-5"></i>
                         <span>เงินกู้ / เงินยืมพนักงาน</span>
                     </button>
 
-                    <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('settings')" id="btn-settings" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-sliders w-5"></i>
                         <span>ตั้งค่าระบบ</span>
                     </button>
 
                     <div class="h-px bg-slate-800 my-2"></div>
-                    <div class="px-4 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ระบบค่าคอมมิชชั่น</div>
+                    <div class="px-4 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider">ระบบค่าคอมมิชชั่น</div>
 
-                    <button onclick="switchTab('commission_rates')" id="btn-commission_rates" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('commission_rates')" id="btn-commission_rates" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-percent w-5"></i>
                         <span>อัตราค่าคอมมิชชั่น</span>
                     </button>
 
-                    <button onclick="switchTab('commission_calc')" id="btn-commission_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('commission_calc')" id="btn-commission_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-calculator w-5"></i>
                         <span>คิดค่าคอมรายชิ้น</span>
                     </button>
 
-                    <button onclick="switchTab('commission_history')" id="btn-commission_history" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-left">
+                    <button onclick="switchTab('commission_history')" id="btn-commission_history" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-clock-rotate-left w-5"></i>
                         <span>ประวัติค่าคอมรายชิ้น</span>
                     </button>
@@ -151,22 +151,22 @@ $company_address = $company_info['address'] ?? '---';
             <!-- Sidebar Footer & Logged User info -->
             <div class="p-4 border-t border-slate-800 space-y-4">
                 <div class="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/50">
-                    <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">ข้อมูลบริษัท</div>
-                    <div class="text-sm font-bold text-white mt-1 truncate"><?= htmlspecialchars($_SESSION['company_name'] ?? 'บริษัท รงยาง โฮม จำกัด') ?></div>
-                    <div class="text-xs text-slate-400 mt-0.5">ปีทำงาน: <?= $_SESSION['active_year'] ?? date('Y') ?></div>
+                    <div class="text-xs text-slate-500 font-bold uppercase tracking-wider">ข้อมูลบริษัท</div>
+                    <div class="text-base font-bold text-white mt-1 truncate"><?= htmlspecialchars($_SESSION['company_name'] ?? 'บริษัท รงยาง โฮม จำกัด') ?></div>
+                    <div class="text-sm text-slate-400 mt-0.5">ปีทำงาน: <?= $_SESSION['active_year'] ?? date('Y') ?></div>
                 </div>
 
                 <div class="space-y-2">
-                    <a href="../index.php" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <a href="../index.php" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                         <i class="fa-solid fa-house"></i>
                         <span>กลับระบบหลัก</span>
                     </a>
-                    <a href="../logout.php" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors">
+                    <a href="../logout.php" class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span>ออกจากระบบ</span>
                     </a>
                 </div>
-                <div class="text-center text-[10px] text-slate-600 mt-2">Version 1.0.0</div>
+                <div class="text-center text-xs text-slate-600 mt-2">Version 1.0.0</div>
             </div>
         </div>
 
@@ -175,14 +175,14 @@ $company_address = $company_info['address'] ?? '---';
             <!-- TOP BAR -->
             <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8 flex-shrink-0 z-10">
                 <div class="flex items-center gap-2">
-                    <h2 id="page-title" class="text-xl font-bold text-slate-800">แดชบอร์ด</h2>
+                    <h2 id="page-title" class="text-2xl font-bold text-slate-800">แดชบอร์ด</h2>
                     <span class="text-slate-300">|</span>
-                    <span class="text-sm text-slate-500" id="page-subtitle">ภาพรวมระบบเงินเดือน</span>
+                    <span class="text-base text-slate-500" id="page-subtitle">ภาพรวมระบบเงินเดือน</span>
                 </div>
 
                 <div class="flex items-center gap-6">
                     <!-- Date/Time Display -->
-                    <div class="hidden md:flex items-center gap-2 text-sm text-slate-600 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
+                    <div class="hidden md:flex items-center gap-2 text-base text-slate-600 bg-slate-50 px-4 py-1.5 rounded-full border border-slate-200">
                         <i class="fa-solid fa-calendar-day text-slate-400"></i>
                         <span class="font-medium" id="header-date"><?= date('d M Y') ?></span>
                     </div>
@@ -190,10 +190,10 @@ $company_address = $company_info['address'] ?? '---';
                     <!-- User Account Dropdown -->
                     <div class="flex items-center gap-3 pl-6 border-l border-slate-200">
                         <div class="text-right hidden sm:block">
-                            <div class="text-sm font-bold text-slate-800 leading-tight"><?= htmlspecialchars($_SESSION['user_login'] ?? 'แอดมิน') ?></div>
-                            <div class="text-[10px] text-slate-500 font-semibold uppercase mt-0.5"><?= htmlspecialchars($_SESSION['user_role'] ?? 'Administrator') ?></div>
+                            <div class="text-base font-bold text-slate-800 leading-tight"><?= htmlspecialchars($_SESSION['user_login'] ?? 'แอดมิน') ?></div>
+                            <div class="text-xs text-slate-500 font-semibold uppercase mt-0.5"><?= htmlspecialchars($_SESSION['user_role'] ?? 'Administrator') ?></div>
                         </div>
-                        <div class="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-base shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-lg shadow-sm">
                             <?= strtoupper(substr($_SESSION['user_login'] ?? 'A', 0, 1)) ?>
                         </div>
                     </div>

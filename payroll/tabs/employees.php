@@ -2,13 +2,13 @@
 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div class="relative w-full md:w-80">
         <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-            <i class="fa-solid fa-magnifying-glass text-sm"></i>
+            <i class="fa-solid fa-magnifying-glass text-base"></i>
         </span>
         <input type="text" id="empSearchInput" onkeyup="loadEmployeesList()" placeholder="ค้นหาชื่อพนักงาน, ตำแหน่ง, รหัส..." 
-               class="block w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+               class="block w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
     </div>
 
-    <button onclick="openEmployeeModal('add')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 gap-1.5 self-start md:self-auto">
+    <button onclick="openEmployeeModal('add')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 gap-1.5 self-start md:self-auto">
         <i class="fa-solid fa-user-plus"></i>
         <span>เพิ่มพนักงานใหม่</span>
     </button>
@@ -20,14 +20,14 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">แผนก / ตำแหน่ง</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เงินเดือน</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">วันเริ่มงาน</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">สิทธิ์วันลาสูงสุด (ลากิจ/ป่วย/พักร้อน/อื่น)</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">สถานะ</th>
-                    <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">การจัดการ</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">แผนก / ตำแหน่ง</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">เงินเดือน</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">วันเริ่มงาน</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">สิทธิ์วันลาสูงสุด (ลากิจ/ป่วย/พักร้อน/อื่น)</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">การจัดการ</th>
                 </tr>
             </thead>
             <tbody id="employeesTableBody" class="divide-y divide-slate-100">
@@ -47,9 +47,9 @@
         <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
             <div class="bg-white px-6 pt-6 pb-4">
                 <div class="flex items-center justify-between mb-6">
-                    <h3 id="employeeModalTitle" class="text-lg font-bold text-slate-800">เพิ่มพนักงานใหม่</h3>
+                    <h3 id="employeeModalTitle" class="text-xl font-bold text-slate-800">เพิ่มพนักงานใหม่</h3>
                     <button onclick="closeEmployeeModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                        <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
                 
@@ -66,34 +66,34 @@
                                     <img src="" id="photo_preview" class="w-full h-full object-cover hidden">
                                 </div>
                                 <label for="photo_input" class="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center cursor-pointer shadow-md transition-all">
-                                    <i class="fa-solid fa-camera text-xs"></i>
+                                    <i class="fa-solid fa-camera text-sm"></i>
                                 </label>
                                 <input type="file" name="photo" id="photo_input" accept="image/*" class="hidden" onchange="previewEmployeePhoto(this)">
                             </div>
-                            <span class="text-[10px] text-slate-400">รูปภาพพนักงาน (สูงสุด 2MB)</span>
+                            <span class="text-xs text-slate-400">รูปภาพพนักงาน (สูงสุด 2MB)</span>
                         </div>
                         
                         <!-- Basic Info Column -->
                         <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">รหัสพนักงาน <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">รหัสพนักงาน <span class="text-rose-500">*</span></label>
                                 <input type="text" name="emp_code" id="emp_code_input" required placeholder="EMP-00001"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ชื่อจริง <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">ชื่อจริง <span class="text-rose-500">*</span></label>
                                 <input type="text" name="first_name" id="first_name_input" required placeholder="สมชาย"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">นามสกุล <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">นามสกุล <span class="text-rose-500">*</span></label>
                                 <input type="text" name="last_name" id="last_name_input" required placeholder="ใจดี"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">รายละเอียดพนักงาน</label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">รายละเอียดพนักงาน</label>
                                 <textarea name="description" id="description_input" rows="2" placeholder="เพิ่มรายละเอียดพนักงาน / หมายเหตุ..."
-                                          class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 resize-none"></textarea>
+                                          class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700 resize-none"></textarea>
                             </div>
                         </div>
                     </div>
@@ -103,27 +103,27 @@
                         <!-- Row 0: Department and First Position (Required) -->
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                             <div class="md:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">แผนก <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">แผนก <span class="text-rose-500">*</span></label>
                                 <input type="text" name="department" id="department_input" required placeholder="เช่น ฝ่ายผลิต"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
                                 <input type="text" name="positions[0][position]" id="position_input_0" required placeholder="เช่น โโกไม้"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
                                 <select name="positions[0][wage_type]" id="wage_type_input_0" required onchange="toggleWageTypeLabelMulti(0, this.value)"
-                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                                     <option value="daily" selected>ค่าแรง (รายวัน)</option>
                                     <option value="monthly">เงินเดือน (รายเดือน)</option>
                                 </select>
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1.5" id="salary_label_0">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
+                                <label class="block text-sm font-semibold text-slate-500 mb-1.5" id="salary_label_0">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
                                 <input type="number" step="0.01" name="positions[0][salary]" id="salary_input_0" required placeholder="600"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                         </div>
 
@@ -134,22 +134,22 @@
                                 <!-- Empty space under Department -->
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
+                                <label class="block md:hidden text-sm font-semibold text-slate-500 mb-1.5">ตำแหน่ง <span class="text-rose-500">*</span></label>
                                 <input type="text" name="positions[<?= $i ?>][position]" id="position_input_<?= $i ?>" placeholder="เช่น ช่างเก็บงานต่างจังหวัด"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
+                                <label class="block md:hidden text-sm font-semibold text-slate-500 mb-1.5">ประเภทค่าจ้าง <span class="text-rose-500">*</span></label>
                                 <select name="positions[<?= $i ?>][wage_type]" id="wage_type_input_<?= $i ?>" onchange="toggleWageTypeLabelMulti(<?= $i ?>, this.value)"
-                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                        class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                                     <option value="daily" selected>ค่าแรง (รายวัน)</option>
                                     <option value="monthly">เงินเดือน (รายเดือน)</option>
                                 </select>
                             </div>
                             <div class="md:col-span-3">
-                                <label class="block md:hidden text-xs font-semibold text-slate-500 mb-1.5" id="salary_label_<?= $i ?>">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
+                                <label class="block md:hidden text-sm font-semibold text-slate-500 mb-1.5" id="salary_label_<?= $i ?>">ค่าแรงรายวัน (บาท) <span class="text-rose-500">*</span></label>
                                 <input type="number" step="0.01" name="positions[<?= $i ?>][salary]" id="salary_input_<?= $i ?>" placeholder="0"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             </div>
                         </div>
                         <?php endfor; ?>
@@ -158,19 +158,19 @@
                     <!-- Contact & Start Date -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">เบอร์โทรศัพท์</label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">เบอร์โทรศัพท์</label>
                             <input type="text" name="phone" id="phone_input" placeholder="08XXXXXXXX"
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">วันที่เริ่มงาน <span class="text-rose-500">*</span></label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">วันที่เริ่มงาน <span class="text-rose-500">*</span></label>
                             <input type="date" name="start_date" id="start_date_input" required
-                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                   class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">สถานะพนักงาน <span class="text-rose-500">*</span></label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">สถานะพนักงาน <span class="text-rose-500">*</span></label>
                             <select name="status" id="status_input" required
-                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700">
+                                    class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                                 <option value="active">ปกติ (Active)</option>
                                 <option value="inactive">พ้นสภาพ (Inactive)</option>
                             </select>
@@ -179,27 +179,27 @@
 
                     <!-- Leave limits section -->
                     <div class="border-t border-slate-100 pt-4 mt-6">
-                        <h4 class="text-xs font-bold text-slate-700 uppercase mb-3"><i class="fa-solid fa-umbrella-beach text-blue-500 mr-1.5"></i> กำหนดโควตาวันลาสูงสุดต่อปี (วัน)</h4>
+                        <h4 class="text-sm font-bold text-slate-700 uppercase mb-3"><i class="fa-solid fa-umbrella-beach text-blue-500 mr-1.5"></i> กำหนดโควตาวันลาสูงสุดต่อปี (วัน)</h4>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                             <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">ลากิจได้สูงสุด</label>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">ลากิจได้สูงสุด</label>
                                 <input type="number" name="max_business_leave" id="max_business_leave_input" min="0" default="7"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 font-bold text-center">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700 font-bold text-center">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">ลาป่วยได้สูงสุด</label>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">ลาป่วยได้สูงสุด</label>
                                 <input type="number" name="max_sick_leave" id="max_sick_leave_input" min="0" default="30"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 font-bold text-center">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700 font-bold text-center">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">ลาพักร้อนได้สูงสุด</label>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">ลาพักร้อนได้สูงสุด</label>
                                 <input type="number" name="max_annual_leave" id="max_annual_leave_input" min="0" default="6"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 font-bold text-center">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700 font-bold text-center">
                             </div>
                             <div>
-                                <label class="block text-[10px] font-semibold text-slate-500 mb-1">ลาอื่นๆ ได้สูงสุด</label>
+                                <label class="block text-xs font-semibold text-slate-500 mb-1">ลาอื่นๆ ได้สูงสุด</label>
                                 <input type="number" name="max_other_leave" id="max_other_leave_input" min="0" default="15"
-                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none transition-all text-slate-700 font-bold text-center">
+                                       class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700 font-bold text-center">
                             </div>
                         </div>
                     </div>
@@ -208,11 +208,11 @@
             
             <div class="bg-slate-50 px-6 py-4 flex flex-row-reverse gap-3">
                 <button type="button" onclick="saveEmployee()" 
-                        class="inline-flex justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10">
+                        class="inline-flex justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10">
                     บันทึกพนักงาน
                 </button>
                 <button type="button" onclick="closeEmployeeModal()"
-                        class="inline-flex justify-center px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-xs transition-all">
+                        class="inline-flex justify-center px-5 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm transition-all">
                     ยกเลิก
                 </button>
             </div>
@@ -232,15 +232,15 @@
                 if (data.length > 0) {
                     data.forEach(function(emp) {
                         let statusBadge = emp.status === 'active' 
-                            ? `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-200"><i class="fa-solid fa-check mr-0.5"></i> ทำงานอยู่</span>`
-                            : `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full border border-slate-200">พ้นสภาพ</span>`;
+                            ? `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full border border-emerald-200"><i class="fa-solid fa-check mr-0.5"></i> ทำงานอยู่</span>`
+                            : `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full border border-slate-200">พ้นสภาพ</span>`;
                         
                         let avatarHtml = '';
                         if (emp.photo) {
                             avatarHtml = `<img src="../${emp.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
                         } else {
                             let initials = (emp.first_name ? emp.first_name.charAt(0) : '') + (emp.last_name ? emp.last_name.charAt(0) : '');
-                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
+                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-sm flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
                         }
 
                         let positionsHtml = '';
@@ -248,46 +248,46 @@
                         if (emp.positions && emp.positions.length > 0) {
                             emp.positions.forEach(function(pos) {
                                 let pwtBadge = pos.wage_type === 'daily' 
-                                    ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded font-bold ml-1">รายวัน</span>`
-                                    : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
+                                    ? `<span class="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 px-1 py-0.5 rounded font-bold ml-1">รายวัน</span>`
+                                    : `<span class="text-[11px] text-blue-600 bg-blue-50 border border-blue-200 px-1 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
                                 positionsHtml += `<div class="font-medium text-slate-700">${pos.position}</div>`;
                                 salariesHtml += `<div class="font-bold text-slate-800">${formatCurrency(pos.salary)} ${pwtBadge}</div>`;
                             });
                         } else {
                             let wageTypeBadge = emp.wage_type === 'daily' 
-                                ? `<span class="text-[9px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold ml-1">รายวัน</span>`
-                                : `<span class="text-[9px] text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
+                                ? `<span class="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold ml-1">รายวัน</span>`
+                                : `<span class="text-[11px] text-blue-600 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded font-bold ml-1">รายเดือน</span>`;
                             positionsHtml = `<div class="font-medium text-slate-700">${emp.position || '-'}</div>`;
                             salariesHtml += `<div class="font-bold text-slate-800">${formatCurrency(emp.salary)} ${wageTypeBadge}</div>`;
                         }
 
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-6 py-4 text-xs font-bold text-slate-800">${emp.emp_code}</td>
-                            <td class="px-6 py-4 text-xs font-semibold text-slate-700">
+                            <td class="px-6 py-4 text-sm font-bold text-slate-800">${emp.emp_code}</td>
+                            <td class="px-6 py-4 text-sm font-semibold text-slate-700">
                                 <div class="flex items-center gap-3">
                                      ${avatarHtml}
                                      <span>${emp.first_name} ${emp.last_name}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-xs text-slate-600">
+                            <td class="px-6 py-4 text-sm text-slate-600">
                                 ${positionsHtml}
-                                <div class="text-[10px] text-slate-400 mt-0.5">${emp.department}</div>
+                                <div class="text-xs text-slate-400 mt-0.5">${emp.department}</div>
                             </td>
-                            <td class="px-6 py-4 text-xs text-slate-700 font-bold">
+                            <td class="px-6 py-4 text-sm text-slate-700 font-bold">
                                 ${salariesHtml}
                             </td>
-                            <td class="px-6 py-4 text-xs text-slate-500">${formatThaiDate(emp.start_date)}</td>
-                            <td class="px-6 py-4 text-xs text-slate-500">
+                            <td class="px-6 py-4 text-sm text-slate-500">${formatThaiDate(emp.start_date)}</td>
+                            <td class="px-6 py-4 text-sm text-slate-500">
                                 <div class="flex items-center gap-1.5">
-                                    <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-md" title="ลากิจ">ก: ${emp.max_business_leave}</span>
-                                    <span class="px-1.5 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-md" title="ลาป่วย">ป: ${emp.max_sick_leave}</span>
-                                    <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-md" title="ลาพักร้อน">พ: ${emp.max_annual_leave}</span>
-                                    <span class="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-[10px] font-bold rounded-md" title="ลาอื่นๆ">อ: ${emp.max_other_leave}</span>
+                                    <span class="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-md" title="ลากิจ">ก: ${emp.max_business_leave}</span>
+                                    <span class="px-1.5 py-0.5 bg-rose-50 text-rose-600 text-xs font-bold rounded-md" title="ลาป่วย">ป: ${emp.max_sick_leave}</span>
+                                    <span class="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-md" title="ลาพักร้อน">พ: ${emp.max_annual_leave}</span>
+                                    <span class="px-1.5 py-0.5 bg-purple-50 text-purple-600 text-xs font-bold rounded-md" title="ลาอื่นๆ">อ: ${emp.max_other_leave}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-xs text-right space-x-2">
+                            <td class="px-6 py-4 text-sm text-right space-x-2">
                                 <button onclick="openEmployeeLoansModal(${emp.id}, '${emp.first_name} ${emp.last_name}')" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="เงินกู้ / เงินยืม">
                                     <i class="fa-solid fa-hand-holding-dollar"></i>
                                 </button>
@@ -471,7 +471,7 @@
     function deleteEmployee(id) {
         Swal.fire({
             title: 'ยืนยันการลบพนักงาน?',
-            html: '<span class="text-sm text-slate-500">การลบพนักงานจะทำให้ประวัติการลงเวลาและคำนวณวันลาของพนักงานรายนี้ถูกลบออกจากระบบทั้งหมดอย่างถาวร</span>',
+            html: '<span class="text-base text-slate-500">การลบพนักงานจะทำให้ประวัติการลงเวลาและคำนวณวันลาของพนักงานรายนี้ถูกลบออกจากระบบทั้งหมดอย่างถาวร</span>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#ef4444',

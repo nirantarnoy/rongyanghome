@@ -2,22 +2,22 @@
 <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <!-- Date Selector -->
     <div class="flex items-center gap-3">
-        <span class="text-xs font-semibold text-slate-500 uppercase">วันที่บันทึกงาน:</span>
+        <span class="text-sm font-semibold text-slate-500 uppercase">วันที่บันทึกงาน:</span>
         <input type="date" id="attendance_date_input" value="<?= date('Y-m-d') ?>" onchange="loadAttendanceList()"
-               class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-xs outline-none font-bold text-slate-700 transition-all">
+               class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none font-bold text-slate-700 transition-all">
     </div>
 
     <!-- Quick Tooltip Actions -->
     <div class="flex flex-wrap gap-2">
-        <button onclick="setAllNormal()" class="inline-flex items-center px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300 font-bold rounded-xl text-xs transition-all gap-1.5">
+        <button onclick="setAllNormal()" class="inline-flex items-center px-3 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 hover:border-emerald-300 font-bold rounded-xl text-sm transition-all gap-1.5">
             <i class="fa-solid fa-circle-check"></i>
             <span>เช็คอินเข้างานปกติทั้งหมด</span>
         </button>
-        <button onclick="setAllCheckout()" class="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 font-bold rounded-xl text-xs transition-all gap-1.5">
+        <button onclick="setAllCheckout()" class="inline-flex items-center px-3 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 hover:border-blue-300 font-bold rounded-xl text-sm transition-all gap-1.5">
             <i class="fa-solid fa-clock"></i>
             <span>เช็คเอาท์ออกงานทั้งหมด</span>
         </button>
-        <button onclick="saveAttendanceBatch()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 gap-1.5">
+        <button onclick="saveAttendanceBatch()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 gap-1.5">
             <i class="fa-solid fa-floppy-disk"></i>
             <span>บันทึกข้อมูลเวลาทำงาน</span>
         </button>
@@ -28,29 +28,29 @@
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
     <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 flex items-center justify-between">
         <div>
-            <span class="text-[10px] text-emerald-600 font-bold uppercase">มาทำงานปกติ</span>
-            <h4 class="text-xl font-bold text-emerald-700 mt-0.5" id="att-summary-normal">0 คน</h4>
+            <span class="text-xs text-emerald-600 font-bold uppercase">มาทำงานปกติ</span>
+            <h4 class="text-2xl font-bold text-emerald-700 mt-0.5" id="att-summary-normal">0 คน</h4>
         </div>
         <i class="fa-solid fa-circle-check text-emerald-300 text-2xl"></i>
     </div>
     <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 flex items-center justify-between">
         <div>
-            <span class="text-[10px] text-amber-600 font-bold uppercase">มาทำงานสาย</span>
-            <h4 class="text-xl font-bold text-amber-700 mt-0.5" id="att-summary-late">0 คน</h4>
+            <span class="text-xs text-amber-600 font-bold uppercase">มาทำงานสาย</span>
+            <h4 class="text-2xl font-bold text-amber-700 mt-0.5" id="att-summary-late">0 คน</h4>
         </div>
         <i class="fa-solid fa-triangle-exclamation text-amber-300 text-2xl"></i>
     </div>
     <div class="bg-rose-50 rounded-2xl p-4 border border-rose-100 flex items-center justify-between">
         <div>
-            <span class="text-[10px] text-rose-600 font-bold uppercase">ขาดงาน</span>
-            <h4 class="text-xl font-bold text-rose-700 mt-0.5" id="att-summary-absent">0 คน</h4>
+            <span class="text-xs text-rose-600 font-bold uppercase">ขาดงาน</span>
+            <h4 class="text-2xl font-bold text-rose-700 mt-0.5" id="att-summary-absent">0 คน</h4>
         </div>
         <i class="fa-solid fa-circle-xmark text-rose-300 text-2xl"></i>
     </div>
     <div class="bg-blue-50 rounded-2xl p-4 border border-blue-100 flex items-center justify-between">
         <div>
-            <span class="text-[10px] text-blue-600 font-bold uppercase">ลางาน</span>
-            <h4 class="text-xl font-bold text-blue-700 mt-0.5" id="att-summary-leave">0 คน</h4>
+            <span class="text-xs text-blue-600 font-bold uppercase">ลางาน</span>
+            <h4 class="text-2xl font-bold text-blue-700 mt-0.5" id="att-summary-leave">0 คน</h4>
         </div>
         <i class="fa-solid fa-umbrella-beach text-blue-300 text-2xl"></i>
     </div>
@@ -62,17 +62,17 @@
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-50 border-b border-slate-100">
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">แผนก / ตำแหน่ง</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">สถานะ</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ตำแหน่งงานวันนี้</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เงินเพิ่ม-เงินหัก</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เวลาเข้า</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">เวลาออก</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ประเภทการลา</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
-                    <th class="px-4 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">บันทึกเดี่ยว</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">แผนก / ตำแหน่ง</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">สถานะ</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ตำแหน่งงานวันนี้</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">เงินเพิ่ม-เงินหัก</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">เวลาเข้า</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">เวลาออก</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ประเภทการลา</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
+                    <th class="px-4 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">บันทึกเดี่ยว</th>
                 </tr>
             </thead>
             <tbody id="attendanceTableBody" class="divide-y divide-slate-100">
@@ -93,14 +93,14 @@
             <div class="bg-white px-6 pt-6 pb-4">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                     <div>
-                        <h3 class="text-base font-bold text-slate-800">บันทึกเงินเพิ่ม - เงินหักรายวัน</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">
+                        <h3 class="text-lg font-bold text-slate-800">บันทึกเงินเพิ่ม - เงินหักรายวัน</h3>
+                        <p class="text-sm text-slate-400 mt-0.5">
                             พนักงาน: <span id="daily_adj_emp_name" class="font-bold text-slate-700"></span> 
                             | วันที่: <span id="daily_adj_work_date" class="font-bold text-slate-700"></span>
                         </p>
                     </div>
                     <button onclick="closeDailyAdjustmentsModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                        <i class="fa-solid fa-xmark text-lg"></i>
+                        <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
                 
@@ -108,25 +108,25 @@
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-3 items-end mb-4">
                     <input type="hidden" id="daily_adj_emp_id">
                     <div class="md:col-span-4">
-                        <label class="block text-[10px] font-bold text-slate-500 mb-1">เลือกประเภทรายการ <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">เลือกประเภทรายการ <span class="text-rose-500">*</span></label>
                         <select id="daily_adj_item_id" required
-                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs font-semibold text-slate-700">
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm font-semibold text-slate-700">
                             <!-- Loaded dynamically -->
                         </select>
                     </div>
                     <div class="md:col-span-3">
-                        <label class="block text-[10px] font-bold text-slate-500 mb-1">จำนวนเงิน (บาท) <span class="text-rose-500">*</span></label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">จำนวนเงิน (บาท) <span class="text-rose-500">*</span></label>
                         <input type="number" step="0.01" min="0.01" id="daily_adj_amount" required placeholder="0.00"
-                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs font-semibold text-slate-700">
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm font-semibold text-slate-700">
                     </div>
                     <div class="md:col-span-3">
-                        <label class="block text-[10px] font-bold text-slate-500 mb-1">หมายเหตุ</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">หมายเหตุ</label>
                         <input type="text" id="daily_adj_note" placeholder="ระบุเหตุผล (ถ้ามี)"
-                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-xs text-slate-700">
+                               class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm text-slate-700">
                     </div>
                     <div class="md:col-span-2">
                         <button type="button" onclick="addDailyAdjustmentRow()"
-                                class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-1">
+                                class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 flex items-center justify-center gap-1">
                             <i class="fa-solid fa-plus"></i>
                             <span>เพิ่ม</span>
                         </button>
@@ -138,11 +138,11 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-100">
-                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">รายการ</th>
-                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">ประเภท</th>
-                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">จำนวนเงิน</th>
-                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
-                                <th class="px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">จัดการ</th>
+                                <th class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">รายการ</th>
+                                <th class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">ประเภท</th>
+                                <th class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">จำนวนเงิน</th>
+                                <th class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider">หมายเหตุ</th>
+                                <th class="px-4 py-2.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">จัดการ</th>
                             </tr>
                         </thead>
                         <tbody id="dailyAdjTableBody" class="divide-y divide-slate-100">
@@ -154,7 +154,7 @@
             
             <div class="bg-slate-50 px-6 py-4 flex flex-row-reverse">
                 <button type="button" onclick="closeDailyAdjustmentsModal()"
-                        class="inline-flex justify-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-all">
+                        class="inline-flex justify-center px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-sm transition-all">
                     ปิดหน้าต่าง
                 </button>
             </div>
@@ -236,7 +236,7 @@
                             avatarHtml = `<img src="../${row.photo}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-sm flex-shrink-0">`;
                         } else {
                             let initials = (row.first_name ? row.first_name.charAt(0) : '') + (row.last_name ? row.last_name.charAt(0) : '');
-                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-xs flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
+                            avatarHtml = `<div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 font-bold text-sm flex items-center justify-center border border-blue-100 shadow-sm flex-shrink-0">${initials}</div>`;
                         }
 
                         // Build position options
@@ -259,48 +259,48 @@
 
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors" data-employee-id="${row.employee_id}">
-                            <td class="px-4 py-3 text-xs font-bold text-slate-800">${row.emp_code}</td>
-                            <td class="px-4 py-3 text-xs font-semibold text-slate-700">
+                            <td class="px-4 py-3 text-sm font-bold text-slate-800">${row.emp_code}</td>
+                            <td class="px-4 py-3 text-sm font-semibold text-slate-700">
                                 <div class="flex items-center gap-3">
                                     ${avatarHtml}
                                     <span>${row.first_name} ${row.last_name}</span>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 text-xs text-slate-500">
+                            <td class="px-4 py-3 text-sm text-slate-500">
                                 <div class="font-medium">${row.position}</div>
-                                <div class="text-[10px] text-slate-400 mt-0.5">${row.department}</div>
+                                <div class="text-xs text-slate-400 mt-0.5">${row.department}</div>
                             </td>
-                            <td class="px-4 py-3 text-xs">
-                                <select onchange="onRowStatusChange(${row.employee_id}, this.value)" class="row-status px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                            <td class="px-4 py-3 text-sm">
+                                <select onchange="onRowStatusChange(${row.employee_id}, this.value)" class="row-status px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all">
                                     <option value="normal" ${optNormal}>มาทำงานปกติ</option>
                                     <option value="late" ${optLate}>มาสาย</option>
                                     <option value="absent" ${optAbsent}>ขาดงาน</option>
                                     <option value="leave" ${optLeave}>ลางาน</option>
                                 </select>
                             </td>
-                            <td class="px-4 py-3 text-xs">
-                                <select class="row-position-id px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all w-40">
+                            <td class="px-4 py-3 text-sm">
+                                <select class="row-position-id px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all w-40">
                                     ${optionsHtml}
                                 </select>
                             </td>
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-4 py-3 text-sm">
                                 <button type="button" onclick="openDailyAdjustmentsModal(${row.employee_id}, '${row.first_name} ${row.last_name}')" 
                                         class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl border border-slate-200 hover:border-blue-200 transition-all font-semibold select-none">
-                                    <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i>
+                                    <i class="fa-solid fa-coins text-amber-500 text-xs"></i>
                                     <span>จัดการ</span>
-                                    <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[9px] rounded-full font-extrabold" id="adj-count-${row.employee_id}">${adjCount}</span>
+                                    <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 text-[11px] rounded-full font-extrabold" id="adj-count-${row.employee_id}">${adjCount}</span>
                                 </button>
                             </td>
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-4 py-3 text-sm">
                                 <input type="time" value="${checkIn}" ${timeDisabled}
-                                       class="row-check-in px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
+                                       class="row-check-in px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
                             </td>
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-4 py-3 text-sm">
                                 <input type="time" value="${checkOut}" ${timeDisabled}
-                                       class="row-check-out px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
+                                       class="row-check-out px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
                             </td>
-                            <td class="px-4 py-3 text-xs">
-                                <select ${leaveDisabled} class="row-leave-type px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
+                            <td class="px-4 py-3 text-sm">
+                                <select ${leaveDisabled} class="row-leave-type px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-40 transition-all">
                                     <option value="" ${leaveType === '' ? 'selected' : ''}>-- ประเภทการลา --</option>
                                     <option value="business" ${loptBusiness}>ลากิจ</option>
                                     <option value="sick" ${loptSick}>ลาป่วย</option>
@@ -308,11 +308,11 @@
                                     <option value="other" ${loptOther}>ลาอื่นๆ</option>
                                 </select>
                             </td>
-                            <td class="px-4 py-3 text-xs">
+                            <td class="px-4 py-3 text-sm">
                                 <input type="text" value="${note}" placeholder="ระบุเหตุผล/หมายเหตุ"
-                                       class="row-note w-full px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                                       class="row-note w-full px-2 py-1.5 border border-slate-200 rounded-lg bg-slate-50 text-sm text-slate-700 outline-none focus:ring-1 focus:ring-blue-500 transition-all">
                             </td>
-                            <td class="px-4 py-3 text-xs text-right">
+                            <td class="px-4 py-3 text-sm text-right">
                                 <button onclick="saveSingleRow(${row.employee_id})" class="p-2 bg-slate-100 hover:bg-blue-600 text-slate-500 hover:text-white rounded-lg transition-all" title="บันทึกพนักงานรายนี้">
                                     <i class="fa-solid fa-floppy-disk"></i>
                                 </button>
@@ -424,18 +424,18 @@
                     
                     data.forEach(function(item) {
                         const typeBadge = item.type === 'allowance'
-                            ? `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full border border-emerald-100">เงินเพิ่ม</span>`
-                            : `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-full border border-rose-100">เงินหัก</span>`;
+                            ? `<span class="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full border border-emerald-100">เงินเพิ่ม</span>`
+                            : `<span class="px-2 py-0.5 bg-rose-50 text-rose-600 text-xs font-bold rounded-full border border-rose-100">เงินหัก</span>`;
 
                         html += `
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="px-4 py-2 text-xs font-semibold text-slate-700">${item.name}</td>
-                            <td class="px-4 py-2 text-xs">${typeBadge}</td>
-                            <td class="px-4 py-2 text-xs font-bold text-right ${item.type === 'allowance' ? 'text-emerald-600' : 'text-rose-600'}">
+                            <td class="px-4 py-2 text-sm font-semibold text-slate-700">${item.name}</td>
+                            <td class="px-4 py-2 text-sm">${typeBadge}</td>
+                            <td class="px-4 py-2 text-sm font-bold text-right ${item.type === 'allowance' ? 'text-emerald-600' : 'text-rose-600'}">
                                 ${item.type === 'allowance' ? '+' : '-'}${parseFloat(item.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                             </td>
-                            <td class="px-4 py-2 text-xs text-slate-500">${item.note || '-'}</td>
-                            <td class="px-4 py-2 text-xs text-center">
+                            <td class="px-4 py-2 text-sm text-slate-500">${item.note || '-'}</td>
+                            <td class="px-4 py-2 text-sm text-center">
                                 <button type="button" onclick="deleteDailyAdjustmentRow(${item.id}, ${empId}, '${dateStr}')" 
                                         class="p-1 text-rose-600 hover:bg-rose-50 rounded transition-all">
                                     <i class="fa-solid fa-trash-can"></i>
@@ -447,7 +447,7 @@
                     $(`#adj-count-${empId}`).text(0);
                     html = `
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-slate-400 text-xs">
+                        <td colspan="5" class="px-4 py-8 text-center text-slate-400 text-sm">
                             ยังไม่มีรายการเงินเพิ่ม/หัก ของวันนี้
                         </td>
                     </tr>`;
