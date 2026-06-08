@@ -32,11 +32,56 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Prompt', sans-serif;
             background-color: #f8fafc; /* slate-50 */
+        }
+        
+        /* Select2 Tailwind customization */
+        .select2-container .select2-selection--single {
+            height: 42px !important;
+            border-radius: 0.75rem !important;
+            border: 1px solid #e2e8f0 !important;
+            display: flex;
+            align-items: center;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #334155 !important;
+            font-size: 0.875rem !important;
+            line-height: 1.25rem !important;
+            padding-left: 1rem !important;
+        }
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #10b981 !important;
+        }
+
+        @media print {
+            .hide-on-print {
+                display: none !important;
+            }
+            .hide-checkbox-on-print {
+                display: none !important;
+            }
+            /* Hide UI elements that are not part of the report */
+            #sidebar, .md\\:hidden.bg-slate-900, header, .custom-card button {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .custom-card {
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
         }
         
         .sidebar {
@@ -1976,6 +2021,13 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         </div>
                                         <span class="font-bold text-rose-500" id="calc-ret-deduction">-0.00 บาท</span>
                                     </div>
+
+                                    <!-- Additional Deductions Container -->
+                                    <div id="additional-deductions-container" class="space-y-2 pt-2 border-t border-slate-50"></div>
+                                    <button type="button" onclick="addAdditionalDeduction()" class="text-xs text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1 mt-2">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                        เพิ่มรายการหักอื่นๆ
+                                    </button>
                                 </div>
 
                                 <!-- Net payment -->
@@ -2000,6 +2052,11 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                 <script>
                     $(document).ready(function() {
+                        $('#f-project').select2({ width: '100%' });
+                        $('#f-project').on('change', function() {
+                            fetchFormMilestones();
+                        });
+
                         // Check if project and sub parameters are set, fetch milestones
                         if ($('#f-project').val() !== '' && $('#f-subcontractor').val() !== '') {
                             fetchFormMilestones();
@@ -2123,6 +2180,24 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
 
+                    function addAdditionalDeduction() {
+                        const html = `
+                            <div class="flex items-center justify-between gap-2 additional-deduction-row">
+                                <div class="flex items-center gap-1.5 flex-1">
+                                    <input type="checkbox" class="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500 deduction-checkbox" onchange="calculateAmounts()" checked>
+                                    <input type="text" class="text-xs font-semibold text-slate-600 border-b border-slate-200 outline-none flex-1 deduction-name" placeholder="รายการหักเพิ่มเติม.....">
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" step="0.01" class="text-xs font-bold text-rose-500 text-right border-b border-slate-200 outline-none w-20 deduction-amount" value="0" onkeyup="calculateAmounts()" onchange="calculateAmounts()">
+                                    <button type="button" onclick="$(this).closest('.additional-deduction-row').remove(); calculateAmounts();" class="text-slate-400 hover:text-rose-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        $('#additional-deductions-container').append(html);
+                    }
+
                     function calculateAmounts() {
                         // If f-installment changes, we might need to reset the main row
                         const instId = $('#f-installment').val();
@@ -2161,7 +2236,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             retDeduction = grossAmount * 0.05;
                         }
 
-                        const netAmount = Math.max(0, grossAmount - taxDeduction - retDeduction);
+                        let otherDeductions = 0;
+                        $('.additional-deduction-row').each(function() {
+                            if ($(this).find('.deduction-checkbox').is(':checked')) {
+                                otherDeductions += parseFloat($(this).find('.deduction-amount').val()) || 0;
+                            }
+                        });
+
+                        const netAmount = Math.max(0, grossAmount - taxDeduction - retDeduction - otherDeductions);
 
                         // Update DOM labels
                         $('#label-grand-total').text(grossAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' บาท');
@@ -2207,6 +2289,18 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             items.push({ type: type, title: title, details: details, amount: amt });
                         });
 
+                        let otherDeductionsTotal = 0;
+                        $('.additional-deduction-row').each(function() {
+                            if ($(this).find('.deduction-checkbox').is(':checked')) {
+                                const title = $(this).find('.deduction-name').val() || 'รายการหักเพิ่มเติม';
+                                const amt = parseFloat($(this).find('.deduction-amount').val()) || 0;
+                                if (amt > 0) {
+                                    items.push({ type: 'other_deduction', title: title, details: 'หักจากยอดชำระ', amount: -amt });
+                                    otherDeductionsTotal += amt;
+                                }
+                            }
+                        });
+
                         const grossAmount = baseAmount + additionalAmount;
                         
                         let taxDeduction = 0;
@@ -2219,7 +2313,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             retDeduction = grossAmount * 0.05;
                         }
 
-                        const netAmount = grossAmount - taxDeduction - retDeduction;
+                        const netAmount = grossAmount - taxDeduction - retDeduction - otherDeductionsTotal;
 
                         // Create FormData to support file upload
                         const form = document.getElementById('payment-form');
@@ -2250,13 +2344,118 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             success: function(res) {
                                 Swal.close();
                                 if (res.status === 'success') {
-                                    Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false})
-                                    .then(() => {
-                                        window.location.href = 'index.php?view=payments';
+                                    Swal.fire({
+                                        title: 'สำเร็จ',
+                                        text: res.message,
+                                        icon: 'success',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'บันทึกค่าใช้จ่ายโครงการ',
+                                        cancelButtonText: 'ไม่บันทึก',
+                                        confirmButtonColor: '#10b981',
+                                        cancelButtonColor: '#f43f5e'
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            openExpenseModalForPayment(pid, grossAmount, 'ค่าแรงผู้รับเหมา ' + $('#f-project option:selected').text());
+                                        } else {
+                                            window.location.href = 'index.php?view=payments';
+                                        }
                                     });
                                 } else {
                                     Swal.fire('ผิดพลาด', res.message, 'error');
                                 }
+                            }
+                        });
+                    }
+
+                    function openExpenseModalForPayment(pid, defaultAmount, paymentName) {
+                        const date = new Date().toISOString().split('T')[0];
+                        
+                        Swal.fire({
+                            title: 'บันทึกค่าใช้จ่ายโครงการ',
+                            html: `
+                                <form id="exp-form-payment" class="text-left space-y-4 p-2 text-sm" enctype="multipart/form-data">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">รายการค่าใช้จ่าย *</label>
+                                        <input type="text" name="item_name" class="swal2-input !m-0 !w-full" placeholder="ระบุรายการ" value="${paymentName}">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">ประเภทค่าใช้จ่าย</label>
+                                            <select name="expense_type" class="swal2-input !m-0 !w-full select-style">
+                                                <option value="ค่าแรงเพิ่ม" selected>ค่าแรงเพิ่ม</option>
+                                                <option value="วัสดุ">วัสดุ</option>
+                                                <option value="ค่าเครื่องมือ">ค่าเครื่องมือ</option>
+                                                <option value="ค่าขนส่ง">ค่าขนส่ง</option>
+                                                <option value="ค่าแก้ไขงาน">ค่าแก้ไขงาน</option>
+                                                <option value="สาธารณูปโภค">สาธารณูปโภค</option>
+                                                <option value="อื่นๆ">อื่นๆ</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่เกิดรายการ *</label>
+                                            <input type="date" name="expense_date" class="swal2-input !m-0 !w-full" value="${date}">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">จำนวนเงิน (บาท) *</label>
+                                        <input type="number" step="0.01" name="amount" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${defaultAmount}">
+                                    </div>
+                                    <input type="hidden" name="status" value="อนุมัติแล้ว">
+                                    <input type="hidden" name="reference_task" value="">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">แนบหลักฐาน (รูปภาพ หรือ PDF)</label>
+                                        <input type="file" name="attachment" class="swal2-input !m-0 !w-full !p-1.5" accept="image/*,application/pdf">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-500 mb-1">บันทึกเพิ่มเติม</label>
+                                        <input type="text" name="note" class="swal2-input !m-0 !w-full" placeholder="ระบุรายละเอียดเพิ่มเติม" value="">
+                                    </div>
+                                </form>
+                            `,
+                            showCancelButton: true,
+                            confirmButtonText: 'บันทึกค่าใช้จ่าย',
+                            cancelButtonText: 'ยกเลิก',
+                            confirmButtonColor: '#10b981',
+                            preConfirm: () => {
+                                const form = document.getElementById('exp-form-payment');
+                                const formData = new FormData(form);
+                                
+                                if (!formData.get('item_name') || !formData.get('expense_date') || !formData.get('amount')) {
+                                    Swal.showValidationMessage('กรุณากรอกข้อมูลรายการ วันที่ และจำนวนเงิน');
+                                    return false;
+                                }
+
+                                formData.append('action', 'expense_save');
+                                formData.append('project_id', pid);
+                                formData.append('id', 0); // New expense
+
+                                return formData;
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                                $.ajax({
+                                    url: 'action.php',
+                                    type: 'POST',
+                                    data: result.value,
+                                    processData: false,
+                                    contentType: false,
+                                    success: function(res) {
+                                        Swal.close();
+                                        if (res.status === 'success') {
+                                            Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false})
+                                            .then(() => {
+                                                window.location.href = 'index.php?view=payments';
+                                            });
+                                        } else {
+                                            Swal.fire('ผิดพลาด', res.message, 'error').then(() => {
+                                                window.location.href = 'index.php?view=payments';
+                                            });
+                                        }
+                                    }
+                                });
+                            } else {
+                                window.location.href = 'index.php?view=payments';
                             }
                         });
                     }
@@ -2373,6 +2572,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         <table class="w-full text-left text-sm text-slate-600 font-medium">
                             <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b border-slate-100">
                                 <tr>
+                                    <th class="py-3 px-4 font-bold w-12 text-center hide-checkbox-on-print">
+                                        <input type="checkbox" id="cost-report-select-all" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" checked onchange="toggleAllCostReports(this)">
+                                    </th>
                                     <th class="py-3 px-4 font-bold">รหัส</th>
                                     <th class="py-3 px-4 font-bold">ชื่อโครงการ</th>
                                     <th class="py-3 px-4 font-bold">ผู้รับเหมาหลัก</th>
@@ -2387,7 +2589,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </thead>
                             <tbody id="cost-report-body" class="divide-y divide-slate-100">
                                 <tr>
-                                    <td colspan="10" class="py-10 text-center text-slate-400 italic">กำลังดึงข้อมูลรายงาน...</td>
+                                    <td colspan="11" class="py-10 text-center text-slate-400 italic">กำลังดึงข้อมูลรายงาน...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2408,13 +2610,16 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                 if (res.status === 'success') {
                                     let html = '';
                                     if (res.data.length === 0) {
-                                        html = '<tr><td colspan="10" class="py-10 text-center text-slate-400 italic">ไม่มีข้อมูลการทำต้นทุนโครงการ</td></tr>';
+                                        html = '<tr><td colspan="11" class="py-10 text-center text-slate-400 italic">ไม่มีข้อมูลการทำต้นทุนโครงการ</td></tr>';
                                     } else {
                                         res.data.forEach(r => {
                                             const profitClass = r.profit >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-500 font-bold';
                                             
                                             html += `
-                                                <tr class="hover:bg-slate-50/50">
+                                                <tr class="hover:bg-slate-50/50 cost-report-row">
+                                                    <td class="py-4 px-4 text-center hide-checkbox-on-print">
+                                                        <input type="checkbox" class="cost-report-checkbox w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" checked onchange="toggleCostReportRow(this)">
+                                                    </td>
                                                     <td class="py-4 px-4 font-bold text-slate-500">${r.project_code}</td>
                                                     <td class="py-4 px-4 font-bold text-slate-700">${r.project_name}</td>
                                                     <td class="py-4 px-4 text-slate-500 text-xs">${r.contractor_name}</td>
@@ -2432,9 +2637,38 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         });
                                     }
                                     $('#cost-report-body').html(html);
+                                    updateSelectAllCheckbox();
                                 }
                             }
                         });
+                    }
+
+                    function toggleCostReportRow(checkbox) {
+                        if (checkbox.checked) {
+                            $(checkbox).closest('tr').removeClass('hide-on-print');
+                        } else {
+                            $(checkbox).closest('tr').addClass('hide-on-print');
+                        }
+                        updateSelectAllCheckbox();
+                    }
+
+                    function toggleAllCostReports(selectAllCheckbox) {
+                        const isChecked = selectAllCheckbox.checked;
+                        $('.cost-report-checkbox').prop('checked', isChecked).each(function() {
+                            if (isChecked) {
+                                $(this).closest('tr').removeClass('hide-on-print');
+                            } else {
+                                $(this).closest('tr').addClass('hide-on-print');
+                            }
+                        });
+                    }
+
+                    function updateSelectAllCheckbox() {
+                        const total = $('.cost-report-checkbox').length;
+                        const checked = $('.cost-report-checkbox:checked').length;
+                        if (total > 0) {
+                            $('#cost-report-select-all').prop('checked', total === checked);
+                        }
                     }
                 </script>
 
