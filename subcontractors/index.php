@@ -119,7 +119,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
     <div class="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center shadow-md">
         <div class="flex items-center gap-2">
             <span class="text-2xl">👷</span>
-            <span class="font-bold text-lg">RONGYANG HOME</span>
+            <span class="font-bold text-xl">RONGYANG HOME</span>
         </div>
         <button id="mobile-menu-btn" class="text-white focus:outline-none">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,8 +139,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     </svg>
                 </div>
                 <div>
-                    <h2 class="font-bold text-white text-lg leading-tight">Rongyang Home</h2>
-                    <span class="text-xs text-slate-500">Subcontractor System</span>
+                    <h2 class="font-bold text-white text-xl leading-tight">Rongyang Home</h2>
+                    <span class="text-sm text-slate-500">Subcontractor System</span>
                 </div>
             </div>
 
@@ -153,66 +153,73 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     <span>หน้าหลักระบบ</span>
                 </a>
 
-                <div class="pt-4 pb-2 px-4 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                <div class="pt-4 pb-2 px-4 text-sm font-bold text-slate-600 uppercase tracking-wider">
                     ผู้รับเหมา / โปรเจค
                 </div>
 
-                <a href="index.php?view=overview" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= $view === 'overview' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=overview" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'overview' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path>
                     </svg>
                     <span>ภาพรวม</span>
                 </a>
 
-                <a href="index.php?view=subcontractors" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= $view === 'subcontractors' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=subcontractors" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'subcontractors' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                     </svg>
                     <span>ผู้รับเหมา</span>
                 </a>
 
-                <a href="index.php?view=projects" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= ($view === 'projects' || $view === 'project_detail') ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=projects" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= ($view === 'projects' || $view === 'project_detail') ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
                     </svg>
                     <span>โปรเจค / งาน</span>
                 </a>
 
-                <a href="index.php?view=payments" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= ($view === 'payments' || $view === 'new_payment') ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=payments" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= ($view === 'payments' || $view === 'new_payment') ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                     <span>การจ่ายเงิน</span>
                 </a>
 
-                <a href="index.php?view=expenses" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= $view === 'expenses' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=expenses" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'expenses' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span>ค่าใช้จ่ายเพิ่มเติม</span>
                 </a>
 
-                <a href="index.php?view=cost_report" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= $view === 'cost_report' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=cost_report" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'cost_report' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
                     <span>รายงานต้นทุน</span>
                 </a>
 
-                <a href="index.php?view=profit_summary" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all <?= $view === 'profit_summary' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                <a href="index.php?view=profit_summary" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'profit_summary' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
                     </svg>
                     <span>สรุปกำไรโปรเจค</span>
                 </a>
+
+                <a href="index.php?view=settings" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'settings' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span>การตั้งค่าสถานะงาน</span>
+                </a>
             </nav>
         </div>
 
         <!-- Sidebar Footer -->
-        <div class="p-4 border-t border-slate-800 text-xs text-slate-500">
-            <p class="font-bold text-slate-400 mb-1">บริษัท รงยาง โฮม จำกัด</p>
-            <p>99/99 หมู่ 5 ต.บางรักน้อย อ.เมืองนนทบุรี จ.นนทบุรี 11000</p>
+        <div class="p-4 border-t border-slate-800 text-sm text-slate-500">
+
             <p class="mt-2">Version 1.0.0</p>
         </div>
     </aside>
@@ -222,7 +229,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
         <!-- Top bar -->
         <header class="bg-white border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                <nav class="flex text-xs text-slate-400 gap-2 mb-1">
+                <nav class="flex text-sm text-slate-400 gap-2 mb-1">
                     <a href="index.php?view=overview" class="hover:text-slate-600">หน้าหลัก</a>
                     <span>/</span>
                     <span class="text-slate-600 font-medium">
@@ -237,6 +244,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             case 'expenses': echo 'ค่าใช้จ่ายเพิ่มเติม'; break;
                             case 'cost_report': echo 'รายงานต้นทุน'; break;
                             case 'profit_summary': echo 'สรุปกำไรโปรเจค'; break;
+                            case 'settings': echo 'การตั้งค่าสถานะงาน'; break;
+                            case 'settings': echo 'การตั้งค่าสถานะงาน'; break;
                         }
                         ?>
                     </span>
@@ -261,7 +270,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
             <!-- Header Action Info -->
             <div class="flex items-center gap-4">
                 <!-- Date selector -->
-                <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 flex items-center gap-2 text-sm text-slate-600">
+                <div class="bg-slate-50 border border-slate-100 rounded-xl px-4 py-2 flex items-center gap-2 text-base text-slate-600">
                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
@@ -271,10 +280,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- User profile -->
                 <div class="flex items-center gap-3">
                     <div class="text-right hidden sm:block">
-                        <p class="text-sm font-bold text-slate-800"><?= $_SESSION['user_login'] ?></p>
-                        <span class="text-xs text-slate-400 capitalize"><?= $_SESSION['user_role'] ?? 'User' ?></span>
+                        <p class="text-base font-bold text-slate-800"><?= $_SESSION['user_login'] ?></p>
+                        <span class="text-sm text-slate-400 capitalize"><?= $_SESSION['user_role'] ?? 'User' ?></span>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-lg shadow-sm border border-emerald-500/20">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xl shadow-sm border border-emerald-500/20">
                         <?= mb_substr($_SESSION['user_login'], 0, 1) ?>
                     </div>
                 </div>
@@ -295,9 +304,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-medium">ผู้รับเหมาทั้งหมด</span>
+                            <span class="text-sm text-slate-400 font-medium">ผู้รับเหมาทั้งหมด</span>
                             <h3 id="stat-subcontractors" class="text-xl font-bold text-slate-800 mt-1">0 ราย</h3>
-                            <span id="stat-subcontractors-working" class="text-xs text-blue-500">กำลังทำงาน 0 ราย</span>
+                            <span id="stat-subcontractors-working" class="text-sm text-blue-500">กำลังทำงาน 0 ราย</span>
                         </div>
                     </div>
 
@@ -308,9 +317,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-medium">โปรเจ็คกำลังดำเนินการ</span>
+                            <span class="text-sm text-slate-400 font-medium">โปรเจ็คกำลังดำเนินการ</span>
                             <h3 id="stat-projects" class="text-xl font-bold text-slate-800 mt-1">0 โปรเจค</h3>
-                            <span id="stat-projects-value" class="text-xs text-emerald-500">มูลค่ารวม 0.00 บาท</span>
+                            <span id="stat-projects-value" class="text-sm text-emerald-500">มูลค่ารวม 0.00 บาท</span>
                         </div>
                     </div>
 
@@ -321,9 +330,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-medium">มูลค่างานรวมทั้งหมด</span>
+                            <span class="text-sm text-slate-400 font-medium">มูลค่างานรวมทั้งหมด</span>
                             <h3 id="stat-total-value" class="text-xl font-bold text-slate-800 mt-1">0.00 บาท</h3>
-                            <span id="stat-total-projects" class="text-xs text-amber-500">จาก 0 โปรเจค</span>
+                            <span id="stat-total-projects" class="text-sm text-amber-500">จาก 0 โปรเจค</span>
                         </div>
                     </div>
 
@@ -334,9 +343,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-medium">จ่ายแล้วรวม</span>
+                            <span class="text-sm text-slate-400 font-medium">จ่ายแล้วรวม</span>
                             <h3 id="stat-paid" class="text-xl font-bold text-slate-800 mt-1">0.00 บาท</h3>
-                            <span id="stat-paid-percent" class="text-xs text-teal-600">คิดเป็น 0%</span>
+                            <span id="stat-paid-percent" class="text-sm text-teal-600">คิดเป็น 0%</span>
                         </div>
                     </div>
 
@@ -347,9 +356,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </svg>
                         </div>
                         <div>
-                            <span class="text-xs text-slate-400 font-medium">คงเหลือที่ต้องจ่าย</span>
+                            <span class="text-sm text-slate-400 font-medium">คงเหลือที่ต้องจ่าย</span>
                             <h3 id="stat-remaining" class="text-xl font-bold text-slate-800 mt-1">0.00 บาท</h3>
-                            <span id="stat-remaining-percent" class="text-xs text-rose-600">คิดเป็น 0%</span>
+                            <span id="stat-remaining-percent" class="text-sm text-rose-600">คิดเป็น 0%</span>
                         </div>
                     </div>
                 </div>
@@ -362,12 +371,12 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             <h3 class="font-bold text-slate-800 flex items-center gap-2">
                                 <span class="text-xl">💸</span> ประวัติการจ่ายค่าแรงผู้รับเหมาล่าสุด
                             </h3>
-                            <a href="index.php?view=payments" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">ดูทั้งหมด</a>
+                            <a href="index.php?view=payments" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700">ดูทั้งหมด</a>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm text-slate-600">
+                            <table class="w-full text-left text-base text-slate-600">
                                 <thead>
-                                    <tr class="text-slate-400 text-xs uppercase border-b border-slate-100">
+                                    <tr class="text-slate-400 text-sm uppercase border-b border-slate-100">
                                         <th class="py-3 font-semibold">เลขที่เอกสาร</th>
                                         <th class="py-3 font-semibold">ผู้รับเหมา</th>
                                         <th class="py-3 font-semibold">โปรเจค</th>
@@ -390,7 +399,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             <h3 class="font-bold text-slate-800 flex items-center gap-2">
                                 <span class="text-xl">📊</span> ความคืบหน้าโครงการ
                             </h3>
-                            <a href="index.php?view=projects" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700">จัดการโครงการ</a>
+                            <a href="index.php?view=projects" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700">จัดการโครงการ</a>
                         </div>
                         <div id="project-progress-list" class="space-y-4 max-h-[350px] overflow-y-auto pr-1">
                             <div class="text-center py-10 text-slate-400 italic">กำลังโหลดข้อมูล...</div>
@@ -442,7 +451,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     <td class="py-3 font-semibold text-slate-700">${p.payment_number}</td>
                                                     <td class="py-3">
                                                         <p class="font-medium text-slate-800">${p.contractor_name}</p>
-                                                        <span class="text-xs text-slate-400">${p.contractor_team}</span>
+                                                        <span class="text-sm text-slate-400">${p.contractor_team}</span>
                                                     </td>
                                                     <td class="py-3 text-slate-500">${p.project_name}</td>
                                                     <td class="py-3 text-right font-bold text-emerald-600">${p.net_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿</td>
@@ -470,14 +479,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         projects.forEach(p => {
                                             html += `
                                                 <div class="space-y-1">
-                                                    <div class="flex justify-between text-sm">
+                                                    <div class="flex justify-between text-base">
                                                         <a href="index.php?view=project_detail&id=${p.id}" class="font-bold text-slate-700 hover:text-emerald-600 transition-colors">${p.project_name}</a>
                                                         <span class="font-semibold text-slate-500">${p.progress_percent}%</span>
                                                     </div>
                                                     <div class="w-full bg-slate-100 rounded-full h-2">
                                                         <div class="bg-emerald-500 h-2 rounded-full" style="width: ${p.progress_percent}%"></div>
                                                     </div>
-                                                    <div class="flex justify-between text-[11px] text-slate-400">
+                                                    <div class="flex justify-between text-xs text-slate-400">
                                                         <span>ผู้รับเหมาหลัก: ${p.contractor_name || '-'}</span>
                                                         <span>คงเหลือ: ${p.remaining_installments.toLocaleString()} ฿</span>
                                                     </div>
@@ -503,10 +512,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </span>
-                            <input type="text" id="sub-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-sm focus:border-emerald-500" placeholder="ค้นหาชื่อผู้รับเหมา, เบอร์โทร..." onkeyup="loadSubcontractors()">
+                            <input type="text" id="sub-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-lg focus:border-emerald-500" placeholder="ค้นหาชื่อผู้รับเหมา, เบอร์โทร..." onkeyup="loadSubcontractors()">
                         </div>
 
-                        <select id="sub-team-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:border-emerald-500" onchange="loadSubcontractors()">
+                        <select id="sub-team-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-lg text-slate-600 focus:border-emerald-500" onchange="loadSubcontractors()">
                             <option value="">ทีมทั้งหมด</option>
                             <option value="ทีมโครงสร้าง">ทีมโครงสร้าง</option>
                             <option value="ทีมไม้">ทีมไม้</option>
@@ -520,7 +529,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             <option value="ทีมสแตนเลส">ทีมสแตนเลส</option>
                         </select>
 
-                        <select id="sub-status-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:border-emerald-500" onchange="loadSubcontractors()">
+                        <select id="sub-status-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-lg text-slate-600 focus:border-emerald-500" onchange="loadSubcontractors()">
                             <option value="">สถานะทั้งหมด</option>
                             <option value="กำลังทำงาน">กำลังทำงาน</option>
                             <option value="รอเริ่มงาน">รอเริ่มงาน</option>
@@ -540,8 +549,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- Table Card -->
                 <div class="custom-card overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-600">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                        <table class="w-full text-left text-base text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-sm">
                                 <tr>
                                     <th class="py-4 px-6 font-bold w-16 text-center">ลำดับ</th>
                                     <th class="py-4 px-6 font-bold">ชื่อผู้รับเหมา / เบอร์โทร</th>
@@ -591,28 +600,28 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         res.data.forEach((s, idx) => {
                                             let statusBadge = '';
                                             if (s.status === 'กำลังทำงาน') {
-                                                statusBadge = '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">กำลังทำงาน</span>';
+                                                statusBadge = '<span class="px-2.5 py-1 text-sm font-semibold rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">กำลังทำงาน</span>';
                                             } else if (s.status === 'รอเริ่มงาน') {
-                                                statusBadge = '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-50 text-amber-600 border border-amber-100">รอเริ่มงาน</span>';
+                                                statusBadge = '<span class="px-2.5 py-1 text-sm font-semibold rounded-full bg-amber-50 text-amber-600 border border-amber-100">รอเริ่มงาน</span>';
                                             } else if (s.status === 'หยุดงานชั่วคราว') {
-                                                statusBadge = '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">หยุดชั่วคราว</span>';
+                                                statusBadge = '<span class="px-2.5 py-1 text-sm font-semibold rounded-full bg-rose-50 text-rose-600 border border-rose-100">หยุดชั่วคราว</span>';
                                             } else {
-                                                statusBadge = '<span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-slate-50 text-slate-500 border border-slate-100">เสร็จสิ้น</span>';
+                                                statusBadge = '<span class="px-2.5 py-1 text-sm font-semibold rounded-full bg-slate-50 text-slate-500 border border-slate-100">เสร็จสิ้น</span>';
                                             }
 
                                             html += `
                                                 <tr class="hover:bg-slate-50/55 transition-all">
                                                     <td class="py-4 px-6 text-center font-bold text-slate-400">${idx + 1}</td>
                                                     <td class="py-4 px-6">
-                                                        <div class="font-bold text-slate-800 text-sm">${s.name}</div>
-                                                        <div class="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                                                        <div class="font-bold text-slate-800 text-base">${s.name}</div>
+                                                        <div class="text-sm text-slate-400 flex items-center gap-1 mt-0.5">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                                                             ${s.phone || '-'}
                                                         </div>
                                                     </td>
                                                     <td class="py-4 px-6 font-semibold text-slate-600">${s.team_type}</td>
                                                     <td class="py-4 px-6 max-w-[200px] truncate" title="${s.active_projects}">
-                                                        <span class="text-xs bg-slate-100 text-slate-600 font-semibold px-2 py-1 rounded">
+                                                        <span class="text-sm bg-slate-100 text-slate-600 font-semibold px-2 py-1 rounded">
                                                             ${s.active_projects}
                                                         </span>
                                                     </td>
@@ -653,15 +662,15 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             html: `
                                 <div class="text-left space-y-4 p-2">
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อผู้รับเหมา *</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">ชื่อผู้รับเหมา *</label>
                                         <input type="text" id="m-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อผู้รับเหมา" value="${name}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์</label>
                                         <input type="text" id="m-phone" class="swal2-input !m-0 !w-full" placeholder="08X-XXX-XXXX" value="${phone}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">ประเภทงาน / ทีม</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">ประเภทงาน / ทีม</label>
                                         <select id="m-team" class="swal2-input !m-0 !w-full select-style">
                                             <option value="ทีมโครงสร้าง" ${team==='ทีมโครงสร้าง'?'selected':''}>ทีมโครงสร้าง</option>
                                             <option value="ทีมไม้" ${team==='ทีมไม้'?'selected':''}>ทีมไม้</option>
@@ -676,7 +685,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">สถานะ</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">สถานะ</label>
                                         <select id="m-status" class="swal2-input !m-0 !w-full">
                                             <option value="กำลังทำงาน" ${status==='กำลังทำงาน'?'selected':''}>กำลังทำงาน</option>
                                             <option value="รอเริ่มงาน" ${status==='รอเริ่มงาน'?'selected':''}>รอเริ่มงาน</option>
@@ -766,10 +775,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </span>
-                            <input type="text" id="proj-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-sm focus:border-emerald-500" placeholder="ค้นหาโปรเจค, รหัส, ลูกค้า..." onkeyup="loadProjects()">
+                            <input type="text" id="proj-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-lg focus:border-emerald-500" placeholder="ค้นหาโปรเจค, รหัส, ลูกค้า..." onkeyup="loadProjects()">
                         </div>
 
-                        <select id="proj-status-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:border-emerald-500" onchange="loadProjects()">
+                        <select id="proj-status-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-lg text-slate-600 focus:border-emerald-500" onchange="loadProjects()">
                             <option value="">สถานะโปรเจคทั้งหมด</option>
                             <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
                             <option value="รอเริ่มงาน">รอเริ่มงาน</option>
@@ -786,6 +795,127 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         <span>เพิ่มรายละเอียดโปรเจค</span>
                     </button>
                 </div>
+
+                
+                <!-- SETTINGS SECTION -->
+                <div class="custom-card p-6 mb-6 border border-blue-200 bg-blue-50/30">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+                        <!-- Column 1 -->
+                        <div class="settings-col" data-category="project_status">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-blue-600 border border-blue-600 rounded-full px-4 py-1.5 text-base">สถานะโปรเจคทั้งหมด</h3>
+                                <button onclick="addSettingRow(this)" class="font-bold text-blue-600 border border-blue-600 rounded-lg px-2 py-1 text-base hover:bg-blue-50">เพิ่ม+</button>
+                            </div>
+                            <div class="settings-list space-y-3"></div>
+                            <button onclick="saveSettings('project_status', this)" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors text-base">บันทึก</button>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="settings-col" data-category="job_type">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-blue-600 border border-blue-600 rounded-full px-4 py-1.5 text-base">ประเภทงาน</h3>
+                                <button onclick="addSettingRow(this)" class="font-bold text-blue-600 border border-blue-600 rounded-lg px-2 py-1 text-base hover:bg-blue-50">เพิ่ม+</button>
+                            </div>
+                            <div class="settings-list space-y-3"></div>
+                            <button onclick="saveSettings('job_type', this)" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors text-base">บันทึก</button>
+                        </div>
+
+                        <!-- Column 3 -->
+                        <div class="settings-col" data-category="team_type">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-blue-600 border border-blue-600 rounded-full px-4 py-1.5 text-base">ประเภททีมงาน</h3>
+                                <button onclick="addSettingRow(this)" class="font-bold text-blue-600 border border-blue-600 rounded-lg px-2 py-1 text-base hover:bg-blue-50">เพิ่ม+</button>
+                            </div>
+                            <div class="settings-list space-y-3"></div>
+                            <button onclick="saveSettings('team_type', this)" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors text-base">บันทึก</button>
+                        </div>
+
+                        <!-- Column 4 -->
+                        <div class="settings-col" data-category="team_status">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-bold text-blue-600 border border-blue-600 rounded-full px-4 py-1.5 text-base">สถานะทีมงาน</h3>
+                                <button onclick="addSettingRow(this)" class="font-bold text-blue-600 border border-blue-600 rounded-lg px-2 py-1 text-base hover:bg-blue-50">เพิ่ม+</button>
+                            </div>
+                            <div class="settings-list space-y-3"></div>
+                            <button onclick="saveSettings('team_status', this)" class="mt-4 w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors text-base">บันทึก</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                    $(document).ready(function() {
+                        if ($('.settings-col').length > 0) {
+                            loadSettings();
+                        }
+                    });
+
+                    function loadSettings() {
+                        $.ajax({
+                            url: 'action.php',
+                            type: 'GET',
+                            data: { action: 'settings_list' },
+                            success: function(res) {
+                                if(res.status === 'success') {
+                                    renderSettings(res.data);
+                                }
+                            }
+                        });
+                    }
+
+                    function renderSettings(data) {
+                        $('.settings-col').each(function() {
+                            const cat = $(this).data('category');
+                            const list = $(this).find('.settings-list');
+                            list.empty();
+                            
+                            if(data[cat] && data[cat].length > 0) {
+                                data[cat].forEach(item => {
+                                    list.append(createSettingRow(item.setting_value));
+                                });
+                            } else {
+                                list.append(createSettingRow(''));
+                            }
+                        });
+                    }
+
+                    function createSettingRow(value) {
+                        return `
+                            <div class="flex items-center gap-2">
+                                <input type="text" class="setting-val w-full border border-blue-600 rounded-full px-4 py-1.5 text-base text-center font-bold text-slate-700 outline-none focus:ring-2 focus:ring-blue-200" value="${value}" placeholder="...">
+                                <button onclick="$(this).parent().remove()" class="text-slate-400 hover:text-red-500 shrink-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    function addSettingRow(btn) {
+                        $(btn).closest('.settings-col').find('.settings-list').append(createSettingRow(''));
+                    }
+
+                    function saveSettings(category, btn) {
+                        const vals = [];
+                        $(btn).closest('.settings-col').find('.setting-val').each(function() {
+                            const v = $(this).val().trim();
+                            if(v) vals.push(v);
+                        });
+
+                        const oldText = $(btn).text();
+                        $(btn).text('กำลังบันทึก...').prop('disabled', true);
+
+                        $.ajax({
+                            url: 'action.php',
+                            type: 'POST',
+                            data: { action: 'settings_save', category: category, values: JSON.stringify(vals) },
+                            success: function(res) {
+                                $(btn).text('บันทึกสำเร็จ!').removeClass('bg-blue-600').addClass('bg-emerald-500');
+                                setTimeout(() => {
+                                    $(btn).text(oldText).removeClass('bg-emerald-500').addClass('bg-blue-600').prop('disabled', false);
+                                }, 2000);
+                            }
+                        });
+                    }
+                </script>
 
                 <!-- Projects List Grid -->
                 <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -830,16 +960,16 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                         <!-- Top Row -->
                                                         <div class="flex justify-between items-start mb-3 gap-2">
                                                             <div>
-                                                                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">${p.project_code || 'PROJ'}</span>
-                                                                <h4 class="font-bold text-slate-800 text-base leading-tight mt-0.5 hover:text-emerald-500 transition-colors">
+                                                                <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">${p.project_code || 'PROJ'}</span>
+                                                                <h4 class="font-bold text-slate-800 text-lg leading-tight mt-0.5 hover:text-emerald-500 transition-colors">
                                                                     <a href="index.php?view=project_detail&id=${p.id}">${p.project_name}</a>
                                                                 </h4>
                                                             </div>
-                                                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${statusClass}">${p.status}</span>
+                                                            <span class="px-2 py-0.5 text-xs font-bold rounded-full ${statusClass}">${p.status}</span>
                                                         </div>
 
                                                         <!-- Details list -->
-                                                        <div class="space-y-2 mt-4 text-xs text-slate-500">
+                                                        <div class="space-y-2 mt-4 text-sm text-slate-500">
                                                             <div class="flex items-center gap-2">
                                                                 <span class="text-slate-400">👤</span>
                                                                 <span class="font-semibold text-slate-700">ลูกค้า: ${p.customer_name || '-'}</span>
@@ -856,7 +986,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                                                         <!-- Progress section -->
                                                         <div class="mt-6 space-y-1">
-                                                            <div class="flex justify-between text-xs font-semibold">
+                                                            <div class="flex justify-between text-sm font-semibold">
                                                                 <span class="text-slate-400">ความคืบหน้างวดงาน</span>
                                                                 <span class="text-slate-700">${p.progress_percent}%</span>
                                                             </div>
@@ -869,12 +999,12 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     <!-- Financial Footer -->
                                                     <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
                                                         <div>
-                                                            <span class="text-[10px] text-slate-400 font-bold block">มูลค่างานรวม</span>
-                                                            <span class="font-bold text-slate-700 text-sm">${p.contract_value.toLocaleString()} ฿</span>
+                                                            <span class="text-xs text-slate-400 font-bold block">มูลค่างานรวม</span>
+                                                            <span class="font-bold text-slate-700 text-base">${p.contract_value.toLocaleString()} ฿</span>
                                                         </div>
                                                         <div class="text-right">
-                                                            <span class="text-[10px] text-slate-400 font-bold block">จ่ายแล้ว / คงเหลือ</span>
-                                                            <span class="text-xs font-semibold">
+                                                            <span class="text-xs text-slate-400 font-bold block">จ่ายแล้ว / คงเหลือ</span>
+                                                            <span class="text-sm font-semibold">
                                                                 <span class="text-emerald-600">${p.paid_installments.toLocaleString()}</span> / <span class="text-rose-500">${p.remaining_installments.toLocaleString()}</span>
                                                             </span>
                                                         </div>
@@ -925,53 +1055,53 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             title: title,
                             width: '800px',
                             html: `
-                                <div class="text-left space-y-4 p-2 text-sm grid grid-cols-2 gap-4">
+                                <div class="text-left space-y-4 p-2 text-base grid grid-cols-2 gap-4">
                                     <div class="col-span-2">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">ชื่อโครงการ *</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อโครงการ *</label>
                                         <input type="text" id="p-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อโครงการ" value="${project_name}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">รหัสโครงการ</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">รหัสโครงการ</label>
                                         <input type="text" id="p-code" class="swal2-input !m-0 !w-full" placeholder="เช่น PJ-67001" value="${project_code}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">ประเภทโครงการ</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ประเภทโครงการ</label>
                                         <input type="text" id="p-type" class="swal2-input !m-0 !w-full" placeholder="เช่น บ้านเดี่ยว 2 ชั้น, ตกแต่งภายใน" value="${project_type}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">ชื่อลูกค้า</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อลูกค้า</label>
                                         <input type="text" id="p-customer-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อผู้ติดต่อ" value="${customer_name}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">เบอร์โทรศัพท์ลูกค้า</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">เบอร์โทรศัพท์ลูกค้า</label>
                                         <input type="text" id="p-customer-phone" class="swal2-input !m-0 !w-full" placeholder="08X-XXX-XXXX" value="${customer_phone}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">อีเมลลูกค้า</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">อีเมลลูกค้า</label>
                                         <input type="email" id="p-customer-email" class="swal2-input !m-0 !w-full" placeholder="wichit@email.com" value="${customer_email}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">ผู้รับเหมาหลัก</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้รับเหมาหลัก</label>
                                         <select id="p-subcontractor" class="swal2-input !m-0 !w-full">${subcontractorOptions}</select>
                                     </div>
                                     <div class="col-span-2">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">สถานที่ตั้งโครงการ / ที่อยู่ลูกค้า</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานที่ตั้งโครงการ / ที่อยู่ลูกค้า</label>
                                         <textarea id="p-address" class="swal2-textarea !m-0 !w-full !h-20" placeholder="ระบุที่ตั้ง">${address}</textarea>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่เริ่มงาน</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เริ่มงาน</label>
                                         <input type="date" id="p-start-date" class="swal2-input !m-0 !w-full" value="${start_date}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">กำหนดส่งงาน</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">กำหนดส่งงาน</label>
                                         <input type="date" id="p-end-date" class="swal2-input !m-0 !w-full" value="${end_date}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่เสร็จสิ้นจริง (ถ้าเสร็จแล้ว)</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เสร็จสิ้นจริง (ถ้าเสร็จแล้ว)</label>
                                         <input type="date" id="p-actual-date" class="swal2-input !m-0 !w-full" value="${actual_end_date}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">สถานะโครงการ</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานะโครงการ</label>
                                         <select id="p-status" class="swal2-input !m-0 !w-full">
                                             <option value="กำลังดำเนินการ" ${status==='กำลังดำเนินการ'?'selected':''}>กำลังดำเนินการ</option>
                                             <option value="รอเริ่มงาน" ${status==='รอเริ่มงาน'?'selected':''}>รอเริ่มงาน</option>
@@ -980,19 +1110,19 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">งบประมาณภายใน (บาท)</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">งบประมาณภายใน (บาท)</label>
                                         <input type="number" step="0.01" id="p-budget" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${budget}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">มูลค่างานตามสัญญา (บาท)</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">มูลค่างานตามสัญญา (บาท)</label>
                                         <input type="number" step="0.01" id="p-contract-value" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${contract_value}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">ผู้จัดการโครงการ</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้จัดการโครงการ</label>
                                         <input type="text" id="p-manager" class="swal2-input !m-0 !w-full" placeholder="ระบุผู้รับผิดชอบ" value="${project_manager}">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">หมายเหตุเพิ่มเติม</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">หมายเหตุเพิ่มเติม</label>
                                         <input type="text" id="p-note" class="swal2-input !m-0 !w-full" placeholder="รายละเอียดอื่นๆ" value="${note}">
                                     </div>
                                 </div>
@@ -1108,6 +1238,75 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         const pays = res.payments;
                         const subs = res.subcontractors;
                         const fins = res.financials;
+                        const assigned_subs = res.assigned_subcontractors || [];
+                        window.currentAllSubcontractors = res.all_subcontractors || [];
+                        window.currentProjectId = p.id;
+
+                        // Build assigned subs HTML
+                        let assignedSubsHTML = '';
+                        const jobTypes = ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'];
+                        
+                        // We always want to show some columns. If empty, show 5 empty columns.
+                        const displaySubs = assigned_subs.length > 0 ? assigned_subs : [{}, {}, {}, {}, {}];
+                        
+                        displaySubs.forEach((sub, index) => {
+                            let jobTypeOptions = '<option value="">-- เลือกประเภทงาน --</option>';
+                            jobTypes.forEach(jt => {
+                                jobTypeOptions += `<option value="${jt}" ${sub.job_type === jt ? 'selected' : ''}>${jt}</option>`;
+                            });
+
+                            let subOptions = '<option value="">-- เลือกผู้รับเหมา --</option>';
+                            window.currentAllSubcontractors.forEach(s => {
+                                subOptions += `<option value="${s.id}" ${sub.subcontractor_id == s.id ? 'selected' : ''}>${s.name} (${s.team_type})</option>`;
+                            });
+
+                            const fileLink = sub.attachment ? `<div class="mt-1 text-xs"><a href="../${sub.attachment}" target="_blank" class="text-blue-500 hover:underline">ดูไฟล์แนบปัจจุบัน</a></div>` : '';
+                            const existingAttachment = sub.attachment ? `<input type="hidden" name="existing_attachment_${index}" value="${sub.attachment}">` : '';
+
+                            assignedSubsHTML += `
+                                <div class="assigned-sub-col w-56 flex flex-col gap-4 border border-slate-200 rounded-lg p-3 bg-slate-50 relative shrink-0">
+                                    <button type="button" onclick="$(this).closest('.assigned-sub-col').remove();" class="absolute top-1 right-1 text-slate-400 hover:text-rose-500">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                    </button>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-rose-500 text-center mb-1">ประเภทงาน เลือก</label>
+                                        <select name="job_type_${index}" class="w-full text-sm border border-slate-300 rounded p-1.5 focus:border-emerald-500 outline-none">
+                                            ${jobTypeOptions}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-bold text-rose-500 text-center mb-1">ชื่อผู้รับเหมาที่รับผิดชอบ</label>
+                                        <select name="subcontractor_id_${index}" class="w-full text-sm border border-slate-300 rounded p-1.5 focus:border-emerald-500 outline-none">
+                                            ${subOptions}
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 text-center mb-1">กรอกค่าแรงตามสัญญา</label>
+                                        <input type="number" name="contract_amount_${index}" class="w-full text-center text-sm border border-slate-300 rounded p-1.5 font-bold text-slate-700" value="${sub.contract_amount || ''}" oninput="calcRemaining(this)" placeholder="0">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 text-center mb-1">ชำระแล้ว</label>
+                                        <input type="number" class="w-full text-center text-sm border border-slate-200 rounded p-1.5 font-bold text-slate-500 bg-slate-100 sub-paid-amount" value="${sub.paid_amount || 0}" readonly>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-bold text-rose-500 text-center mb-1">ยอด ค้างชำระค่าแรง</label>
+                                        <input type="number" class="w-full text-center text-sm border border-slate-200 rounded p-1.5 font-bold text-rose-500 bg-slate-100 sub-remaining-amount" value="${sub.remaining_amount || 0}" readonly>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-bold text-slate-700 text-center mb-1">แนบเอกสารสัญญา</label>
+                                        <input type="file" name="attachment_${index}" class="w-full text-xs border border-slate-300 rounded p-1 bg-white" accept=".pdf,image/*">
+                                        ${fileLink}
+                                        ${existingAttachment}
+                                    </div>
+                                </div>
+                            `;
+                        });
                         
                         let progressHTML = `
                             <div class="relative w-24 h-24 flex items-center justify-center">
@@ -1115,25 +1314,25 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <circle class="text-slate-100" stroke-width="8" stroke="currentColor" fill="transparent" r="38" cx="48" cy="48" />
                                     <circle class="text-emerald-500 progress-ring__circle" stroke-width="8" stroke-dasharray="${2 * Math.PI * 38}" stroke-dashoffset="${2 * Math.PI * 38 * (1 - p.progress_percent / 100)}" stroke-linecap="round" stroke="currentColor" fill="transparent" r="38" cx="48" cy="48" />
                                 </svg>
-                                <span class="absolute font-bold text-lg text-slate-800">${p.progress_percent}%</span>
+                                <span class="absolute font-bold text-xl text-slate-800">${p.progress_percent}%</span>
                             </div>
                         `;
 
                         // 1. Build Subcontractors Right Panel list
                         let subsHtml = '';
                         if (subs.length === 0) {
-                            subsHtml = '<p class="text-slate-400 text-xs italic">ไม่มีข้อมูลผู้รับเหมาในโครงการ</p>';
+                            subsHtml = '<p class="text-slate-400 text-sm italic">ไม่มีข้อมูลผู้รับเหมาในโครงการ</p>';
                         } else {
                             subs.forEach(s => {
                                 subsHtml += `
                                     <div class="flex items-center justify-between border-b border-slate-50 pb-2">
                                         <div>
-                                            <p class="font-bold text-slate-700 text-xs">${s.name}</p>
-                                            <span class="text-[10px] text-slate-400">${s.team_type}</span>
+                                            <p class="font-bold text-slate-700 text-sm">${s.name}</p>
+                                            <span class="text-xs text-slate-400">${s.team_type}</span>
                                         </div>
                                         <div class="text-right">
-                                            <span class="text-[10px] text-slate-400 block">จ่ายสะสม</span>
-                                            <span class="font-bold text-emerald-600 text-xs">${s.paid_amount.toLocaleString()} ฿</span>
+                                            <span class="text-xs text-slate-400 block">จ่ายสะสม</span>
+                                            <span class="font-bold text-emerald-600 text-sm">${s.paid_amount.toLocaleString()} ฿</span>
                                         </div>
                                     </div>
                                 `;
@@ -1148,11 +1347,11 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             insts.forEach((inst, idx) => {
                                 let badge = '';
                                 if (inst.status === 'จ่ายแล้ว') {
-                                    badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">จ่ายแล้ว</span>';
+                                    badge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">จ่ายแล้ว</span>';
                                 } else if (inst.status === 'บางส่วน') {
-                                    badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">บางส่วน</span>';
+                                    badge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">บางส่วน</span>';
                                 } else {
-                                    badge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-50 text-slate-500 border border-slate-100">รอจ่าย</span>';
+                                    badge = '<span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-50 text-slate-500 border border-slate-100">รอจ่าย</span>';
                                 }
 
                                 instListHtml += `
@@ -1183,11 +1382,11 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             exps.forEach((exp, idx) => {
                                 let badge = '';
                                 if (exp.status === 'อนุมัติแล้ว') {
-                                    badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">อนุมัติแล้ว</span>';
+                                    badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">อนุมัติแล้ว</span>';
                                 } else if (exp.status === 'รออนุมัติ') {
-                                    badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">รออนุมัติ</span>';
+                                    badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">รออนุมัติ</span>';
                                 } else {
-                                    badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">ปฏิเสธ</span>';
+                                    badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">ปฏิเสธ</span>';
                                 }
 
                                 let fileLink = exp.attachment ? `<a href="../${exp.attachment}" target="_blank" class="text-blue-500 font-semibold hover:underline">แนบไฟล์</a>` : '-';
@@ -1223,17 +1422,17 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-2">
-                                            <span class="text-xs uppercase font-bold text-slate-400 tracking-wider">${p.project_code || 'PJ-67001'}</span>
-                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">${p.status}</span>
+                                            <span class="text-sm uppercase font-bold text-slate-400 tracking-wider">${p.project_code || 'PJ-67001'}</span>
+                                            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">${p.status}</span>
                                         </div>
                                         <h2 class="font-bold text-xl text-slate-800 mt-1">${p.project_name}</h2>
-                                        <p class="text-xs text-slate-400 mt-0.5">${p.project_type || 'โครงการก่อสร้าง'}</p>
+                                        <p class="text-sm text-slate-400 mt-0.5">${p.project_type || 'โครงการก่อสร้าง'}</p>
                                     </div>
                                 </div>
                                 
                                 <div class="flex items-center gap-6">
                                     <div class="text-right">
-                                        <span class="text-[10px] text-slate-400 font-bold block">มูลค่างานตามสัญญา</span>
+                                        <span class="text-xs text-slate-400 font-bold block">มูลค่างานตามสัญญา</span>
                                         <h4 class="text-xl font-bold text-slate-700">${fins.contract_value.toLocaleString(undefined, {minimumFractionDigits: 2})} บาท</h4>
                                     </div>
                                     ${progressHTML}
@@ -1246,73 +1445,89 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                 <div class="lg:col-span-2 space-y-6">
                                     <!-- Custom Tab Headers -->
                                     <div class="bg-white border border-slate-100 rounded-xl p-1.5 flex gap-1 shadow-sm">
-                                        <button onclick="switchTab('tab-info')" id="btn-tab-info" class="flex-1 py-2 px-4 text-xs font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">ข้อมูลโปรเจ็ค</button>
-                                        <button onclick="switchTab('tab-milestones')" id="btn-tab-milestones" class="flex-1 py-2 px-4 text-xs font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">งวดงาน / การจ่ายเงิน</button>
-                                        <button onclick="switchTab('tab-extra-expenses')" id="btn-tab-extra-expenses" class="flex-1 py-2 px-4 text-xs font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">ค่าใช้จ่ายเพิ่มเติม</button>
+                                        <button onclick="switchTab('tab-info')" id="btn-tab-info" class="flex-1 py-2 px-4 text-sm font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">ข้อมูลโปรเจ็ค</button>
+                                        <button onclick="switchTab('tab-milestones')" id="btn-tab-milestones" class="flex-1 py-2 px-4 text-sm font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">งวดงาน / การจ่ายเงิน</button>
+                                        <button onclick="switchTab('tab-extra-expenses')" id="btn-tab-extra-expenses" class="flex-1 py-2 px-4 text-sm font-bold text-slate-500 rounded-lg hover:text-slate-800 transition-all">ค่าใช้จ่ายเพิ่มเติม</button>
                                     </div>
 
                                     <!-- TAB CONTENT: INFO -->
                                     <div id="tab-info" class="tab-pane bg-white border border-slate-100 rounded-xl p-6 shadow-sm space-y-6">
                                         <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-                                            <h3 class="font-bold text-slate-800 text-sm">รายละเอียดโปรเจ็ค</h3>
-                                            <button onclick="openProjectModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-xs font-bold text-emerald-600 hover:underline">แก้ไขข้อมูล</button>
+                                            <h3 class="font-bold text-slate-800 text-base">รายละเอียดโปรเจ็ค</h3>
+                                            <button onclick="openProjectModal(${JSON.stringify(p).replace(/"/g, '&quot;')})" class="text-sm font-bold text-emerald-600 hover:underline">แก้ไขข้อมูล</button>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                                        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-base">
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">รหัสโครงการ</span>
+                                                <span class="text-sm text-slate-400 font-medium">รหัสโครงการ</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.project_code || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">ประเภทโครงการ</span>
+                                                <span class="text-sm text-slate-400 font-medium">ประเภทโครงการ</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.project_type || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">ลูกค้า</span>
+                                                <span class="text-sm text-slate-400 font-medium">ลูกค้า</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.customer_name || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">เบอร์โทรศัพท์ลูกค้า</span>
+                                                <span class="text-sm text-slate-400 font-medium">เบอร์โทรศัพท์ลูกค้า</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.customer_phone || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">อีเมลลูกค้า</span>
+                                                <span class="text-sm text-slate-400 font-medium">อีเมลลูกค้า</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.customer_email || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">ผู้จัดการโครงการ</span>
+                                                <span class="text-sm text-slate-400 font-medium">ผู้จัดการโครงการ</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.project_manager || '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">วันที่เริ่มงาน</span>
+                                                <span class="text-sm text-slate-400 font-medium">วันที่เริ่มงาน</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.start_date ? new Date(p.start_date).toLocaleDateString('th-TH') : '-'}</p>
                                             </div>
                                             <div>
-                                                <span class="text-xs text-slate-400 font-medium">กำหนดเสร็จงาน</span>
+                                                <span class="text-sm text-slate-400 font-medium">กำหนดเสร็จงาน</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5">${p.end_date ? new Date(p.end_date).toLocaleDateString('th-TH') : '-'}</p>
                                             </div>
                                             <div class="col-span-2">
-                                                <span class="text-xs text-slate-400 font-medium">ที่อยู่โครงการ</span>
+                                                <span class="text-sm text-slate-400 font-medium">ที่อยู่โครงการ</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5 leading-relaxed">${p.address || '-'}</p>
                                             </div>
                                             <div class="col-span-2">
-                                                <span class="text-xs text-slate-400 font-medium">หมายเหตุเพิ่มเติม</span>
+                                                <span class="text-sm text-slate-400 font-medium">หมายเหตุเพิ่มเติม</span>
                                                 <p class="font-semibold text-slate-700 mt-0.5 leading-relaxed">${p.note || '-'}</p>
                                             </div>
                                         </div>
+
+                                        <!-- Assigned Subcontractors Section -->
+                                        <div class="border-t border-slate-100 pt-6 mt-6">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <h3 class="font-bold text-rose-500 text-lg">รายละเอียดผู้รับเหมาทำงานในโปรเจค</h3>
+                                                <button onclick="saveAssignedSubcontractors()" class="text-sm font-bold text-emerald-600 hover:underline bg-emerald-50 px-3 py-1.5 rounded">บันทึกข้อมูลผู้รับเหมาในโปรเจค</button>
+                                            </div>
+                                            <div class="overflow-x-auto pb-4">
+                                                <form id="assigned-subs-form" class="flex gap-4 min-w-max items-start">
+                                                    ${assignedSubsHTML}
+                                                </form>
+                                                <button type="button" onclick="addAssignedSubcontractorColumn()" class="mt-4 text-sm font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1">+ เพิ่มประเภทงาน</button>
+                                            </div>
+                                            
+                                        </div>
+
                                     </div>
 
                                     <!-- TAB CONTENT: MILESTONES -->
                                     <div id="tab-milestones" class="tab-pane bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm space-y-4 hidden">
                                         <div class="p-6 pb-0 flex justify-between items-center">
-                                            <h3 class="font-bold text-slate-800 text-sm">งวดงาน / การจ่ายเงินผู้รับเหมา</h3>
+                                            <h3 class="font-bold text-slate-800 text-base">งวดงาน / การจ่ายเงินผู้รับเหมา</h3>
                                             <div class="flex items-center gap-2">
-                                                <a href="index.php?view=new_payment&project_id=${p.id}&subcontractor_id=${p.main_subcontractor_id || ''}" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg">จ่ายเงินงวด</a>
-                                                <button onclick="openInstallmentModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1">+ เพิ่มงวด</button>
+                                                <a href="index.php?view=new_payment&project_id=${p.id}&subcontractor_id=${p.main_subcontractor_id || ''}" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-3 py-1.5 rounded-lg">จ่ายเงินงวด</a>
+                                                <button onclick="openInstallmentModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm px-3 py-1.5 rounded-lg flex items-center gap-1">+ เพิ่มงวด</button>
                                             </div>
                                         </div>
                                         <div class="overflow-x-auto">
-                                            <table class="w-full text-left text-sm text-slate-600">
-                                                <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                                            <table class="w-full text-left text-base text-slate-600">
+                                                <thead class="bg-slate-50 text-slate-500 uppercase text-sm">
                                                     <tr>
                                                         <th class="py-3 px-4 font-bold text-center w-16">งวดที่</th>
                                                         <th class="py-3 px-4 font-bold">รายการ / รายละเอียด</th>
@@ -1334,12 +1549,12 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <!-- TAB CONTENT: EXTRA EXPENSES -->
                                     <div id="tab-extra-expenses" class="tab-pane bg-white border border-slate-100 rounded-xl overflow-hidden shadow-sm space-y-4 hidden">
                                         <div class="p-6 pb-0 flex justify-between items-center">
-                                            <h3 class="font-bold text-slate-800 text-sm">บันทึกค่าใช้จ่ายเพิ่มเติม</h3>
-                                            <button onclick="openExpenseModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1">+ บันทึกค่าใช้จ่าย</button>
+                                            <h3 class="font-bold text-slate-800 text-base">บันทึกค่าใช้จ่ายเพิ่มเติม</h3>
+                                            <button onclick="openExpenseModal()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-3 py-1.5 rounded-lg flex items-center gap-1">+ บันทึกค่าใช้จ่าย</button>
                                         </div>
                                         <div class="overflow-x-auto">
-                                            <table class="w-full text-left text-sm text-slate-600">
-                                                <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                                            <table class="w-full text-left text-base text-slate-600">
+                                                <thead class="bg-slate-50 text-slate-500 uppercase text-sm">
                                                     <tr>
                                                         <th class="py-3 px-4 font-bold w-12 text-center">#</th>
                                                         <th class="py-3 px-4 font-bold">รายการ</th>
@@ -1364,8 +1579,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                 <div class="space-y-6">
                                     <!-- Financial Panel -->
                                     <div class="custom-card p-6 space-y-4">
-                                        <h3 class="font-bold text-slate-800 text-sm pb-2 border-b border-slate-100">สรุปการเงินของโปรเจ็ค</h3>
-                                        <div class="space-y-3 text-sm">
+                                        <h3 class="font-bold text-slate-800 text-base pb-2 border-b border-slate-100">สรุปการเงินของโปรเจ็ค</h3>
+                                        <div class="space-y-3 text-base">
                                             <div class="flex justify-between">
                                                 <span class="text-slate-400">มูลค่างานรวม</span>
                                                 <span class="font-bold text-slate-700">${fins.contract_value.toLocaleString()} บาท</span>
@@ -1386,7 +1601,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                 <span class="text-slate-400">ค่าใช้จ่ายเพิ่มเติมสะสม</span>
                                                 <span class="font-bold text-amber-600">${fins.additional_expenses.toLocaleString()} บาท</span>
                                             </div>
-                                            <div class="flex justify-between border-t border-slate-100 pt-2 text-base">
+                                            <div class="flex justify-between border-t border-slate-100 pt-2 text-lg">
                                                 <span class="font-bold text-slate-800">ต้นทุนรวม ณ ปัจจุบัน</span>
                                                 <span class="font-extrabold text-slate-800">${fins.total_cost.toLocaleString()} บาท</span>
                                             </div>
@@ -1402,7 +1617,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <!-- Main Subcontractor & Sub list -->
                                     <div class="custom-card p-6 space-y-4">
                                         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                                            <h3 class="font-bold text-slate-800 text-sm">ผู้รับเหมาในโครงการ</h3>
+                                            <h3 class="font-bold text-slate-800 text-base">ผู้รับเหมาในโครงการ</h3>
                                         </div>
                                         <div class="space-y-3">
                                             ${subsHtml}
@@ -1413,6 +1628,138 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         `;
 
                         $('#project-detail-container').html(detailHtml);
+                    }
+
+                    function calcRemaining(inputElem) {
+                        const col = $(inputElem).closest('.assigned-sub-col');
+                        const contractAmt = parseFloat($(inputElem).val()) || 0;
+                        const paidAmt = parseFloat(col.find('.sub-paid-amount').val()) || 0;
+                        const remaining = Math.max(0, contractAmt - paidAmt);
+                        col.find('.sub-remaining-amount').val(remaining);
+                    }
+
+                    function addAssignedSubcontractorColumn() {
+                        const index = new Date().getTime(); // unique index
+                        const jobTypes = ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'];
+                        
+                        let jobTypeOptions = '<option value="">-- เลือกประเภทงาน --</option>';
+                        jobTypes.forEach(jt => { jobTypeOptions += `<option value="${jt}">${jt}</option>`; });
+
+                        let subOptions = '<option value="">-- เลือกผู้รับเหมา --</option>';
+                        if(window.currentAllSubcontractors) {
+                            window.currentAllSubcontractors.forEach(s => {
+                                subOptions += `<option value="${s.id}">${s.name} (${s.team_type})</option>`;
+                            });
+                        }
+
+                        const html = `
+                            <div class="assigned-sub-col w-56 flex flex-col gap-4 border border-slate-200 rounded-lg p-3 bg-slate-50 relative shrink-0">
+                                <button type="button" onclick="$(this).closest('.assigned-sub-col').remove();" class="absolute top-1 right-1 text-slate-400 hover:text-rose-500">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                
+                                <div>
+                                    <label class="block text-sm font-bold text-rose-500 text-center mb-1">ประเภทงาน เลือก</label>
+                                    <select name="job_type_${index}" class="w-full text-sm border border-slate-300 rounded p-1.5 focus:border-emerald-500 outline-none">
+                                        ${jobTypeOptions}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-bold text-rose-500 text-center mb-1">ชื่อผู้รับเหมาที่รับผิดชอบ</label>
+                                    <select name="subcontractor_id_${index}" class="w-full text-sm border border-slate-300 rounded p-1.5 focus:border-emerald-500 outline-none">
+                                        ${subOptions}
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 text-center mb-1">กรอกค่าแรงตามสัญญา</label>
+                                    <input type="number" name="contract_amount_${index}" class="w-full text-center text-sm border border-slate-300 rounded p-1.5 font-bold text-slate-700" value="" oninput="calcRemaining(this)" placeholder="0">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 text-center mb-1">ชำระแล้ว</label>
+                                    <input type="number" class="w-full text-center text-sm border border-slate-200 rounded p-1.5 font-bold text-slate-500 bg-slate-100 sub-paid-amount" value="0" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-rose-500 text-center mb-1">ยอด ค้างชำระค่าแรง</label>
+                                    <input type="number" class="w-full text-center text-sm border border-slate-200 rounded p-1.5 font-bold text-rose-500 bg-slate-100 sub-remaining-amount" value="0" readonly>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 text-center mb-1">แนบเอกสารสัญญา</label>
+                                    <input type="file" name="attachment_${index}" class="w-full text-xs border border-slate-300 rounded p-1 bg-white" accept=".pdf,image/*">
+                                </div>
+                            </div>
+                        `;
+                        $('#assigned-subs-form').append(html);
+                    }
+
+                    function saveAssignedSubcontractors() {
+                        const form = document.getElementById('assigned-subs-form');
+                        const formData = new FormData();
+                        
+                        let items = [];
+                        let hasError = false;
+                        
+                        $('.assigned-sub-col').each(function() {
+                            const jtSelect = $(this).find('select[name^="job_type_"]');
+                            const subSelect = $(this).find('select[name^="subcontractor_id_"]');
+                            const amtInput = $(this).find('input[name^="contract_amount_"]');
+                            const fileInput = $(this).find('input[type="file"]')[0];
+                            const existingAttachInput = $(this).find('input[name^="existing_attachment_"]');
+                            
+                            const jobType = jtSelect.val();
+                            const subId = subSelect.val();
+                            const amt = amtInput.val();
+                            
+                            if (jobType || subId || amt) {
+                                if (!jobType || !subId) {
+                                    hasError = true;
+                                    return false;
+                                }
+                                
+                                const idx = items.length;
+                                items.push({
+                                    job_type: jobType,
+                                    subcontractor_id: subId,
+                                    contract_amount: amt || 0,
+                                    existing_attachment: existingAttachInput.length ? existingAttachInput.val() : ''
+                                });
+                                
+                                if (fileInput.files.length > 0) {
+                                    formData.append('attachment_' + idx, fileInput.files[0]);
+                                }
+                            }
+                        });
+                        
+                        if (hasError) {
+                            Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุประเภทงานและชื่อผู้รับเหมาให้ครบถ้วนในคอลัมน์ที่มีการกรอกข้อมูล', 'warning');
+                            return;
+                        }
+
+                        formData.append('action', 'save_assigned_subcontractors');
+                        formData.append('project_id', window.currentProjectId);
+                        formData.append('data_json', JSON.stringify(items));
+
+                        Swal.fire({title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                        $.ajax({
+                            url: 'action.php',
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(res) {
+                                Swal.close();
+                                if (res.status === 'success') {
+                                    Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false});
+                                    loadProjectDetails();
+                                } else {
+                                    Swal.fire('ผิดพลาด', res.message, 'error');
+                                }
+                            }
+                        });
                     }
 
                     function switchTab(tabId) {
@@ -1442,27 +1789,27 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             html: `
                                 <div class="text-left space-y-4 p-2">
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">งวดที่ (ตัวเลขเท่านั้น) *</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">งวดที่ (ตัวเลขเท่านั้น) *</label>
                                         <input type="number" id="inst-num" class="swal2-input !m-0 !w-full" placeholder="เช่น 1, 2" value="${num}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">รายการ / รายละเอียดงาน *</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">รายการ / รายละเอียดงาน *</label>
                                         <input type="text" id="inst-name" class="swal2-input !m-0 !w-full" placeholder="เช่น งวดที่ 1 : มัดจำ" value="${name}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">กำหนดจ่าย</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">กำหนดจ่าย</label>
                                         <input type="date" id="inst-due" class="swal2-input !m-0 !w-full" value="${due}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">มูลค่างาน (บาท) *</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">มูลค่างาน (บาท) *</label>
                                         <input type="number" step="0.01" id="inst-amt" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${amt}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">จ่ายแล้ว (บาท)</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">จ่ายแล้ว (บาท)</label>
                                         <input type="number" step="0.01" id="inst-paid" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${paid}">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-semibold text-slate-700 mb-1">สถานะ</label>
+                                        <label class="block text-base font-semibold text-slate-700 mb-1">สถานะ</label>
                                         <select id="inst-status" class="swal2-input !m-0 !w-full">
                                             <option value="รอจ่าย" ${status==='รอจ่าย'?'selected':''}>รอจ่าย</option>
                                             <option value="บางส่วน" ${status==='บางส่วน'?'selected':''}>บางส่วน</option>
@@ -1578,14 +1925,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         Swal.fire({
                             title: title,
                             html: `
-                                <form id="exp-form" class="text-left space-y-4 p-2 text-sm" enctype="multipart/form-data">
+                                <form id="exp-form" class="text-left space-y-4 p-2 text-base" enctype="multipart/form-data">
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">รายการค่าใช้จ่าย *</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">รายการค่าใช้จ่าย *</label>
                                         <input type="text" name="item_name" class="swal2-input !m-0 !w-full" placeholder="ระบุรายการ เช่น ค่าขนดิน, ค่าแก้งานฐานราก" value="${name}">
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">ประเภทค่าใช้จ่าย</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">ประเภทค่าใช้จ่าย</label>
                                             <select name="expense_type" class="swal2-input !m-0 !w-full select-style">
                                                 <option value="วัสดุ" ${type==='วัสดุ'?'selected':''}>วัสดุ</option>
                                                 <option value="ค่าแรงเพิ่ม" ${type==='ค่าแรงเพิ่ม'?'selected':''}>ค่าแรงเพิ่ม</option>
@@ -1597,21 +1944,21 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่เกิดรายการ *</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เกิดรายการ *</label>
                                             <input type="date" name="expense_date" class="swal2-input !m-0 !w-full" value="${date}">
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">งวดงาน / งานที่เกี่ยวข้อง</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">งวดงาน / งานที่เกี่ยวข้อง</label>
                                         <select name="reference_task" class="swal2-input !m-0 !w-full">${installmentOptions}</select>
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">จำนวนเงิน (บาท) *</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">จำนวนเงิน (บาท) *</label>
                                             <input type="number" step="0.01" name="amount" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${amt}">
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">สถานะ</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">สถานะ</label>
                                             <select name="status" class="swal2-input !m-0 !w-full">
                                                 <option value="อนุมัติแล้ว" ${status==='อนุมัติแล้ว'?'selected':''}>อนุมัติแล้ว</option>
                                                 <option value="รออนุมัติ" ${status==='รออนุมัติ'?'selected':''}>รออนุมัติ</option>
@@ -1620,11 +1967,11 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">แนบหลักฐาน (รูปภาพ หรือ PDF)</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">แนบหลักฐาน (รูปภาพ หรือ PDF)</label>
                                         <input type="file" name="attachment" class="swal2-input !m-0 !w-full !p-1.5" accept="image/*,application/pdf">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">บันทึกเพิ่มเติม</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">บันทึกเพิ่มเติม</label>
                                         <input type="text" name="note" class="swal2-input !m-0 !w-full" placeholder="ระบุรายละเอียดเพิ่มเติม" value="${note}">
                                     </div>
                                 </form>
@@ -1714,10 +2061,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                                 </svg>
                             </span>
-                            <input type="text" id="pay-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-sm focus:border-emerald-500" placeholder="ค้นหาเลขที่เอกสาร, ผู้รับเหมา, โปรเจค..." onkeyup="loadPayments()">
+                            <input type="text" id="pay-search" class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl outline-none text-lg focus:border-emerald-500" placeholder="ค้นหาเลขที่เอกสาร, ผู้รับเหมา, โปรเจค..." onkeyup="loadPayments()">
                         </div>
 
-                        <select id="pay-sub-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:border-emerald-500" onchange="loadPayments()">
+                        <select id="pay-sub-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-lg text-slate-600 focus:border-emerald-500" onchange="loadPayments()">
                             <option value="">ผู้รับเหมาทั้งหมด</option>
                             <?php foreach ($all_subcontractors as $sub): ?>
                                 <option value="<?=$sub['id']?>"><?=$sub['name']?></option>
@@ -1736,8 +2083,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- Table Card -->
                 <div class="custom-card overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-600 font-medium">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                        <table class="w-full text-left text-base text-slate-600 font-medium">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-sm">
                                 <tr>
                                     <th class="py-4 px-6 font-bold">เลขที่เอกสาร</th>
                                     <th class="py-4 px-6 font-bold">ผู้รับเหมา</th>
@@ -1782,13 +2129,13 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                             const docLink = p.attachment ? `<a href="../${p.attachment}" target="_blank" class="text-blue-500 font-bold hover:underline">คลิกดูหลักฐาน</a>` : '-';
                                             html += `
                                                 <tr class="hover:bg-slate-50/50">
-                                                    <td class="py-4 px-6 font-bold text-slate-700 text-sm">${p.payment_number}</td>
+                                                    <td class="py-4 px-6 font-bold text-slate-700 text-base">${p.payment_number}</td>
                                                     <td class="py-4 px-6">
                                                         <div class="font-bold text-slate-800">${p.contractor_name}</div>
-                                                        <span class="text-xs text-slate-400">${p.contractor_team}</span>
+                                                        <span class="text-sm text-slate-400">${p.contractor_team}</span>
                                                     </td>
                                                     <td class="py-4 px-6 text-slate-500 font-semibold">${p.project_name}</td>
-                                                    <td class="py-4 px-6 text-slate-500 text-xs max-w-[150px] truncate" title="${p.installment_name || 'จ่ายเงินล่วงหน้า/อื่นๆ'}">
+                                                    <td class="py-4 px-6 text-slate-500 text-sm max-w-[150px] truncate" title="${p.installment_name || 'จ่ายเงินล่วงหน้า/อื่นๆ'}">
                                                         ${p.installment_name || 'จ่ายเงินล่วงหน้า/อื่นๆ'}
                                                     </td>
                                                     <td class="py-4 px-6 text-center text-slate-500">${p.payment_date}</td>
@@ -1870,20 +2217,20 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     <div class="lg:col-span-2 space-y-6">
                         <!-- Card 1: Document details -->
                         <div class="custom-card p-6 space-y-4">
-                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">ข้อมูลการจ่ายเงิน</h3>
+                            <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-2">ข้อมูลการจ่ายเงิน</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">เลขที่เอกสาร *</label>
-                                    <input type="text" name="payment_number" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm font-bold text-slate-700 bg-slate-50 focus:border-emerald-500" value="<?=$doc_number?>" readonly>
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">เลขที่เอกสาร *</label>
+                                    <input type="text" name="payment_number" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base font-bold text-slate-700 bg-slate-50 focus:border-emerald-500" value="<?=$doc_number?>" readonly>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่จ่าย *</label>
-                                    <input type="date" name="payment_date" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" value="<?=date('Y-m-d')?>">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่จ่าย *</label>
+                                    <input type="date" name="payment_date" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" value="<?=date('Y-m-d')?>">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">วิธีการจ่าย *</label>
-                                    <select name="payment_method" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">วิธีการจ่าย *</label>
+                                    <select name="payment_method" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500">
                                         <option value="โอนเงิน">โอนเงิน</option>
                                         <option value="เงินสด">เงินสด</option>
                                         <option value="เช็ค">เช็ค</option>
@@ -1893,24 +2240,24 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">บัญชีผู้รับเงิน / บัญชีต้นทาง</label>
-                                    <input type="text" name="bank_account" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" placeholder="เช่น ธนาคารกรุงเทพ 123-4-56789-0 (บัญชีหลัก)">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">บัญชีผู้รับเงิน / บัญชีต้นทาง</label>
+                                    <input type="text" name="bank_account" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" placeholder="เช่น ธนาคารกรุงเทพ 123-4-56789-0 (บัญชีหลัก)">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">อ้างอิง / หมายเหตุ</label>
-                                    <input type="text" name="note" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" placeholder="เช่น เลขที่เช็ค, หมายเหตุเพิ่มเติม">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">อ้างอิง / หมายเหตุ</label>
+                                    <input type="text" name="note" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" placeholder="เช่น เลขที่เช็ค, หมายเหตุเพิ่มเติม">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Card 2: Subcontractor and Project Selection -->
                         <div class="custom-card p-6 space-y-4">
-                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">เลือกผู้รับเหมาและโปรเจค</h3>
+                            <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-2">เลือกผู้รับเหมาและโปรเจค</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">ผู้รับเหมา *</label>
-                                    <select id="f-subcontractor" name="subcontractor_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" onchange="fetchFormMilestones()">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้รับเหมา *</label>
+                                    <select id="f-subcontractor" name="subcontractor_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" onchange="fetchFormMilestones()">
                                         <option value="">-- เลือกผู้รับเหมา --</option>
                                         <?php foreach ($all_subcontractors as $sub): ?>
                                             <option value="<?=$sub['id']?>" <?=$pre_sub_id==$sub['id']?'selected':''?>><?=$sub['name']?> (<?=$sub['team_type']?>)</option>
@@ -1918,8 +2265,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-500 mb-1">โปรเจค / งาน *</label>
-                                    <select id="f-project" name="project_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" onchange="fetchFormMilestones()">
+                                    <label class="block text-sm font-semibold text-slate-500 mb-1">โปรเจค / งาน *</label>
+                                    <select id="f-project" name="project_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" onchange="fetchFormMilestones()">
                                         <option value="">-- เลือกโปรเจค --</option>
                                         <?php foreach ($all_projects as $proj): ?>
                                             <option value="<?=$proj['id']?>" <?=$pre_project_id==$proj['id']?'selected':''?>><?=($proj['project_code'] ? '['.$proj['project_code'].'] ' : '') . $proj['project_name']?></option>
@@ -1929,8 +2276,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             </div>
 
                             <div id="f-installment-container" class="hidden">
-                                <label class="block text-xs font-semibold text-slate-500 mb-1">งวดงาน / รายการที่จ่าย *</label>
-                                <select id="f-installment" name="installment_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-sm text-slate-700 focus:border-emerald-500" onchange="calculateAmounts()">
+                                <label class="block text-sm font-semibold text-slate-500 mb-1">งวดงาน / รายการที่จ่าย *</label>
+                                <select id="f-installment" name="installment_id" class="w-full px-4 py-2 border border-slate-200 rounded-xl outline-none text-base text-slate-700 focus:border-emerald-500" onchange="calculateAmounts()">
                                     <!-- Dynamic options -->
                                     <option value="0">-- ไม่เกี่ยวข้องกับงวดงาน (จ่ายค่าแรงล่วงหน้า/ค่าเครื่องมือ) --</option>
                                 </select>
@@ -1940,15 +2287,15 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         <!-- Card 3: Payment details table -->
                         <div class="custom-card p-6 space-y-4">
                             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-                                <h3 class="font-bold text-slate-800 text-sm">รายละเอียดการจ่ายเงิน</h3>
-                                <button type="button" onclick="addPaymentItemRow()" class="text-xs font-bold text-emerald-600 flex items-center gap-1 hover:underline">
+                                <h3 class="font-bold text-slate-800 text-base">รายละเอียดการจ่ายเงิน</h3>
+                                <button type="button" onclick="addPaymentItemRow()" class="text-sm font-bold text-emerald-600 flex items-center gap-1 hover:underline">
                                     + เพิ่มรายการจ่ายเพิ่มเติม
                                 </button>
                             </div>
                             
                             <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm text-slate-600">
-                                    <thead class="bg-slate-50 text-slate-500 text-xs">
+                                <table class="w-full text-left text-base text-slate-600">
+                                    <thead class="bg-slate-50 text-slate-500 text-sm">
                                         <tr>
                                             <th class="py-2.5 px-4 font-bold w-12 text-center">#</th>
                                             <th class="py-2.5 px-4 font-bold w-48">รายการ</th>
@@ -1973,13 +2320,13 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                         <!-- Card 4: Document Attachment -->
                         <div class="custom-card p-6 space-y-4">
-                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-2">เอกสารแนบ (สลิปโอนเงิน / ใบสำคัญรับเงิน)</h3>
+                            <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-2">เอกสารแนบ (สลิปโอนเงิน / ใบสำคัญรับเงิน)</h3>
                             <div class="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-emerald-500 transition-colors" onclick="$('#f-attachment').click()">
                                 <svg class="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                 </svg>
-                                <p class="text-sm font-semibold text-slate-600" id="file-name-label">เลือกไฟล์หลักฐานการชำระเงิน หรือลากมาวางที่นี่</p>
-                                <span class="text-xs text-slate-400 mt-1">รองรับไฟล์ภาพ JPG, PNG หรือเอกสาร PDF ขนาดไม่เกิน 10MB</span>
+                                <p class="text-base font-semibold text-slate-600" id="file-name-label">เลือกไฟล์หลักฐานการชำระเงิน หรือลากมาวางที่นี่</p>
+                                <span class="text-sm text-slate-400 mt-1">รองรับไฟล์ภาพ JPG, PNG หรือเอกสาร PDF ขนาดไม่เกิน 10MB</span>
                                 <input type="file" id="f-attachment" name="attachment" class="hidden" onchange="updateFileLabel()">
                             </div>
                         </div>
@@ -1988,9 +2335,9 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     <!-- Right Section: Totals & Deduction calculation summary -->
                     <div class="space-y-6">
                         <div class="custom-card p-6 space-y-4 sticky top-6">
-                            <h3 class="font-bold text-slate-800 text-sm pb-2 border-b border-slate-100">สรุปยอดชำระเงิน</h3>
+                            <h3 class="font-bold text-slate-800 text-base pb-2 border-b border-slate-100">สรุปยอดชำระเงิน</h3>
                             
-                            <div class="space-y-3 text-sm text-slate-600">
+                            <div class="space-y-3 text-base text-slate-600">
                                 <div class="flex justify-between">
                                     <span>ยอดจ่ายงวดหลัก:</span>
                                     <span class="font-bold text-slate-700" id="calc-base-amount">0.00 บาท</span>
@@ -2009,7 +2356,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-1.5">
                                             <input type="checkbox" id="f-tax-enabled" class="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" onchange="calculateAmounts()" checked>
-                                            <label for="f-tax-enabled" class="text-xs font-semibold text-slate-600">หักภาษี ณ ที่จ่าย (3%)</label>
+                                            <label for="f-tax-enabled" class="text-sm font-semibold text-slate-600">หักภาษี ณ ที่จ่าย (3%)</label>
                                         </div>
                                         <span class="font-bold text-rose-500" id="calc-tax-deduction">-0.00 บาท</span>
                                     </div>
@@ -2017,14 +2364,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center gap-1.5">
                                             <input type="checkbox" id="f-ret-enabled" class="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500" onchange="calculateAmounts()">
-                                            <label for="f-ret-enabled" class="text-xs font-semibold text-slate-600">หักเงินประกันผลงาน (5%)</label>
+                                            <label for="f-ret-enabled" class="text-sm font-semibold text-slate-600">หักเงินประกันผลงาน (5%)</label>
                                         </div>
                                         <span class="font-bold text-rose-500" id="calc-ret-deduction">-0.00 บาท</span>
                                     </div>
 
                                     <!-- Additional Deductions Container -->
                                     <div id="additional-deductions-container" class="space-y-2 pt-2 border-t border-slate-50"></div>
-                                    <button type="button" onclick="addAdditionalDeduction()" class="text-xs text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1 mt-2">
+                                    <button type="button" onclick="addAdditionalDeduction()" class="text-sm text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1 mt-2">
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                                         เพิ่มรายการหักอื่นๆ
                                     </button>
@@ -2039,10 +2386,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                             <!-- Buttons -->
                             <div class="pt-4 space-y-2">
-                                <button type="button" onclick="submitPaymentForm()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all text-center text-sm">
+                                <button type="button" onclick="submitPaymentForm()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 transition-all text-center text-base">
                                     บันทึกและยืนยันการจ่ายเงิน
                                 </button>
-                                <a href="index.php?view=payments" class="block w-full bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-3 px-4 rounded-xl text-center text-sm transition-all border border-slate-200">
+                                <a href="index.php?view=payments" class="block w-full bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold py-3 px-4 rounded-xl text-center text-base transition-all border border-slate-200">
                                     ยกเลิก
                                 </a>
                             </div>
@@ -2185,10 +2532,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             <div class="flex items-center justify-between gap-2 additional-deduction-row">
                                 <div class="flex items-center gap-1.5 flex-1">
                                     <input type="checkbox" class="rounded border-slate-200 text-emerald-500 focus:ring-emerald-500 deduction-checkbox" onchange="calculateAmounts()" checked>
-                                    <input type="text" class="text-xs font-semibold text-slate-600 border-b border-slate-200 outline-none flex-1 deduction-name" placeholder="รายการหักเพิ่มเติม.....">
+                                    <input type="text" class="text-sm font-semibold text-slate-600 border-b border-slate-200 outline-none flex-1 deduction-name" placeholder="รายการหักเพิ่มเติม.....">
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <input type="number" step="0.01" class="text-xs font-bold text-rose-500 text-right border-b border-slate-200 outline-none w-20 deduction-amount" value="0" onkeyup="calculateAmounts()" onchange="calculateAmounts()">
+                                    <input type="number" step="0.01" class="text-sm font-bold text-rose-500 text-right border-b border-slate-200 outline-none w-20 deduction-amount" value="0" onkeyup="calculateAmounts()" onchange="calculateAmounts()">
                                     <button type="button" onclick="$(this).closest('.additional-deduction-row').remove(); calculateAmounts();" class="text-slate-400 hover:text-rose-500">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                     </button>
@@ -2373,14 +2720,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         Swal.fire({
                             title: 'บันทึกค่าใช้จ่ายโครงการ',
                             html: `
-                                <form id="exp-form-payment" class="text-left space-y-4 p-2 text-sm" enctype="multipart/form-data">
+                                <form id="exp-form-payment" class="text-left space-y-4 p-2 text-base" enctype="multipart/form-data">
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">รายการค่าใช้จ่าย *</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">รายการค่าใช้จ่าย *</label>
                                         <input type="text" name="item_name" class="swal2-input !m-0 !w-full" placeholder="ระบุรายการ" value="${paymentName}">
                                     </div>
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">ประเภทค่าใช้จ่าย</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">ประเภทค่าใช้จ่าย</label>
                                             <select name="expense_type" class="swal2-input !m-0 !w-full select-style">
                                                 <option value="ค่าแรงเพิ่ม" selected>ค่าแรงเพิ่ม</option>
                                                 <option value="วัสดุ">วัสดุ</option>
@@ -2392,22 +2739,22 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">วันที่เกิดรายการ *</label>
+                                            <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เกิดรายการ *</label>
                                             <input type="date" name="expense_date" class="swal2-input !m-0 !w-full" value="${date}">
                                         </div>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">จำนวนเงิน (บาท) *</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">จำนวนเงิน (บาท) *</label>
                                         <input type="number" step="0.01" name="amount" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${defaultAmount}">
                                     </div>
                                     <input type="hidden" name="status" value="อนุมัติแล้ว">
                                     <input type="hidden" name="reference_task" value="">
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">แนบหลักฐาน (รูปภาพ หรือ PDF)</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">แนบหลักฐาน (รูปภาพ หรือ PDF)</label>
                                         <input type="file" name="attachment" class="swal2-input !m-0 !w-full !p-1.5" accept="image/*,application/pdf">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">บันทึกเพิ่มเติม</label>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">บันทึกเพิ่มเติม</label>
                                         <input type="text" name="note" class="swal2-input !m-0 !w-full" placeholder="ระบุรายละเอียดเพิ่มเติม" value="">
                                     </div>
                                 </form>
@@ -2466,7 +2813,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- Search & Filters -->
                 <div class="custom-card p-5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
-                        <select id="exp-proj-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-sm text-slate-600 focus:border-emerald-500" onchange="loadExpensesList()">
+                        <select id="exp-proj-filter" class="py-2 px-4 border border-slate-200 rounded-xl outline-none text-lg text-slate-600 focus:border-emerald-500" onchange="loadExpensesList()">
                             <option value="">โครงการทั้งหมด</option>
                             <?php foreach ($all_projects as $proj): ?>
                                 <option value="<?=$proj['id']?>"><?=$proj['project_name']?></option>
@@ -2478,8 +2825,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- Table Card -->
                 <div class="custom-card overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-600">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+                        <table class="w-full text-left text-base text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-sm">
                                 <tr>
                                     <th class="py-4 px-6 font-bold w-12 text-center">#</th>
                                     <th class="py-4 px-6 font-bold">โครงการ</th>
@@ -2521,11 +2868,11 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         res.data.forEach((exp, idx) => {
                                             let badge = '';
                                             if (exp.status === 'อนุมัติแล้ว') {
-                                                badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">อนุมัติแล้ว</span>';
+                                                badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">อนุมัติแล้ว</span>';
                                             } else if (exp.status === 'รออนุมัติ') {
-                                                badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100">รออนุมัติ</span>';
+                                                badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">รออนุมัติ</span>';
                                             } else {
-                                                badge = '<span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100">ปฏิเสธ</span>';
+                                                badge = '<span class="px-2.5 py-0.5 rounded text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">ปฏิเสธ</span>';
                                             }
 
                                             let fileLink = exp.attachment ? `<a href="../${exp.attachment}" target="_blank" class="text-blue-500 font-bold hover:underline">คลิกดู</a>` : '-';
@@ -2539,7 +2886,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     </td>
                                                     <td class="py-4 px-6 font-semibold text-slate-700">${exp.item_name}</td>
                                                     <td class="py-4 px-6 text-center font-medium text-slate-500">${exp.expense_type}</td>
-                                                    <td class="py-4 px-6 text-slate-500 text-xs">${exp.reference_task || '-'}</td>
+                                                    <td class="py-4 px-6 text-slate-500 text-sm">${exp.reference_task || '-'}</td>
                                                     <td class="py-4 px-6 text-center text-slate-500">${new Date(exp.expense_date).toLocaleDateString('th-TH')}</td>
                                                     <td class="py-4 px-6 text-right font-extrabold text-slate-700">${exp.amount.toLocaleString(undefined, {minimumFractionDigits: 2})} ฿</td>
                                                     <td class="py-4 px-6 text-center">${badge}</td>
@@ -2559,37 +2906,34 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <!-- ================== VIEW: COST REPORT ================== -->
                 <div class="custom-card p-6 space-y-6">
                     <div class="flex justify-between items-center border-b border-slate-100 pb-4">
-                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
-                            <span>📋</span> รายงานสรุปต้นทุนและการจ่ายงานโครงการ
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <span>📋</span> รายงานสรุปต้นทุนค่าแรงรับเหมาโครงการ
                         </h3>
-                        <button onclick="window.print()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow shadow-emerald-500/10">
+                        <button onclick="window.print()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 shadow shadow-emerald-500/10">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                             <span>พิมพ์รายงาน</span>
                         </button>
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-slate-600 font-medium">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs border-b border-slate-100">
+                        <table class="w-full text-left text-base text-slate-600 font-medium">
+                            <thead class="bg-slate-50 text-slate-500 uppercase text-sm border-b border-slate-100">
                                 <tr>
                                     <th class="py-3 px-4 font-bold w-12 text-center hide-checkbox-on-print">
                                         <input type="checkbox" id="cost-report-select-all" class="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer" checked onchange="toggleAllCostReports(this)">
                                     </th>
                                     <th class="py-3 px-4 font-bold">รหัส</th>
                                     <th class="py-3 px-4 font-bold">ชื่อโครงการ</th>
-                                    <th class="py-3 px-4 font-bold">ผู้รับเหมาหลัก</th>
-                                    <th class="py-3 px-4 font-bold text-right">มูลค่าโครงการ</th>
-                                    <th class="py-3 px-4 font-bold text-right">ค่าแรงงวดงาน</th>
-                                    <th class="py-3 px-4 font-bold text-right">ค่าใช้จ่ายเพิ่มเติม</th>
-                                    <th class="py-3 px-4 font-bold text-right">รวมต้นทุน</th>
-                                    <th class="py-3 px-4 font-bold text-right">กำไรขั้นต้น</th>
-                                    <th class="py-3 px-4 font-bold text-center">กำไร %</th>
+                                    <th class="py-3 px-4 font-bold text-center text-rose-500">รายชื่อผู้รับเหมา</th>
+                                    <th class="py-3 px-4 font-bold text-right text-rose-500">มูลค่างานรวมเหมา</th>
+                                    <th class="py-3 px-4 font-bold text-right text-slate-500">ค่าใช้จ่ายเพิ่มเติม</th>
+                                    <th class="py-3 px-4 font-bold text-right text-rose-500">รวมต้นทุน<br><span class="text-xs">ค่าแรงเหมาโปรเจค</span></th>
                                     <th class="py-3 px-4 font-bold text-center">สถานะ</th>
                                 </tr>
                             </thead>
                             <tbody id="cost-report-body" class="divide-y divide-slate-100">
                                 <tr>
-                                    <td colspan="11" class="py-10 text-center text-slate-400 italic">กำลังดึงข้อมูลรายงาน...</td>
+                                    <td colspan="8" class="py-10 text-center text-slate-400 italic">กำลังดึงข้อมูลรายงาน...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2610,7 +2954,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                 if (res.status === 'success') {
                                     let html = '';
                                     if (res.data.length === 0) {
-                                        html = '<tr><td colspan="11" class="py-10 text-center text-slate-400 italic">ไม่มีข้อมูลการทำต้นทุนโครงการ</td></tr>';
+                                        html = '<tr><td colspan="8" class="py-10 text-center text-slate-400 italic">ไม่มีข้อมูลการทำต้นทุนโครงการ</td></tr>';
                                     } else {
                                         res.data.forEach(r => {
                                             const profitClass = r.profit >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-500 font-bold';
@@ -2622,7 +2966,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     </td>
                                                     <td class="py-4 px-4 font-bold text-slate-500">${r.project_code}</td>
                                                     <td class="py-4 px-4 font-bold text-slate-700">${r.project_name}</td>
-                                                    <td class="py-4 px-4 text-slate-500 text-xs">${r.contractor_name}</td>
+                                                    <td class="py-4 px-4 text-slate-500 text-sm">${r.contractor_name}</td>
                                                     <td class="py-4 px-4 text-right font-bold text-slate-700">${r.contract_value.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                                                     <td class="py-4 px-4 text-right font-semibold text-slate-600">${r.labor_cost.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                                                     <td class="py-4 px-4 text-right font-semibold text-slate-600">${r.additional_expenses.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
@@ -2630,7 +2974,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     <td class="py-4 px-4 text-right ${profitClass}">${r.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                                                     <td class="py-4 px-4 text-center font-bold ${r.profit_percent >= 0 ? 'text-emerald-600' : 'text-rose-500'}">${r.profit_percent}%</td>
                                                     <td class="py-4 px-4 text-center">
-                                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${r.status==='กำลังดำเนินการ'?'bg-emerald-50 text-emerald-600':(r.status==='เสร็จสิ้น'?'bg-blue-55 text-blue-600':'bg-slate-100 text-slate-600')}">${r.status}</span>
+                                                        <span class="px-2 py-0.5 rounded text-xs font-bold ${r.status==='กำลังดำเนินการ'?'bg-emerald-50 text-emerald-600':(r.status==='เสร็จสิ้น'?'bg-blue-55 text-blue-600':'bg-slate-100 text-slate-600')}">${r.status}</span>
                                                     </td>
                                                 </tr>
                                             `;
@@ -2677,7 +3021,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Left: Profit summary chart -->
                     <div class="custom-card p-6 lg:col-span-2 space-y-6">
-                        <h3 class="font-bold text-slate-800 text-base flex items-center gap-2 pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 pb-3 border-b border-slate-100">
                             <span>📈</span> แผนภูมิเปรียบเทียบ รายรับ สัญญา vs ต้นทุนโครงการ
                         </h3>
                         <div class="h-80 flex items-center justify-center">
@@ -2687,14 +3031,14 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                     <!-- Right: KPI summaries -->
                     <div class="custom-card p-6 space-y-6">
-                        <h3 class="font-bold text-slate-800 text-base pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 text-lg pb-3 border-b border-slate-100">
                             📊 สถิติกำไรเฉลี่ยโครงการ
                         </h3>
                         
                         <div class="space-y-4">
                             <div class="bg-emerald-50 text-emerald-800 border border-emerald-100 p-4 rounded-2xl flex justify-between items-center">
                                 <div>
-                                    <span class="text-xs font-semibold block text-emerald-600">มูลค่ารวมสัญญา (โครงการทั้งหมด)</span>
+                                    <span class="text-sm font-semibold block text-emerald-600">มูลค่ารวมสัญญา (โครงการทั้งหมด)</span>
                                     <span class="text-xl font-extrabold" id="sum-contract">0.00 บาท</span>
                                 </div>
                                 <span class="text-3xl">🏠</span>
@@ -2702,7 +3046,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                             <div class="bg-rose-50 text-rose-800 border border-rose-100 p-4 rounded-2xl flex justify-between items-center">
                                 <div>
-                                    <span class="text-xs font-semibold block text-rose-600">ต้นทุนสะสมรวม</span>
+                                    <span class="text-sm font-semibold block text-rose-600">ต้นทุนสะสมรวม</span>
                                     <span class="text-xl font-extrabold" id="sum-cost">0.00 บาท</span>
                                 </div>
                                 <span class="text-3xl">📉</span>
@@ -2710,7 +3054,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
 
                             <div class="bg-blue-50 text-blue-800 border border-blue-100 p-4 rounded-2xl flex justify-between items-center">
                                 <div>
-                                    <span class="text-xs font-semibold block text-blue-600">กำไรรวมขั้นต้น</span>
+                                    <span class="text-sm font-semibold block text-blue-600">กำไรรวมขั้นต้น</span>
                                     <span class="text-xl font-extrabold" id="sum-profit">0.00 บาท</span>
                                 </div>
                                 <span class="text-3xl">💰</span>

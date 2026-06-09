@@ -321,6 +321,33 @@ if ($action === 'project_get_details') {
         'total_installments_val' => $total_inst_amount
     ];
     
+    // Assigned Subcontractors
+    $assignedSQL = "SELECT a.*, s.name as subcontractor_name 
+                    FROM project_assigned_subcontractors a
+                    LEFT JOIN subcontractors s ON a.subcontractor_id = s.id
+                    WHERE a.project_id = $id ORDER BY a.id ASC";
+    $assignedRes = mysqli_query($conn, $assignedSQL);
+    $assigned_subcontractors = [];
+    if($assignedRes) {
+        while($r = mysqli_fetch_assoc($assignedRes)) {
+            $r['contract_amount'] = (float)$r['contract_amount'];
+            $subId = $r['subcontractor_id'];
+            $paidSQL = "SELECT SUM(net_amount) as total_paid FROM subcontractor_payments WHERE project_id = $id AND subcontractor_id = $subId";
+            $paidRes = mysqli_query($conn, $paidSQL);
+            $r['paid_amount'] = (float)(mysqli_fetch_assoc($paidRes)['total_paid'] ?? 0);
+            $r['remaining_amount'] = max(0, $r['contract_amount'] - $r['paid_amount']);
+            $assigned_subcontractors[] = $r;
+        }
+    }
+
+    // All active subcontractors for dropdowns
+    $allSubSQL = "SELECT id, name, team_type FROM subcontractors WHERE company_id = $company_id AND status = 'กำลังทำงาน' ORDER BY name ASC";
+    $allSubRes = mysqli_query($conn, $allSubSQL);
+    $all_subcontractors = [];
+    while($r = mysqli_fetch_assoc($allSubRes)) {
+        $all_subcontractors[] = $r;
+    }
+    
     echo json_encode([
         'status' => 'success', 
         'project' => $project, 
@@ -328,6 +355,8 @@ if ($action === 'project_get_details') {
         'expenses' => $expenses, 
         'payments' => $payments,
         'subcontractors' => $subcontractors,
+        'assigned_subcontractors' => $assigned_subcontractors,
+        'all_subcontractors' => $all_subcontractors,
         'financials' => $financials
     ]);
     exit;
@@ -367,6 +396,50 @@ if ($action === 'installment_save') {
     } else {
         echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);
     }
+    exit;
+}
+
+if ($action === 'save_assigned_subcontractors') {
+    $project_id = (int)$_POST['project_id'];
+    $data_json = $_POST['data_json'];
+    $items = json_decode($data_json, true);
+
+    // Delete existing records for this project
+    mysqli_query($conn, "DELETE FROM project_assigned_subcontractors WHERE project_id = $project_id");
+
+    if (is_array($items)) {
+        foreach ($items as $idx => $item) {
+            $job_type = mysqli_real_escape_string($conn, $item['job_type']);
+            $subcontractor_id = (int)$item['subcontractor_id'];
+            $contract_amount = (float)$item['contract_amount'];
+            
+            // Handle file upload
+            $attachment = '';
+            $file_key = 'attachment_' . $idx;
+            if (isset($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = '../uploads/contracts/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $fileExtension = pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION);
+                $newFileName = 'contract_' . $project_id . '_' . time() . '_' . rand(1000, 9999) . '.' . $fileExtension;
+                $destPath = $uploadDir . $newFileName;
+                if (move_uploaded_file($_FILES[$file_key]['tmp_name'], $destPath)) {
+                    $attachment = 'uploads/contracts/' . $newFileName;
+                }
+            } else {
+                // Check if existing attachment was passed back
+                if (isset($item['existing_attachment']) && !empty($item['existing_attachment'])) {
+                    $attachment = mysqli_real_escape_string($conn, $item['existing_attachment']);
+                }
+            }
+
+            $sql = "INSERT INTO project_assigned_subcontractors (company_id, project_id, job_type, subcontractor_id, contract_amount, attachment) 
+                    VALUES ($company_id, $project_id, '$job_type', $subcontractor_id, $contract_amount, '$attachment')";
+            mysqli_query($conn, $sql);
+        }
+    }
+    echo json_encode(['status' => 'success', 'message' => 'บันทึกข้อมูลผู้รับเหมาในโปรเจคเรียบร้อยแล้ว']);
     exit;
 }
 
@@ -733,12 +806,21 @@ if ($action === 'cost_report') {
     while ($row = mysqli_fetch_assoc($result)) {
         $pid = $row['id'];
         
-        // Labor cost (milestones total)
-        $instSQL = "SELECT SUM(amount) as labor_total, SUM(paid_amount) as labor_paid FROM project_installments WHERE project_id = $pid";
-        $instRes = mysqli_query($conn, $instSQL);
-        $instData = mysqli_fetch_assoc($instRes);
-        $labor_total = (float)($instData['labor_total'] ?? 0);
-        $labor_paid = (float)($instData['labor_paid'] ?? 0);
+        // Get assigned subcontractors
+        $subs_sql = "SELECT s.name FROM project_assigned_subcontractors pas JOIN subcontractors s ON pas.subcontractor_id = s.id WHERE pas.project_id = $pid";
+        $subs_res = mysqli_query($conn, $subs_sql);
+        $sub_names_arr = [];
+        while ($sub_row = mysqli_fetch_assoc($subs_res)) {
+            $sub_names_arr[] = $sub_row['name'];
+        }
+        $subcontractor_names = !empty($sub_names_arr) ? implode(',', $sub_names_arr) : '-';
+        
+        // Labor cost from assigned subs
+        $contract_sql = "SELECT SUM(contract_amount) as total_contract, SUM(paid_amount) as labor_paid FROM project_assigned_subcontractors WHERE project_id = $pid";
+        $contract_res = mysqli_query($conn, $contract_sql);
+        $contract_data = mysqli_fetch_assoc($contract_res);
+        $labor_total = (float)($contract_data['total_contract'] ?? 0);
+        $labor_paid = (float)($contract_data['labor_paid'] ?? 0);
         
         // Additional expenses
         $expSQL = "SELECT SUM(amount) as exp_total FROM project_additional_expenses WHERE project_id = $pid AND status = 'อนุมัติแล้ว'";
@@ -754,7 +836,7 @@ if ($action === 'cost_report') {
         $data[] = [
             'project_code' => $row['project_code'] ?? 'PJ-'.$row['id'],
             'project_name' => $row['project_name'],
-            'contractor_name' => $row['contractor_name'] ?? '-',
+            'subcontractor_names' => $subcontractor_names,
             'contract_value' => $contract_val,
             'labor_cost' => $labor_total,
             'additional_expenses' => $exp_total,
@@ -815,3 +897,55 @@ if ($action === 'get_payment_form_details') {
 echo json_encode(['status' => 'error', 'message' => 'Invalid Action']);
 exit;
 ?>
+
+
+if ($action === 'settings_list') {
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS subcontractor_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id INT DEFAULT 1,
+        category VARCHAR(50) NOT NULL,
+        setting_value VARCHAR(255) NOT NULL,
+        sort_order INT DEFAULT 0
+    )");
+    
+    $check = mysqli_query($conn, "SELECT COUNT(*) as c FROM subcontractor_settings WHERE company_id = $company_id");
+    if(mysqli_fetch_assoc($check)['c'] == 0) {
+        $defaults = [
+            'project_status' => ['กำลังดำเนินการ', 'รอเริ่มงาน', 'เสร็จสิ้น', 'ยกเลิก'],
+            'job_type' => ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'],
+            'team_type' => ['ทีมโครงสร้าง', 'ทีมงานระบบ', 'ทีมตกแต่ง', 'อื่นๆ'],
+            'team_status' => ['กำลังทำงาน', 'ว่าง', 'พักงาน', 'แบล็คลิสต์']
+        ];
+        foreach($defaults as $cat => $vals) {
+            foreach($vals as $i => $v) {
+                mysqli_query($conn, "INSERT INTO subcontractor_settings (company_id, category, setting_value, sort_order) VALUES ($company_id, '$cat', '$v', $i)");
+            }
+        }
+    }
+    
+    $res = mysqli_query($conn, "SELECT * FROM subcontractor_settings WHERE company_id = $company_id ORDER BY category, sort_order ASC, id ASC");
+    $data = [];
+    while($row = mysqli_fetch_assoc($res)) {
+        $data[$row['category']][] = $row;
+    }
+    echo json_encode(['status' => 'success', 'data' => $data]);
+    exit;
+}
+
+if ($action === 'settings_save') {
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $values = json_decode($_POST['values'], true);
+    
+    mysqli_query($conn, "DELETE FROM subcontractor_settings WHERE company_id = $company_id AND category = '$category'");
+    
+    if(is_array($values)) {
+        foreach($values as $i => $v) {
+            $val = mysqli_real_escape_string($conn, $v);
+            if(!empty($val)) {
+                mysqli_query($conn, "INSERT INTO subcontractor_settings (company_id, category, setting_value, sort_order) VALUES ($company_id, '$category', '$val', $i)");
+            }
+        }
+    }
+    echo json_encode(['status' => 'success']);
+    exit;
+}
