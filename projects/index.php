@@ -508,6 +508,139 @@ $view = $_GET['view'] ?? 'list';
                 }
             </script>
 
+        
+            <!-- ================== ADDED FROM SUBCONTRACTORS PROFIT SUMMARY ================== -->
+            <div class="mb-10 mt-12">
+                <h2 class="text-2xl font-bold text-[#4a3f35] mb-6">สรุปต้นทุนและการจ่ายงานโครงการ (ผู้รับเหมา)</h2>
+
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Profit summary chart -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 lg:col-span-2 space-y-6">
+                        <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2 pb-3 border-b border-slate-100">
+                            <span>📈</span> แผนภูมิเปรียบเทียบ รายรับ สัญญา vs ต้นทุนโครงการ
+                        </h3>
+                        <div class="h-80 flex items-center justify-center">
+                            <canvas id="profit-comparison-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Right: KPI summaries -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 space-y-6">
+                        <h3 class="font-bold text-gray-800 text-lg pb-3 border-b border-slate-100">
+                            📊 สถิติกำไรเฉลี่ยโครงการ
+                        </h3>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-emerald-50/50 text-emerald-800 border border-emerald-100 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-sm font-semibold block text-emerald-600">มูลค่ารวมสัญญา (โครงการทั้งหมด)</span>
+                                    <span class="text-xl font-extrabold" id="sum-contract">0.00 บาท</span>
+                                </div>
+                                <span class="text-3xl">🏠</span>
+                            </div>
+
+                            <div class="bg-red-50/50 text-red-800 border border-red-100 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-sm font-semibold block text-red-600">ต้นทุนสะสมรวม</span>
+                                    <span class="text-xl font-extrabold" id="sum-cost">0.00 บาท</span>
+                                </div>
+                                <span class="text-3xl">📉</span>
+                            </div>
+
+                            <div class="bg-blue-50 text-blue-800 border border-blue-100 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <span class="text-sm font-semibold block text-blue-600">กำไรรวมขั้นต้น</span>
+                                    <span class="text-xl font-extrabold" id="sum-profit">0.00 บาท</span>
+                                </div>
+                                <span class="text-3xl">💰</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    $(document).ready(function() {
+                        loadProfitSummaryData();
+                    });
+
+                    function loadProfitSummaryData() {
+                        $.ajax({
+                            url: '../subcontractors/action.php',
+                            type: 'GET',
+                            data: { action: 'cost_report' },
+                            success: function(res) {
+                                if (res.status === 'success') {
+                                    let labels = [];
+                                    let revenues = [];
+                                    let costs = [];
+                                    let profits = [];
+                                    
+                                    let totalRev = 0;
+                                    let totalCost = 0;
+                                    let totalProfit = 0;
+
+                                    res.data.forEach(r => {
+                                        labels.push(r.project_name);
+                                        revenues.push(r.contract_value);
+                                        costs.push(r.total_cost);
+                                        profits.push(r.profit);
+
+                                        totalRev += r.contract_value;
+                                        totalCost += r.total_cost;
+                                        totalProfit += r.profit;
+                                    });
+
+                                    $('#sum-contract').text(totalRev.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
+                                    $('#sum-cost').text(totalCost.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
+                                    $('#sum-profit').text(totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
+
+                                    // Render Chart
+                                    new Chart(document.getElementById('profit-comparison-chart'), {
+                                        type: 'bar',
+                                        data: {
+                                            labels: labels,
+                                            datasets: [
+                                                {
+                                                    label: 'มูลค่าโครงการ',
+                                                    data: revenues,
+                                                    backgroundColor: '#10b981', // emerald-500
+                                                    borderRadius: 8
+                                                },
+                                                {
+                                                    label: 'ต้นทุนโครงการ',
+                                                    data: costs,
+                                                    backgroundColor: '#ef4444', // red-500
+                                                    borderRadius: 8
+                                                }
+                                            ]
+                                        },
+                                        options: {
+                                            responsive: true,
+                                            maintainAspectRatio: false,
+                                            scales: {
+                                                y: {
+                                                    beginAtZero: true,
+                                                    grid: {
+                                                        color: '#f1f5f9'
+                                                    }
+                                                },
+                                                x: {
+                                                    grid: {
+                                                        display: false
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                </script>
+            
+            </div>
+
         <?php elseif ($view == 'list'): ?>
             <!-- List View -->
             <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">

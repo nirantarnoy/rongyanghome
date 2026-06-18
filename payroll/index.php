@@ -138,12 +138,12 @@ $company_address = $company_info['address'] ?? '---';
 
                     <button onclick="switchTab('commission_calc')" id="btn-commission_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-calculator w-5"></i>
-                        <span>คิดค่าคอมรายชิ้น</span>
+                        <span>คิดค่าคอมแบบเหมารายเดือน</span>
                     </button>
 
                     <button onclick="switchTab('commission_history')" id="btn-commission_history" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
                         <i class="fa-solid fa-clock-rotate-left w-5"></i>
-                        <span>ประวัติค่าคอมรายชิ้น</span>
+                        <span>ประวัติค่าคอมแบบเหมารายเดือน</span>
                     </button>
                 </div>
             </div>
@@ -323,12 +323,12 @@ $company_address = $company_info['address'] ?? '---';
                     loadCommissionSettings();
                     break;
                 case 'commission_calc':
-                    title = 'คิดค่าคอมรายตัว';
-                    subtitle = 'คำนวณและปันส่วนค่าคอมมิชชั่นเฟอร์นิเจอร์รายตัว';
+                    title = 'คิดค่าคอมแบบเหมารายเดือน';
+                    subtitle = 'คำนวณและปันส่วนค่าคอมมิชชั่นเฟอร์นิเจอร์ตามยอดขาย';
                     loadCommissionCalc();
                     break;
                 case 'commission_history':
-                    title = 'ประวัติค่าคอมรายชิ้น';
+                    title = 'ประวัติค่าคอมแบบเหมารายเดือน';
                     subtitle = 'เรียกดู แก้ไข หรือตรวจสอบรายละเอียดค่าคอมมิชชั่นย้อนหลัง';
                     loadCommissionHistory();
                     break;

@@ -3,8 +3,8 @@
         <!-- Header -->
         <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/50">
             <div>
-                <h4 class="font-bold text-slate-800 text-lg">ประวัติค่าคอมมิชชั่นรายชิ้น</h4>
-                <p class="text-sm text-slate-400 mt-0.5">เรียกดู แก้ไข หรือตรวจสอบรายละเอียดการปันส่วนค่าคอมมิชชั่นเฟอร์นิเจอร์</p>
+                <h4 class="font-bold text-slate-800 text-lg">ประวัติค่าคอมมิชชั่นแบบเหมารายเดือน</h4>
+                <p class="text-sm text-slate-400 mt-0.5">เรียกดู แก้ไข หรือตรวจสอบรายละเอียดการปันส่วนค่าคอมมิชชั่นแบบเหมา</p>
             </div>
             <button onclick="switchTab('commission_calc')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 gap-1.5">
                 <i class="fa-solid fa-plus"></i>
@@ -62,12 +62,10 @@
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-50 border-b border-slate-200">
-                                <th class="px-4 py-3 text-sm font-bold text-slate-500 uppercase">สินค้า</th>
-                                <th class="px-4 py-3 text-sm font-bold text-slate-500 uppercase text-center">จำนวน</th>
-                                <th class="px-4 py-3 text-sm font-bold text-slate-500 uppercase text-right">ราคารวม (บาท)</th>
-                                <th class="px-4 py-3 text-sm font-bold text-purple-500 uppercase text-right">แอดมิน</th>
-                                <th class="px-4 py-3 text-sm font-bold text-blue-500 uppercase text-right">คนปิดการขาย</th>
-                                <th class="px-4 py-3 text-sm font-bold text-amber-500 uppercase text-right">ผู้ช่วย</th>
+                                <th class="px-4 py-3 text-sm font-bold text-slate-500 uppercase">รายการ</th>
+                                <th class="px-4 py-3 text-sm font-bold text-slate-500 uppercase text-right">ยอดขายรวม (บาท)</th>
+                                <th class="px-4 py-3 text-sm font-bold text-blue-500 uppercase text-right">เรต (%)</th>
+                                <th class="px-4 py-3 text-sm font-bold text-emerald-500 uppercase text-right">ค่าคอมรวม (บาท)</th>
                             </tr>
                         </thead>
                         <tbody id="modal_view_items_body" class="divide-y divide-slate-100">
@@ -75,11 +73,10 @@
                         </tbody>
                         <tfoot class="bg-slate-50 border-t border-slate-200">
                             <tr>
-                                <th colspan="2" class="px-4 py-3 text-base font-bold text-slate-600 text-right">รวมทั้งหมด:</th>
+                                <th class="px-4 py-3 text-base font-bold text-slate-600 text-right">รวมทั้งหมด:</th>
                                 <th class="px-4 py-3 text-base font-extrabold text-slate-800 text-right" id="modal_view_total_sales">0.00</th>
-                                <th class="px-4 py-3 text-base font-bold text-purple-600 text-right" id="modal_view_total_admin">0.00</th>
-                                <th class="px-4 py-3 text-base font-bold text-blue-600 text-right" id="modal_view_total_sales_comm">0.00</th>
-                                <th class="px-4 py-3 text-base font-bold text-amber-600 text-right" id="modal_view_total_helper">0.00</th>
+                                <th class="px-4 py-3 text-base font-bold text-blue-600 text-right">-</th>
+                                <th class="px-4 py-3 text-base font-bold text-emerald-600 text-right" id="modal_view_total_sales_comm">0.00</th>
                             </tr>
                         </tfoot>
                     </table>
@@ -182,36 +179,21 @@
                     $('#modal_btn_edit').attr('onclick', `closeViewModal(); editCommissionTransaction(${id});`);
 
                     let tbody = '';
-                    let totalAdmin = 0, totalSalesComm = 0, totalHelper = 0, totalSalesAmount = 0;
+                    let totalSalesComm = 0, totalSalesAmount = 0;
 
                     res.items.forEach(function(item) {
                         totalSalesAmount += parseFloat(item.total_price);
-                        totalAdmin += parseFloat(item.admin_commission);
                         totalSalesComm += parseFloat(item.sales_commission);
-                        
-                        let helperComm = 0;
-                        if (item.helper1_employee_id) helperComm += parseFloat(item.helper1_commission);
-                        if (item.helper2_employee_id) helperComm += parseFloat(item.helper2_commission);
-                        totalHelper += helperComm;
 
                         tbody += `
                             <tr class="hover:bg-slate-50/50">
                                 <td class="px-4 py-3">
-                                    <div class="text-sm font-bold text-slate-700">${item.product_code}</div>
-                                    <div class="text-xs font-semibold text-slate-500">${item.product_name}</div>
+                                    <div class="text-sm font-semibold text-slate-700">${item.product_name}</div>
                                 </td>
-                                <td class="px-4 py-3 text-sm font-bold text-slate-600 text-center">${item.quantity} ${item.unit}</td>
                                 <td class="px-4 py-3 text-sm font-bold text-slate-700 text-right">${parseFloat(item.total_price).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-4 py-3 text-sm font-bold text-blue-600 text-right">${parseFloat(item.sales_rate).toFixed(2)}%</td>
                                 <td class="px-4 py-3 text-right">
-                                    <div class="text-sm font-extrabold text-purple-600">${parseFloat(item.admin_commission).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
-                                    ${item.admin_employee_id ? `<div class="text-[11px] font-semibold text-purple-400 mt-0.5">${parseFloat(item.admin_rate).toFixed(2)}%</div>` : '<div class="text-[11px] text-slate-300">-</div>'}
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <div class="text-sm font-extrabold text-blue-600">${parseFloat(item.sales_commission).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
-                                    <div class="text-[11px] font-semibold text-blue-400 mt-0.5">${parseFloat(item.sales_rate).toFixed(2)}%</div>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <div class="text-sm font-extrabold text-amber-600">${parseFloat(helperComm).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                                    <div class="text-sm font-extrabold text-emerald-600">${parseFloat(item.sales_commission).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
                                 </td>
                             </tr>
                         `;
@@ -219,12 +201,9 @@
 
                     $('#modal_view_items_body').html(tbody);
                     $('#modal_view_total_sales').text(totalSalesAmount.toLocaleString('th-TH', {minimumFractionDigits: 2}));
-                    $('#modal_view_total_admin').text(totalAdmin.toLocaleString('th-TH', {minimumFractionDigits: 2}));
                     $('#modal_view_total_sales_comm').text(totalSalesComm.toLocaleString('th-TH', {minimumFractionDigits: 2}));
-                    $('#modal_view_total_helper').text(totalHelper.toLocaleString('th-TH', {minimumFractionDigits: 2}));
                     
-                    const grandTotal = totalAdmin + totalSalesComm + totalHelper;
-                    $('#modal_view_grand_total').text(grandTotal.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+                    $('#modal_view_grand_total').text(totalSalesComm.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
 
                     // Show modal
                     $('#viewCommissionModal').removeClass('hidden');

@@ -121,7 +121,7 @@ $createAttendanceTable = "CREATE TABLE IF NOT EXISTS payroll_attendance (
     work_date DATE NOT NULL,
     check_in TIME NULL,
     check_out TIME NULL,
-    status ENUM('normal', 'late', 'absent', 'leave') NOT NULL DEFAULT 'normal',
+    status ENUM('normal', 'late', 'absent', 'leave', 'day_off', 'weekly_off') NOT NULL DEFAULT 'normal',
     leave_type ENUM('business', 'sick', 'annual', 'other') NULL,
     note VARCHAR(255) NULL,
     position_id INT NULL DEFAULT NULL,

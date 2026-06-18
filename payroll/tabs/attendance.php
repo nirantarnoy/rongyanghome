@@ -56,6 +56,19 @@
     </div>
 </div>
 
+<!-- Status Explanations -->
+<div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 mb-6">
+    <h3 class="text-sm font-bold text-slate-800 mb-3"><i class="fa-solid fa-circle-info text-blue-500 mr-2"></i>คำอธิบายสถานะการทำงาน</h3>
+    <ul class="text-sm text-slate-600 space-y-2">
+        <li><span class="font-bold text-emerald-600">มาทำงานปกติ</span> = รับค่าแรงตามเรตที่เลือกให้แต่ละคนในแต่ละวัน</li>
+        <li><span class="font-bold text-amber-600">มาสาย</span> = หักเงินเป็นนาที บัญชีคำนวณเองข้างนอกแล้วกดหักตามเรตที่กำหนดเอง</li>
+        <li><span class="font-bold text-rose-600">ขาดงาน</span> = ให้เลือกเมื่อพนักงานรับเงินเดือนประจำลาโดยไม่แจ้งหรือลาโดยที่หมดสิทธิ์วันลาตามกำหนดแล้วให้ระบบหักเงินอัตโนมัติโดยคำนวณจากค่าแรงเฉลี่ยต่อวันเช่นเงินเดือน12,000/30 = หักต่อวัน = 400 บาท</li>
+        <li><span class="font-bold text-blue-600">ลางาน</span> = ใช้เลือกสำหรับพนักงานรับเงินเดือนไม่หักเงินเดือนหากอยู่ในสิทธิ์ลา</li>
+        <li><span class="font-bold text-slate-500">หยุดงาน</span> = ใช้เลือกให้พนักงานรายวันที่หยุดงานก็จะไม่ได้เงินในวันนี้</li>
+        <li><span class="font-bold text-indigo-500">วันหยุดประจำสัปดาห์</span> = ใช้เลือกให้พนักงานรายเดือนที่หยุดงานจะไม่ถูกหักเงินในวันนี้เพราะเป็นวันหยุดประจำของพนักงาน</li>
+    </ul>
+</div>
+
 <!-- Attendance Form/Table Card -->
 <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
     <div class="overflow-x-auto">
@@ -220,6 +233,8 @@
                         let optLate = status === 'late' ? 'selected' : '';
                         let optAbsent = status === 'absent' ? 'selected' : '';
                         let optLeave = status === 'leave' ? 'selected' : '';
+                        let optDayOff = status === 'day_off' ? 'selected' : '';
+                        let optWeeklyOff = status === 'weekly_off' ? 'selected' : '';
 
                         // Build leave types options
                         let loptBusiness = leaveType === 'business' ? 'selected' : '';
@@ -227,8 +242,8 @@
                         let loptAnnual = leaveType === 'annual' ? 'selected' : '';
                         let loptOther = leaveType === 'other' ? 'selected' : '';
 
-                        // Disable time inputs for absent/leave
-                        let timeDisabled = (status === 'absent' || status === 'leave') ? 'disabled' : '';
+                        // Disable time inputs for absent/leave/day off
+                        let timeDisabled = (status === 'absent' || status === 'leave' || status === 'day_off' || status === 'weekly_off') ? 'disabled' : '';
                         let leaveDisabled = (status !== 'leave') ? 'disabled' : '';
 
                         let avatarHtml = '';
@@ -276,6 +291,8 @@
                                     <option value="late" ${optLate}>มาสาย</option>
                                     <option value="absent" ${optAbsent}>ขาดงาน</option>
                                     <option value="leave" ${optLeave}>ลางาน</option>
+                                    <option value="day_off" ${optDayOff}>หยุดงาน</option>
+                                    <option value="weekly_off" ${optWeeklyOff}>วันหยุดประจำสัปดาห์</option>
                                 </select>
                             </td>
                             <td class="px-4 py-3 text-sm">
@@ -349,7 +366,7 @@
         const checkOut = row.find('.row-check-out');
         const leaveType = row.find('.row-leave-type');
 
-        if (status === 'absent' || status === 'leave') {
+        if (status === 'absent' || status === 'leave' || status === 'day_off' || status === 'weekly_off') {
             checkIn.val('').prop('disabled', true);
             checkOut.val('').prop('disabled', true);
         } else {

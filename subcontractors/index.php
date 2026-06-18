@@ -199,13 +199,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     <span>รายงานต้นทุน</span>
                 </a>
 
-                <a href="index.php?view=profit_summary" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'profit_summary' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path>
-                    </svg>
-                    <span>สรุปกำไรโปรเจค</span>
-                </a>
 
                 <a href="index.php?view=settings" class="flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-lg font-medium" <?= $view === 'settings' ? 'active-menu' : 'hover:text-white hover:bg-slate-800' ?>">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +236,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                             case 'new_payment': echo 'บันทึกการจ่ายเงิน'; break;
                             case 'expenses': echo 'ค่าใช้จ่ายเพิ่มเติม'; break;
                             case 'cost_report': echo 'รายงานต้นทุน'; break;
-                            case 'profit_summary': echo 'สรุปกำไรโปรเจค'; break;
                             case 'settings': echo 'การตั้งค่าสถานะงาน'; break;
                             case 'settings': echo 'การตั้งค่าสถานะงาน'; break;
                         }
@@ -261,7 +253,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         case 'new_payment': echo 'การจ่ายเงินผู้รับเหมา (ใหม่)'; break;
                         case 'expenses': echo 'ค่าใช้จ่ายเพิ่มเติมของโครงการ'; break;
                         case 'cost_report': echo 'รายงานสรุปต้นทุนโครงการ'; break;
-                        case 'profit_summary': echo 'สรุปกำไรขาดทุนโครงการ'; break;
                     }
                     ?>
                 </h1>
@@ -2966,13 +2957,10 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                                     </td>
                                                     <td class="py-4 px-4 font-bold text-slate-500">${r.project_code}</td>
                                                     <td class="py-4 px-4 font-bold text-slate-700">${r.project_name}</td>
-                                                    <td class="py-4 px-4 text-slate-500 text-sm">${r.contractor_name}</td>
-                                                    <td class="py-4 px-4 text-right font-bold text-slate-700">${r.contract_value.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                                    <td class="py-4 px-4 text-right font-semibold text-slate-600">${r.labor_cost.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                                                    <td class="py-4 px-4 text-rose-600 font-bold text-sm">${r.subcontractor_names}</td>
+                                                    <td class="py-4 px-4 text-right font-bold text-slate-700">${r.labor_cost.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                                                     <td class="py-4 px-4 text-right font-semibold text-slate-600">${r.additional_expenses.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
                                                     <td class="py-4 px-4 text-right font-extrabold text-slate-800">${r.total_cost.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                                    <td class="py-4 px-4 text-right ${profitClass}">${r.profit.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-                                                    <td class="py-4 px-4 text-center font-bold ${r.profit_percent >= 0 ? 'text-emerald-600' : 'text-rose-500'}">${r.profit_percent}%</td>
                                                     <td class="py-4 px-4 text-center">
                                                         <span class="px-2 py-0.5 rounded text-xs font-bold ${r.status==='กำลังดำเนินการ'?'bg-emerald-50 text-emerald-600':(r.status==='เสร็จสิ้น'?'bg-blue-55 text-blue-600':'bg-slate-100 text-slate-600')}">${r.status}</span>
                                                     </td>
@@ -3016,132 +3004,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                     }
                 </script>
 
-            <?php elseif ($view === 'profit_summary'): ?>
-                <!-- ================== VIEW: PROJECT PROFIT SUMMARY ================== -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Left: Profit summary chart -->
-                    <div class="custom-card p-6 lg:col-span-2 space-y-6">
-                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2 pb-3 border-b border-slate-100">
-                            <span>📈</span> แผนภูมิเปรียบเทียบ รายรับ สัญญา vs ต้นทุนโครงการ
-                        </h3>
-                        <div class="h-80 flex items-center justify-center">
-                            <canvas id="profit-comparison-chart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Right: KPI summaries -->
-                    <div class="custom-card p-6 space-y-6">
-                        <h3 class="font-bold text-slate-800 text-lg pb-3 border-b border-slate-100">
-                            📊 สถิติกำไรเฉลี่ยโครงการ
-                        </h3>
-                        
-                        <div class="space-y-4">
-                            <div class="bg-emerald-50 text-emerald-800 border border-emerald-100 p-4 rounded-2xl flex justify-between items-center">
-                                <div>
-                                    <span class="text-sm font-semibold block text-emerald-600">มูลค่ารวมสัญญา (โครงการทั้งหมด)</span>
-                                    <span class="text-xl font-extrabold" id="sum-contract">0.00 บาท</span>
-                                </div>
-                                <span class="text-3xl">🏠</span>
-                            </div>
-
-                            <div class="bg-rose-50 text-rose-800 border border-rose-100 p-4 rounded-2xl flex justify-between items-center">
-                                <div>
-                                    <span class="text-sm font-semibold block text-rose-600">ต้นทุนสะสมรวม</span>
-                                    <span class="text-xl font-extrabold" id="sum-cost">0.00 บาท</span>
-                                </div>
-                                <span class="text-3xl">📉</span>
-                            </div>
-
-                            <div class="bg-blue-50 text-blue-800 border border-blue-100 p-4 rounded-2xl flex justify-between items-center">
-                                <div>
-                                    <span class="text-sm font-semibold block text-blue-600">กำไรรวมขั้นต้น</span>
-                                    <span class="text-xl font-extrabold" id="sum-profit">0.00 บาท</span>
-                                </div>
-                                <span class="text-3xl">💰</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <script>
-                    $(document).ready(function() {
-                        loadProfitSummaryData();
-                    });
-
-                    function loadProfitSummaryData() {
-                        $.ajax({
-                            url: 'action.php',
-                            type: 'GET',
-                            data: { action: 'cost_report' },
-                            success: function(res) {
-                                if (res.status === 'success') {
-                                    let labels = [];
-                                    let revenues = [];
-                                    let costs = [];
-                                    let profits = [];
-                                    
-                                    let totalRev = 0;
-                                    let totalCost = 0;
-                                    let totalProfit = 0;
-
-                                    res.data.forEach(r => {
-                                        labels.push(r.project_name);
-                                        revenues.push(r.contract_value);
-                                        costs.push(r.total_cost);
-                                        profits.push(r.profit);
-
-                                        totalRev += r.contract_value;
-                                        totalCost += r.total_cost;
-                                        totalProfit += r.profit;
-                                    });
-
-                                    $('#sum-contract').text(totalRev.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
-                                    $('#sum-cost').text(totalCost.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
-                                    $('#sum-profit').text(totalProfit.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' บาท');
-
-                                    // Render Chart
-                                    new Chart(document.getElementById('profit-comparison-chart'), {
-                                        type: 'bar',
-                                        data: {
-                                            labels: labels,
-                                            datasets: [
-                                                {
-                                                    label: 'มูลค่าโครงการ',
-                                                    data: revenues,
-                                                    backgroundColor: '#10b981', // emerald-500
-                                                    borderRadius: 8
-                                                },
-                                                {
-                                                    label: 'ต้นทุนโครงการ',
-                                                    data: costs,
-                                                    backgroundColor: '#ef4444', // red-500
-                                                    borderRadius: 8
-                                                }
-                                            ]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            scales: {
-                                                y: {
-                                                    beginAtZero: true,
-                                                    grid: {
-                                                        color: '#f1f5f9'
-                                                    }
-                                                },
-                                                x: {
-                                                    grid: {
-                                                        display: false
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                    }
-                </script>
             <?php endif; ?>
 
         </div>
