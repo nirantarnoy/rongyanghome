@@ -59,6 +59,7 @@
 
 <script>
     let employeesList = [];
+    let commissionSettings = null;
     let defaultSalesRate = 1.00;
     let commItemIndex = 0;
     let activeEditCommId = 0;
@@ -70,6 +71,7 @@
             data: { action: 'get_commission_settings' },
             success: function(rates) {
                 if (rates) {
+                    commissionSettings = rates;
                     defaultSalesRate = parseFloat(rates.sales_rate || 1.00);
                 }
                 
@@ -130,8 +132,14 @@
                     <span class="row-number font-bold text-slate-500 text-sm block py-2.5"></span>
                 </div>
                 <div class="md:col-span-3">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">รายการสินค้า / ยอดขาย *</label>
-                    <input type="text" class="prod-name w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 text-sm transition-all" placeholder="เช่น ยอดขายรวมเดือนพฤษภาคม">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">แพลตฟอร์ม / รายการ *</label>
+                    <select class="prod-name w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-semibold text-slate-700 transition-all">
+                        <option value="">-- เลือกแพลตฟอร์ม --</option>
+                        <option value="Shopee">Shopee</option>
+                        <option value="Lazada">Lazada</option>
+                        <option value="Tiktok">Tiktok</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">ยอดขายรวม (บาท) *</label>
@@ -339,6 +347,19 @@
 
     $(document).on('change', '.sales-emp-select', function() {
         const row = $(this).closest('.item-block');
+        calculateItem(row);
+    });
+
+    $(document).on('change', '.prod-name', function() {
+        const row = $(this).closest('.item-block');
+        const platform = $(this).val();
+        let newRate = defaultSalesRate;
+        if (commissionSettings) {
+            if (platform === 'Shopee') newRate = parseFloat(commissionSettings.shopee_rate);
+            else if (platform === 'Lazada') newRate = parseFloat(commissionSettings.lazada_rate);
+            else if (platform === 'Tiktok') newRate = parseFloat(commissionSettings.tiktok_rate);
+        }
+        row.find('.sales-rate-input').val(newRate);
         calculateItem(row);
     });
 </script>

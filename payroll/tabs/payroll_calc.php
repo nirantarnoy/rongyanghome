@@ -29,6 +29,22 @@
     </div>
 </div>
 
+<!-- Cycle selector buttons -->
+<div id="calcCycleSelector" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
+    <button onclick="selectCycle(1)" id="btn-cycle-1" class="p-4 rounded-xl border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 transition-all text-left">
+        <h5 class="font-bold text-slate-800">งวดที่ 1 (1-10)</h5>
+        <div class="text-sm text-slate-500 mt-1" id="cycle-1-dates">1 - 10 มิถุนายน 2569</div>
+    </button>
+    <button onclick="selectCycle(2)" id="btn-cycle-2" class="p-4 rounded-xl border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 transition-all text-left">
+        <h5 class="font-bold text-slate-800">งวดที่ 2 (11-20)</h5>
+        <div class="text-sm text-slate-500 mt-1" id="cycle-2-dates">11 - 20 มิถุนายน 2569</div>
+    </button>
+    <button onclick="selectCycle(3)" id="btn-cycle-3" class="p-4 rounded-xl border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-200 transition-all text-left">
+        <h5 class="font-bold text-slate-800">งวดสิ้นเดือน (21-30)</h5>
+        <div class="text-sm text-slate-500 mt-1" id="cycle-3-dates">21 - 30 มิถุนายน 2569 <span class="text-xs text-rose-500 block">(หักเงินกู้/ยืม เฉพาะรอบสิ้นเดือน)</span></div>
+    </button>
+</div>
+
 <!-- ========================================== -->
 <!-- VIEW: CALCULATOR (MAIN) -->
 <!-- ========================================== -->
@@ -78,6 +94,11 @@
         </div>
     </div>
 
+        <!-- Dynamic Summary Panel -->
+        <div id="cycleSummaryPanel" class="hidden mb-6 mt-4">
+            <!-- Rendered via JS based on selected cycle -->
+        </div>
+
     <!-- Details Table -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
@@ -100,23 +121,8 @@
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100">
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center w-12">
-                            <input type="checkbox" id="selectAllEmployees" checked onchange="toggleSelectAllEmployees(this)"
-                                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer">
-                        </th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ประเภท/อัตรา</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center">สถิติงาน (มา/ขาด/ลา)</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-slate-600">เงินได้พื้นฐาน</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right text-emerald-600">เงินเพิ่มพิเศษ</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right text-rose-600">เงินหักทั้งหมด</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right text-amber-600">หักเงินกู้/ยืม</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-blue-600">ยอดสุทธิที่จ่าย</th>
-                        <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">สลิปเงินเดือน</th>
-                    </tr>
+                <thead id="payrollTableHead">
+                    <!-- Dynamic Headers based on cycle -->
                 </thead>
                 <tbody id="payrollTableBody" class="divide-y divide-slate-100">
                     <!-- Dynamically populated -->
@@ -160,6 +166,7 @@
     let activeCalcSubTab = 'calculator';
     let currentPayrollRun = null;
     let computedDetails = [];
+    let selectedCycle = 1;
 
     function switchCalcSubTab(subTab) {
         activeCalcSubTab = subTab;
@@ -179,15 +186,95 @@
 
         if (subTab === 'calculator') {
             $('#calcPeriodSelector').removeClass('hidden');
-            loadPayrollCalculation();
+            $('#calcCycleSelector').removeClass('hidden');
+            selectCycle(1);
         } else {
             $('#calcPeriodSelector').addClass('hidden');
+            $('#calcCycleSelector').addClass('hidden');
             loadPayrollHistory();
         }
     }
 
     function loadPayrollCalc() {
         switchCalcSubTab('calculator');
+    }
+
+    function renderCycleTableHeaders() {
+        let headers = `
+            <tr class="bg-slate-50 border-b border-slate-100">
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center w-12">
+                    <input type="checkbox" id="selectAllEmployees" checked onchange="toggleSelectAllEmployees(this)"
+                           class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer">
+                </th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">รหัสพนักงาน</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
+        `;
+
+        if (selectedCycle === 1 || selectedCycle === 2) {
+            headers += `
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">เงินได้งวดนี้</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">เงินเพิ่ม</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">หักทั่วไป</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">หนี้คงเหลือ</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center">สถานะหนี้</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-blue-600">จ่ายจริงรอบนี้</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">จัดการ</th>
+            `;
+        } else {
+            headers += `
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">รายได้รอบนี้</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">เงินเพิ่ม</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">เงินหักทั่วไป</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right text-rose-600">เงินกู้/ยืม (หักรอบนี้)</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right font-bold text-blue-600">จ่ายสุทธิรอบนี้</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">ยอดหนี้คงเหลือ</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-center">สถานะ</th>
+                <th class="px-6 py-4 text-sm font-semibold text-slate-500 uppercase tracking-wider text-right">จัดการ</th>
+            `;
+        }
+        headers += '</tr>';
+        $('#payrollTableHead').html(headers);
+    }
+
+    function selectCycle(cycle) {
+        selectedCycle = cycle;
+        const monthPeriod = $('#payroll_month_input').val();
+        if (!monthPeriod) return;
+
+        // Visual update for buttons
+        $('#btn-cycle-1, #btn-cycle-2, #btn-cycle-3').removeClass('bg-blue-600 text-white').addClass('bg-white text-slate-800');
+        $(`#btn-cycle-${cycle}`).addClass('bg-blue-600 text-white').removeClass('bg-white text-slate-800');
+        $(`#btn-cycle-${cycle} h5`).removeClass('text-slate-800').addClass('text-white');
+        $(`#btn-cycle-${cycle} div`).removeClass('text-slate-500 text-rose-500').addClass('text-blue-100');
+        
+        // Reset others to normal
+        [1,2,3].forEach(c => {
+            if(c !== cycle) {
+                $(`#btn-cycle-${c} h5`).removeClass('text-white').addClass('text-slate-800');
+                $(`#btn-cycle-${c} div`).removeClass('text-blue-100').addClass('text-slate-500');
+                if (c === 3) $(`#btn-cycle-3 div span`).removeClass('text-blue-200').addClass('text-rose-500');
+            }
+        });
+
+        if (cycle === 3) $(`#btn-cycle-3 div span`).removeClass('text-rose-500').addClass('text-blue-200');
+
+        const parts = monthPeriod.split('-');
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const lastDay = new Date(year, month, 0).getDate();
+
+        if (cycle === 1) {
+            $('#payroll_start_date').val(`${year}-${String(month).padStart(2, '0')}-01`);
+            $('#payroll_end_date').val(`${year}-${String(month).padStart(2, '0')}-10`);
+        } else if (cycle === 2) {
+            $('#payroll_start_date').val(`${year}-${String(month).padStart(2, '0')}-11`);
+            $('#payroll_end_date').val(`${year}-${String(month).padStart(2, '0')}-20`);
+        } else {
+            $('#payroll_start_date').val(`${year}-${String(month).padStart(2, '0')}-21`);
+            $('#payroll_end_date').val(`${year}-${String(month).padStart(2, '0')}-${lastDay}`);
+        }
+
+        loadPayrollCalculation(true);
     }
 
     function loadPayrollCalculation(recalculate = false) {
@@ -204,7 +291,8 @@
                 month_period: monthPeriod,
                 start_date: startDate,
                 end_date: endDate,
-                recalculate: recalculate ? 'true' : 'false'
+                recalculate: recalculate ? 'true' : 'false',
+                cycle: selectedCycle
             },
             success: function(res) {
                 if (res.status === 'error') {
@@ -214,6 +302,7 @@
                 }
                 computedDetails = res.details || [];
                 currentPayrollRun = res;
+                renderCycleTableHeaders();
 
                 if (res.status === 'saved') {
                     $('#payroll_start_date').val(res.start_date);
@@ -280,24 +369,57 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm">${typeBadge}</td>
-                            <td class="px-6 py-4 text-sm text-center font-bold">
-                                <div class="flex items-center justify-center gap-2">
-                                    <span class="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100" title="วันทำงานปกติ + สาย">${row.present_days} มา</span>
-                                    <span class="text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100" title="วันขาดงาน">${row.absent_days} ขาด</span>
-                                    <span class="text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100" title="วันหยุดลางาน">${row.leave_days} ลา</span>
+                        let cols = '';
+                        if (selectedCycle === 1 || selectedCycle === 2) {
+                            cols = `
+                                <td class="px-6 py-4 text-sm text-right font-bold text-slate-700">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-right font-semibold text-emerald-500">${parseFloat(row.allowance || 0) > 0 ? '+' + parseFloat(row.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                                <td class="px-6 py-4 text-sm text-right font-semibold text-rose-500">${parseFloat(row.deductions) > 0 ? '-' + parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-amber-600">${parseFloat(row.remaining_debt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-center"><span class="text-amber-500 bg-amber-50 px-2 py-1 rounded text-xs">รอหักสิ้นเดือน</span></td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-blue-600">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    <button onclick="printPaySlip(${row.employee_id})" class="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-blue-600 text-slate-600 hover:text-white rounded-lg transition-all text-sm font-bold gap-1 shadow-sm">
+                                        <i class="fa-solid fa-print"></i> พิมพ์สลิป
+                                    </button>
+                                </td>
+                            `;
+                        } else {
+                            cols = `
+                                <td class="px-6 py-4 text-sm text-right font-bold text-slate-700">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-right font-semibold text-emerald-500">${parseFloat(row.allowance || 0) > 0 ? '+' + parseFloat(row.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                                <td class="px-6 py-4 text-sm text-right font-semibold text-rose-500">${parseFloat(row.deductions) > 0 ? '-' + parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-rose-600">${parseFloat(row.loan_deduction || 0) > 0 ? '-' + parseFloat(row.loan_deduction).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-blue-600">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-right font-bold text-amber-600">${parseFloat(row.remaining_debt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-6 py-4 text-sm text-center">
+                                    ${parseFloat(row.remaining_debt) > 0 ? '<span class="text-emerald-500 bg-emerald-50 px-2 py-1 rounded text-xs">ผ่อนต่อ</span>' : '-'}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    <button onclick="printPaySlip(${row.employee_id})" class="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-blue-600 text-slate-600 hover:text-white rounded-lg transition-all text-sm font-bold gap-1 shadow-sm">
+                                        <i class="fa-solid fa-print"></i> พิมพ์สลิป
+                                    </button>
+                                </td>
+                            `;
+                        }
+
+                        html += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 text-center">
+                                <input type="checkbox" class="employee-checkbox w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer" 
+                                       data-emp-id="${row.employee_id}" checked ${disabledAttr} onchange="onEmployeeCheckboxChange()">
+                            </td>
+                            <td class="px-6 py-4 text-sm font-bold text-slate-800">${row.emp_code}</td>
+                            <td class="px-6 py-4 text-sm font-semibold text-slate-700">
+                                <div class="flex items-center gap-3">
+                                    ${avatarHtml}
+                                    <div>
+                                        <span>${row.first_name} ${row.last_name}</span>
+                                        <div class="text-xs text-slate-400 font-normal mt-0.5">${row.position}</div>
+                                    </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-right font-bold text-slate-700">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                            <td class="px-6 py-4 text-sm text-right font-semibold text-emerald-500">${parseFloat(row.allowance || 0) > 0 ? '+' + parseFloat(row.allowance).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
-                            <td class="px-6 py-4 text-sm text-right font-semibold text-rose-500">${parseFloat(row.deductions) > 0 ? '-' + parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
-                            <td class="px-6 py-4 text-sm text-right font-semibold text-amber-600">${parseFloat(row.loan_deduction || 0) > 0 ? '-' + parseFloat(row.loan_deduction).toLocaleString('th-TH', {minimumFractionDigits: 2}) : '0.00'}</td>
-                            <td class="px-6 py-4 text-sm text-right font-bold text-blue-600">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                            <td class="px-6 py-4 text-sm text-right">
-                                <button onclick="printPaySlip(${row.employee_id})" class="inline-flex items-center px-2.5 py-1.5 bg-slate-100 hover:bg-blue-600 text-slate-600 hover:text-white rounded-lg transition-all text-sm font-bold gap-1 shadow-sm">
-                                    <i class="fa-solid fa-print"></i> พิมพ์สลิป
-                                </button>
-                            </td>
+                            ${cols}
                         </tr>`;
                     });
                 } else {
@@ -357,6 +479,7 @@
                         month_period: monthPeriod,
                         start_date: startDate,
                         end_date: endDate,
+                        cycle: selectedCycle,
                         status: status,
                         details: JSON.stringify(filteredDetails)
                     },
@@ -756,6 +879,12 @@
 
     function updatePayrollSummaryAndPayload() {
         let totalPayout = 0;
+        let totalBase = 0;
+        let totalAllowance = 0;
+        let totalDeductions = 0;
+        let totalLoanDeductions = 0;
+        let totalRemainingDebt = 0;
+        let debtEmpCount = 0;
         let selectedEmpCount = 0;
         
         $('.employee-checkbox').each(function() {
@@ -766,16 +895,99 @@
             if (detail) {
                 if (isChecked) {
                     totalPayout += parseFloat(detail.net_pay);
+                    totalBase += parseFloat(detail.base_earnings);
+                    totalAllowance += parseFloat(detail.allowance || 0);
+                    totalDeductions += parseFloat(detail.deductions || 0);
+                    totalLoanDeductions += parseFloat(detail.loan_deduction || 0);
+                    if (parseFloat(detail.remaining_debt || 0) > 0) {
+                        totalRemainingDebt += parseFloat(detail.remaining_debt);
+                        debtEmpCount++;
+                    }
                     selectedEmpCount++;
                 }
             }
         });
 
-        $('#sum-total-payout').text(totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
         $('#sum-total-employees').text(selectedEmpCount + ' คน');
         
-        let avg = selectedEmpCount > 0 ? (totalPayout / selectedEmpCount) : 0;
-        $('#sum-average-payout').text(avg.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
+        let html = '';
+        if (selectedCycle === 1 || selectedCycle === 2) {
+            html = `
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+                    <span class="text-xs text-blue-500 font-bold uppercase tracking-wider mb-1">เงินได้รวมงวดนี้</span>
+                    <h3 class="text-2xl font-bold text-blue-700">${totalBase.toLocaleString('th-TH', {minimumFractionDigits: 2})}</h3>
+                </div>
+                <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+                    <span class="text-xs text-emerald-500 font-bold uppercase tracking-wider mb-1">เงินเพิ่ม</span>
+                    <h3 class="text-2xl font-bold text-emerald-700">${totalAllowance.toLocaleString('th-TH', {minimumFractionDigits: 2})}</h3>
+                </div>
+                <div class="bg-rose-50 border border-rose-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+                    <span class="text-xs text-rose-500 font-bold uppercase tracking-wider mb-1">เงินหักทั่วไป</span>
+                    <h3 class="text-2xl font-bold text-rose-700">${totalDeductions.toLocaleString('th-TH', {minimumFractionDigits: 2})}</h3>
+                </div>
+                <div class="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden">
+                    <span class="text-xs text-amber-600 font-bold uppercase tracking-wider mb-1">หนี้คงเหลือพนักงาน</span>
+                    <h3 class="text-2xl font-bold text-amber-700">${totalRemainingDebt.toLocaleString('th-TH', {minimumFractionDigits: 2})}</h3>
+                </div>
+                <div class="bg-blue-600 rounded-2xl p-4 flex flex-col justify-center relative overflow-hidden shadow-md shadow-blue-500/20">
+                    <span class="text-xs text-blue-100 font-bold uppercase tracking-wider mb-1">ยอดจ่ายสุทธิรอบนี้</span>
+                    <h3 class="text-2xl font-bold text-white">${totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2})}</h3>
+                </div>
+            </div>`;
+        } else {
+            html = `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-700 mb-3">สรุปยอดรวมรอบปัจจุบัน</span>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">เงินได้รวม</div>
+                            <div class="font-bold text-slate-800 text-lg">${(totalBase + totalAllowance).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">หักรวมทั้งหมด</div>
+                            <div class="font-bold text-slate-800 text-lg">${totalDeductions.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">หักเงินกู้รอบนี้</div>
+                            <div class="font-bold text-rose-600 text-lg">${totalLoanDeductions.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div class="bg-blue-600 text-white p-2 rounded-lg -m-2 text-center flex flex-col justify-center shadow-md">
+                            <div class="text-xs text-blue-100 mb-1">จ่ายสุทธิรวม</div>
+                            <div class="font-bold text-lg">${totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col justify-center">
+                    <span class="text-sm font-bold text-slate-700 mb-3">สรุปเงินกู้/ยืม ของพนักงาน</span>
+                    <div class="grid grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">พนักงานที่มีหนี้</div>
+                            <div class="font-bold text-slate-800 text-lg">${debtEmpCount} <span class="text-sm font-normal">คน</span></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">ยอดหนี้คงเหลือรวม</div>
+                            <div class="font-bold text-slate-800 text-lg">${totalRemainingDebt.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">ยอดหักรอบนี้</div>
+                            <div class="font-bold text-rose-600 text-lg">${totalLoanDeductions.toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 mb-1">ยอดที่รอหักสิ้นเดือน</div>
+                            <div class="font-bold text-amber-600 text-lg">${(totalRemainingDebt - totalLoanDeductions).toLocaleString('th-TH', {minimumFractionDigits: 2})}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        $('#cycleSummaryPanel').html(html).removeClass('hidden');
+
+        // Optional: keep totalPayout updated in the top widgets if needed
+        $('#sum-total-payout').text(totalPayout.toLocaleString('th-TH', {minimumFractionDigits: 2}) + ' บาท');
     }
 
     function getFilteredPayrollDetails() {

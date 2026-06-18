@@ -225,6 +225,12 @@ if ($check_detail_loan_deduction && mysqli_num_rows($check_detail_loan_deduction
     mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN loan_deduction DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
 }
 
+// Ensure the remaining_debt column exists in payroll_run_details
+$check_detail_remaining_debt = mysqli_query($conn, "SHOW COLUMNS FROM payroll_run_details LIKE 'remaining_debt'");
+if ($check_detail_remaining_debt && mysqli_num_rows($check_detail_remaining_debt) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_run_details ADD COLUMN remaining_debt DECIMAL(10, 2) NOT NULL DEFAULT 0.00");
+}
+
 // Create loans and loan payments tables
 $createLoansTable = "CREATE TABLE IF NOT EXISTS payroll_loans (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -309,6 +315,9 @@ $createCommSettingsTable = "CREATE TABLE IF NOT EXISTS payroll_commission_settin
     admin_rate DECIMAL(5,2) NOT NULL DEFAULT 1.00,
     sales_rate DECIMAL(5,2) NOT NULL DEFAULT 2.00,
     helper_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+    shopee_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+    lazada_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+    tiktok_rate DECIMAL(5,2) NOT NULL DEFAULT 0.50,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
@@ -320,10 +329,22 @@ if ($checkAdminRateCol && mysqli_num_rows($checkAdminRateCol) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_commission_settings ADD COLUMN admin_rate DECIMAL(5,2) NOT NULL DEFAULT 1.00 AFTER company_id");
 }
 
+$newPlatformCols = [
+    'shopee_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 0.50",
+    'lazada_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 0.50",
+    'tiktok_rate' => "DECIMAL(5,2) NOT NULL DEFAULT 0.50"
+];
+foreach ($newPlatformCols as $col_name => $col_def) {
+    $check_col = mysqli_query($conn, "SHOW COLUMNS FROM payroll_commission_settings LIKE '$col_name'");
+    if ($check_col && mysqli_num_rows($check_col) == 0) {
+        mysqli_query($conn, "ALTER TABLE payroll_commission_settings ADD COLUMN $col_name $col_def");
+    }
+}
+
 // Ensure default settings exist for company
 $checkCommSettings = mysqli_query($conn, "SELECT id FROM payroll_commission_settings WHERE company_id = $company_id");
 if ($checkCommSettings && mysqli_num_rows($checkCommSettings) == 0) {
-    mysqli_query($conn, "INSERT IGNORE INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate) VALUES ($company_id, 1.00, 2.00, 0.50)");
+    mysqli_query($conn, "INSERT IGNORE INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate, shopee_rate, lazada_rate, tiktok_rate) VALUES ($company_id, 1.00, 2.00, 0.50, 0.50, 0.50, 0.50)");
 }
 
 $createCommissionsTable = "CREATE TABLE IF NOT EXISTS payroll_commissions (
@@ -1144,11 +1165,11 @@ switch ($action) {
         break;
 
     case 'get_payroll_run':
-        $month = mysqli_real_escape_string($conn, $_GET['month_period'] ?? date('Y-m'));
-        $recalculate = isset($_GET['recalculate']) && $_GET['recalculate'] === 'true';
-        
+        $month = $_GET['month_period'] ?? '';
         $start_date = $_GET['start_date'] ?? null;
         $end_date = $_GET['end_date'] ?? null;
+        $recalculate = ($_GET['recalculate'] ?? 'false') === 'true';
+        $cycle = isset($_GET['cycle']) ? (int)$_GET['cycle'] : 3; // 1, 2, or 3
         
         // If not provided, calculate first and last days of the month
         if (empty($start_date) || empty($end_date)) {
@@ -1402,10 +1423,16 @@ switch ($action) {
                 }
                 
                 $loan_deduction = 0.00;
+                $remaining_debt = 0.00;
                 $emp_loans = $emp_loans_map[$emp_id] ?? [];
                 foreach ($emp_loans as $loan) {
-                    $deduct = min((float)$loan['monthly_deduction'], (float)$loan['remaining_balance']);
-                    $loan_deduction += $deduct;
+                    $rem = (float)$loan['remaining_balance'];
+                    $remaining_debt += $rem;
+                    
+                    if ($cycle === 3) {
+                        $deduct = min((float)$loan['monthly_deduction'], $rem);
+                        $loan_deduction += $deduct;
+                    }
                 }
 
                 $net_pay = $base_earnings + $total_allowance - $total_deductions - $loan_deduction;
@@ -1428,6 +1455,7 @@ switch ($action) {
                     'leave_days' => $leave_days,
                     'deductions' => $total_deductions,
                     'loan_deduction' => $loan_deduction,
+                    'remaining_debt' => $remaining_debt,
                     'net_pay' => $net_pay
                 ];
                 }
@@ -1447,6 +1475,7 @@ switch ($action) {
     case 'save_payroll_run':
         $month = mysqli_real_escape_string($conn, $_POST['month_period'] ?? '');
         $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'pending');
+        $cycle = isset($_POST['cycle']) ? (int)$_POST['cycle'] : 3;
         $details_json = $_POST['details'] ?? '[]';
         $details_list = json_decode($details_json, true);
         
@@ -1502,6 +1531,11 @@ switch ($action) {
         mysqli_query($conn, "DELETE FROM payroll_run_details WHERE payroll_run_id = $run_id");
         
         // Insert details
+        $detail_sql = "INSERT INTO payroll_run_details 
+                        (payroll_run_id, employee_id, wage_type, rate, base_earnings, allowance, present_days, absent_days, leave_days, deductions, loan_deduction, remaining_debt, net_pay)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $detail_stmt = mysqli_prepare($conn, $detail_sql);
+
         $success = true;
         $error_msg = '';
         foreach ($details_list as $item) {
@@ -1515,17 +1549,13 @@ switch ($action) {
             $leave_days = (int)$item['leave_days'];
             $deductions = (float)$item['deductions'];
             $loan_deduction = (float)($item['loan_deduction'] ?? 0.00);
+            $remaining_debt = (float)($item['remaining_debt'] ?? 0.00);
             $net_pay = (float)$item['net_pay'];
             
-            $detail_sql = "INSERT INTO payroll_run_details (
-                                payroll_run_id, employee_id, wage_type, rate, base_earnings, allowance,
-                                present_days, absent_days, leave_days, deductions, loan_deduction, net_pay
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $detail_stmt = mysqli_prepare($conn, $detail_sql);
             if ($detail_stmt) {
-                mysqli_stmt_bind_param($detail_stmt, "iissddiiiddd", 
+                mysqli_stmt_bind_param($detail_stmt, "iissddiiidddd", 
                     $run_id, $employee_id, $wage_type, $rate, $base_earnings, $allowance,
-                    $present_days, $absent_days, $leave_days, $deductions, $loan_deduction, $net_pay
+                    $present_days, $absent_days, $leave_days, $deductions, $loan_deduction, $remaining_debt, $net_pay
                 );
                 if (!mysqli_stmt_execute($detail_stmt)) {
                     $success = false;
@@ -1585,14 +1615,17 @@ switch ($action) {
         break;
 
     case 'get_commission_settings':
-        $sql = "SELECT admin_rate, sales_rate, helper_rate FROM payroll_commission_settings WHERE company_id = ?";
+        $sql = "SELECT admin_rate, sales_rate, helper_rate, shopee_rate, lazada_rate, tiktok_rate FROM payroll_commission_settings WHERE company_id = ?";
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, "i", $company_id);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $settings = mysqli_fetch_assoc($res);
         if (!$settings) {
-            $settings = ['admin_rate' => 1.00, 'sales_rate' => 2.00, 'helper_rate' => 0.50];
+            $settings = [
+                'admin_rate' => 1.00, 'sales_rate' => 2.00, 'helper_rate' => 0.50,
+                'shopee_rate' => 0.50, 'lazada_rate' => 0.50, 'tiktok_rate' => 0.50
+            ];
         }
         echo json_encode($settings);
         break;
@@ -1601,10 +1634,14 @@ switch ($action) {
         $admin_rate = (float)($_POST['admin_rate'] ?? 1.00);
         $sales_rate = (float)($_POST['sales_rate'] ?? 2.00);
         $helper_rate = (float)($_POST['helper_rate'] ?? 0.50);
-        $sql = "INSERT INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate) VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE admin_rate = VALUES(admin_rate), sales_rate = VALUES(sales_rate), helper_rate = VALUES(helper_rate)";
+        $shopee_rate = (float)($_POST['shopee_rate'] ?? 0.50);
+        $lazada_rate = (float)($_POST['lazada_rate'] ?? 0.50);
+        $tiktok_rate = (float)($_POST['tiktok_rate'] ?? 0.50);
+
+        $sql = "INSERT INTO payroll_commission_settings (company_id, admin_rate, sales_rate, helper_rate, shopee_rate, lazada_rate, tiktok_rate) VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE admin_rate = VALUES(admin_rate), sales_rate = VALUES(sales_rate), helper_rate = VALUES(helper_rate), shopee_rate = VALUES(shopee_rate), lazada_rate = VALUES(lazada_rate), tiktok_rate = VALUES(tiktok_rate)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "iddd", $company_id, $admin_rate, $sales_rate, $helper_rate);
+        mysqli_stmt_bind_param($stmt, "idddddd", $company_id, $admin_rate, $sales_rate, $helper_rate, $shopee_rate, $lazada_rate, $tiktok_rate);
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['status' => 'success', 'message' => 'บันทึกอัตราค่าคอมมิชชั่นเรียบร้อยแล้ว']);
         } else {

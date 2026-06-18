@@ -1,12 +1,12 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="space-y-6 lg:col-span-1">
+    <form id="commissionSettingsForm" class="space-y-6 lg:col-span-1">
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6">
             <div>
-                <h4 class="font-bold text-slate-800 text-lg">อัตราค่าคอมมิชชั่นเริ่มต้น</h4>
+                <h4 class="font-bold text-slate-800 text-lg">อัตราค่าคอมมิชชั่นนอกแพลตฟอร์ม/LineOAและแฟลชเซลล์</h4>
                 <p class="text-sm text-slate-400 mt-0.5">ระบุอัตราเปอร์เซ็นต์ค่าคอมมิชชั่นเริ่มต้นสำหรับพนักงานเปิดการขายและผู้ช่วย</p>
             </div>
             
-            <form id="commissionSettingsForm" class="space-y-4">
+            <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-semibold text-slate-600 mb-2">แอดมินรับลูกค้า/ช่วยตอบ</label>
                     <div class="relative">
@@ -39,8 +39,51 @@
                     <i class="fa-solid fa-floppy-disk"></i>
                     <span>บันทึกตั้งค่าค่าคอมมิชชั่น</span>
                 </button>
-            </form>
+            </div>
         </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+            <h4 class="font-bold text-slate-800 text-lg">อัตราค่าคอมมิชชั่น shopee (คิดเหมารวม)</h4>
+            <div class="relative">
+                <input type="number" step="0.01" min="0" max="100" name="shopee_rate" id="comm_shopee_rate" required
+                       class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">%</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">หมายเหตุ: ค่าคอมมิชชั่นจะถูกแบ่งเท่าๆ กันตามจำนวนผู้ช่วยที่ถูกเลือกในรายการขาย (สูงสุด 5 คน)</p>
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>บันทึกตั้งค่าค่าคอมมิชชั่น</span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+            <h4 class="font-bold text-slate-800 text-lg">อัตราค่าคอมมิชชั่น lazada (คิดเหมารวม)</h4>
+            <div class="relative">
+                <input type="number" step="0.01" min="0" max="100" name="lazada_rate" id="comm_lazada_rate" required
+                       class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">%</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">หมายเหตุ: ค่าคอมมิชชั่นจะถูกแบ่งเท่าๆ กันตามจำนวนผู้ช่วยที่ถูกเลือกในรายการขาย (สูงสุด 5 คน)</p>
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>บันทึกตั้งค่าค่าคอมมิชชั่น</span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
+            <h4 class="font-bold text-slate-800 text-lg">อัตราค่าคอมมิชชั่น tiktok (คิดเหมารวม)</h4>
+            <div class="relative">
+                <input type="number" step="0.01" min="0" max="100" name="tiktok_rate" id="comm_tiktok_rate" required
+                       class="w-full pl-4 pr-12 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-bold text-slate-700 transition-all">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">%</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1.5">หมายเหตุ: ค่าคอมมิชชั่นจะถูกแบ่งเท่าๆ กันตามจำนวนผู้ช่วยที่ถูกเลือกในรายการขาย (สูงสุด 5 คน)</p>
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/10 transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>บันทึกตั้งค่าค่าคอมมิชชั่น</span>
+            </button>
+        </div>
+    </form>
     </div>
     <!-- Right Panel: Dashboard -->
     <div class="space-y-6 lg:col-span-2">
@@ -296,6 +339,9 @@
                     $('#comm_admin_rate').val(res.admin_rate);
                     $('#comm_sales_rate').val(res.sales_rate);
                     $('#comm_helper_rate').val(res.helper_rate);
+                    $('#comm_shopee_rate').val(res.shopee_rate);
+                    $('#comm_lazada_rate').val(res.lazada_rate);
+                    $('#comm_tiktok_rate').val(res.tiktok_rate);
                 }
             }
         });
