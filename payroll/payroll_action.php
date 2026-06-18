@@ -243,6 +243,7 @@ $createLoansTable = "CREATE TABLE IF NOT EXISTS payroll_loans (
     remaining_balance DECIMAL(10, 2) NOT NULL,
     total_installments INT NULL,
     monthly_deduction DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    auto_deduct TINYINT(1) NOT NULL DEFAULT 1,
     due_date DATE NULL,
     status ENUM('active', 'paid_off') NOT NULL DEFAULT 'active',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -250,6 +251,12 @@ $createLoansTable = "CREATE TABLE IF NOT EXISTS payroll_loans (
     FOREIGN KEY (employee_id) REFERENCES payroll_employees(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 mysqli_query($conn, $createLoansTable);
+
+// Ensure the auto_deduct column exists in payroll_loans
+$check_auto_deduct = mysqli_query($conn, "SHOW COLUMNS FROM payroll_loans LIKE 'auto_deduct'");
+if ($check_auto_deduct && mysqli_num_rows($check_auto_deduct) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_loans ADD COLUMN auto_deduct TINYINT(1) NOT NULL DEFAULT 1 AFTER monthly_deduction");
+}
 
 $createLoanPaymentsTable = "CREATE TABLE IF NOT EXISTS payroll_loan_payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1349,7 +1356,7 @@ switch ($action) {
             
 
             // Get active loans/borrows for this company
-            $loans_sql = "SELECT id, employee_id, type, remaining_balance, monthly_deduction, contract_no
+            $loans_sql = "SELECT id, employee_id, type, remaining_balance, monthly_deduction, contract_no, auto_deduct
                           FROM payroll_loans 
                           WHERE company_id = ? AND status = 'active'";
             $loans_stmt = mysqli_prepare($conn, $loans_sql);
@@ -1429,7 +1436,7 @@ switch ($action) {
                     $rem = (float)$loan['remaining_balance'];
                     $remaining_debt += $rem;
                     
-                    if ($cycle === 3) {
+                    if ($cycle === 3 && (int)$loan['auto_deduct'] === 1) {
                         $deduct = min((float)$loan['monthly_deduction'], $rem);
                         $loan_deduction += $deduct;
                     }
@@ -1893,6 +1900,7 @@ switch ($action) {
         $loan_date = mysqli_real_escape_string($conn, $_POST['loan_date'] ?? date('Y-m-d'));
         $amount = (float)($_POST['amount'] ?? 0.00);
         $monthly_deduction = (float)($_POST['monthly_deduction'] ?? 0.00);
+        $auto_deduct = isset($_POST['auto_deduct']) && $_POST['auto_deduct'] == '1' ? 1 : 0;
         $total_installments = !empty($_POST['total_installments']) ? (int)$_POST['total_installments'] : null;
         $due_date = !empty($_POST['due_date']) ? mysqli_real_escape_string($conn, $_POST['due_date']) : null;
         $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'active');
@@ -1915,13 +1923,13 @@ switch ($action) {
                 $sql = "UPDATE payroll_loans SET 
                             employee_id = ?, type = ?, contract_no = ?, loan_date = ?, 
                             amount = ?, remaining_balance = ?, total_installments = ?, 
-                            monthly_deduction = ?, due_date = ?, status = ?
+                            monthly_deduction = ?, auto_deduct = ?, due_date = ?, status = ?
                         WHERE id = ? AND company_id = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "isssddidssii", 
+                mysqli_stmt_bind_param($stmt, "isssddiidsii", 
                     $employee_id, $type, $contract_no, $loan_date, 
                     $amount, $new_rem, $total_installments, 
-                    $monthly_deduction, $due_date, $status, $id, $company_id
+                    $monthly_deduction, $auto_deduct, $due_date, $status, $id, $company_id
                 );
                 if (mysqli_stmt_execute($stmt)) {
                     echo json_encode(['status' => 'success', 'message' => 'แก้ไขข้อมูลสัญญาเรียบร้อยแล้ว']);
@@ -1937,13 +1945,13 @@ switch ($action) {
             $sql = "INSERT INTO payroll_loans (
                         company_id, employee_id, type, contract_no, loan_date, 
                         amount, remaining_balance, total_installments, 
-                        monthly_deduction, due_date, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        monthly_deduction, auto_deduct, due_date, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iisssddidss", 
+            mysqli_stmt_bind_param($stmt, "iisssddiids", 
                 $company_id, $employee_id, $type, $contract_no, $loan_date, 
                 $amount, $remaining_balance, $total_installments, 
-                $monthly_deduction, $due_date, $status
+                $monthly_deduction, $auto_deduct, $due_date, $status
             );
             if (mysqli_stmt_execute($stmt)) {
                 echo json_encode(['status' => 'success', 'message' => 'สร้างสัญญาเงินกู้/ยืมเรียบร้อยแล้ว']);

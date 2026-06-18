@@ -79,10 +79,16 @@
     </div>
 
     <!-- Create Button -->
-    <button onclick="openLoanModal('add')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 gap-1.5 self-start md:self-auto">
-        <i class="fa-solid fa-plus-circle"></i>
-        <span>สร้างสัญญาเงินกู้/เงินยืม</span>
-    </button>
+    <div class="flex items-center gap-2">
+        <button onclick="openGlobalPaymentModal()" class="inline-flex items-center px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold border border-emerald-200 rounded-xl text-sm transition-all shadow-sm gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>สร้างรายการชำระเงินกู้</span>
+        </button>
+        <button onclick="openLoanModal('add')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md shadow-blue-500/10 gap-1.5 self-start md:self-auto">
+            <i class="fa-solid fa-plus-circle"></i>
+            <span>สร้างสัญญาเงินกู้/เงินยืม</span>
+        </button>
+    </div>
 </div>
 
 <!-- Loans Table Card -->
@@ -181,6 +187,13 @@
                             <label class="block text-sm font-semibold text-slate-500 mb-1.5" id="lbl_monthly_deduction">หักเงินรายเดือน (บาท)</label>
                             <input type="number" step="0.01" name="monthly_deduction" id="loan_monthly_deduction" placeholder="1000"
                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm font-bold text-slate-800 outline-none transition-all">
+                            
+                            <!-- Auto Deduct Checkbox -->
+                            <label class="flex items-center gap-2 mt-3 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                <input type="checkbox" name="auto_deduct" id="loan_auto_deduct" value="1" checked
+                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <span class="text-sm font-semibold text-slate-700">หักจากเงินเดือนอัตโนมัติ <br/><span class="text-xs text-slate-500 font-normal">(หากไม่เลือก จะต้องบันทึกชำระเงินสดเอง)</span></span>
+                            </label>
                         </div>
                     </div>
 
@@ -297,6 +310,83 @@
             <div class="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 rounded-b-3xl border-t border-slate-100">
                 <button type="button" onclick="closePaymentModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">ยกเลิก</button>
                 <button type="button" onclick="saveManualRepayment()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-emerald-500/10">บันทึกรับชำระ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Global Manual Repayment (Cash) -->
+<div id="globalPaymentModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 transition-opacity bg-slate-900/40 backdrop-blur-sm" onclick="closeGlobalPaymentModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-slate-800">รายการชำระเงินกู้</h3>
+                    <button onclick="closeGlobalPaymentModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="globalPaymentForm" class="space-y-4">
+                    <!-- Employee Selector -->
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-500 mb-1.5">เลือกพนักงาน <span class="text-rose-500">*</span></label>
+                        <select id="gp_employee_id" required onchange="onGlobalEmployeeChange()"
+                                class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">ประเภทธุรกรรม</label>
+                            <input type="text" value="ชำระด้วยเงินสด" readonly
+                                   class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-sm font-bold outline-none cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">เลขที่สัญญา / เอกสาร <span class="text-rose-500">*</span></label>
+                            <select name="loan_id" id="gp_loan_id" required onchange="onGlobalLoanChange()"
+                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
+                                <option value="">-- เลือกสัญญา --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">วันที่ชำระ <span class="text-rose-500">*</span></label>
+                            <input type="date" name="payment_date" id="gp_payment_date" required
+                                   class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">จำนวนเงินกู้ยืม <span class="text-slate-400 font-normal">(ยอดรวม/คงเหลือ)</span></label>
+                            <input type="text" id="gp_total_amount" readonly placeholder="0.00"
+                                   class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 text-sm font-bold outline-none cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-500 mb-1.5">จำนวนเงินที่ต้องการชำระในงวดนี้ <span class="text-rose-500">*</span></label>
+                        <input type="number" step="0.01" name="amount" id="gp_amount" required placeholder="0.00"
+                               class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm font-bold text-blue-600 outline-none transition-all text-center text-lg">
+                    </div>
+                    
+                    <input type="hidden" name="note" value="ชำระคืนด้วยเงินสด">
+                </form>
+                
+                <div class="mt-6 pt-4 border-t border-slate-100 flex items-end justify-between">
+                    <div>
+                        <div class="text-xs text-slate-400 font-semibold mb-6">ลายเซ็นผู้รับเงิน</div>
+                        <div class="w-48 border-b-2 border-slate-300"></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" onclick="closeGlobalPaymentModal()" class="px-4 py-2 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors">ยกเลิก</button>
+                        <button type="button" onclick="saveGlobalManualRepayment()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-blue-500/20">กดชำระเงิน</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -541,6 +631,7 @@
                             $('#loan_monthly_deduction').val(res.monthly_deduction);
                             $('#loan_due_date').val(res.due_date || '');
                             $('#loan_status').val(res.status);
+                            $('#loan_auto_deduct').prop('checked', res.auto_deduct == 1);
 
                             toggleLoanTypeFields(res.type);
                             if (res.type === 'borrow') {
@@ -718,6 +809,96 @@
                         }
                     }
                 });
+            }
+        });
+    }
+
+    // Global Payment Modal
+    function openGlobalPaymentModal() {
+        $('#globalPaymentForm')[0].reset();
+        $('#gp_payment_date').val(new Date().toISOString().split('T')[0]);
+        $('#gp_loan_id').html('<option value="">-- เลือกสัญญา --</option>');
+        $('#gp_total_amount').val('');
+        
+        // Populate employee dropdown with unique active borrowers
+        let activeLoans = rawLoansList.filter(l => l.status === 'active');
+        let uniqueEmps = new Map();
+        activeLoans.forEach(l => {
+            if (!uniqueEmps.has(l.employee_id)) {
+                uniqueEmps.set(l.employee_id, {
+                    id: l.employee_id,
+                    name: l.name,
+                    code: l.emp_code
+                });
+            }
+        });
+        
+        let empHtml = '<option value="">-- เลือกพนักงาน --</option>';
+        uniqueEmps.forEach(emp => {
+            empHtml += `<option value="${emp.id}">${emp.code} - ${emp.name}</option>`;
+        });
+        $('#gp_employee_id').html(empHtml);
+        
+        $('#globalPaymentModal').removeClass('hidden');
+    }
+
+    function onGlobalEmployeeChange() {
+        let empId = $('#gp_employee_id').val();
+        let loansHtml = '<option value="">-- เลือกสัญญา --</option>';
+        $('#gp_total_amount').val('');
+        $('#gp_amount').val('');
+
+        if (empId) {
+            let empLoans = rawLoansList.filter(l => l.status === 'active' && l.employee_id == empId);
+            empLoans.forEach(l => {
+                loansHtml += `<option value="${l.id}">${l.contract_no} (คงเหลือ: ${parseFloat(l.remaining_balance).toLocaleString('th-TH')} ฿)</option>`;
+            });
+        }
+        $('#gp_loan_id').html(loansHtml);
+    }
+
+    function onGlobalLoanChange() {
+        let loanId = $('#gp_loan_id').val();
+        if (loanId) {
+            let loan = rawLoansList.find(l => l.id == loanId);
+            if (loan) {
+                let amt = parseFloat(loan.amount).toLocaleString('th-TH', {minimumFractionDigits:2});
+                let rem = parseFloat(loan.remaining_balance).toLocaleString('th-TH', {minimumFractionDigits:2});
+                $('#gp_total_amount').val(`${amt} (เหลือ ${rem})`);
+                
+                // Auto fill the usual monthly deduction amount, bounded by remaining balance
+                let suggested = Math.min(parseFloat(loan.monthly_deduction) || 0, parseFloat(loan.remaining_balance));
+                if (suggested <= 0) suggested = parseFloat(loan.remaining_balance);
+                $('#gp_amount').val(suggested > 0 ? suggested : '');
+            }
+        } else {
+            $('#gp_total_amount').val('');
+            $('#gp_amount').val('');
+        }
+    }
+
+    function closeGlobalPaymentModal() {
+        $('#globalPaymentModal').addClass('hidden');
+    }
+
+    function saveGlobalManualRepayment() {
+        const form = $('#globalPaymentForm')[0];
+        if (!form.reportValidity()) return;
+
+        const formData = $(form).serialize() + '&action=save_loan_payment';
+        $.ajax({
+            url: 'payroll_action.php',
+            type: 'POST',
+            data: formData,
+            success: function(res) {
+                let parsed = typeof res === 'string' ? JSON.parse(res) : res;
+                if (parsed.status === 'success') {
+                    Swal.fire('ชำระคืนสำเร็จ!', parsed.message, 'success');
+                    closeGlobalPaymentModal();
+                    loadLoansTab();
+                } else {
+                    Swal.fire('ผิดพลาด', parsed.message, 'error');
+                }
             }
         });
     }
