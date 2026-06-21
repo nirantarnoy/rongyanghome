@@ -145,6 +145,16 @@ $company_address = $company_info['address'] ?? '---';
                         <i class="fa-solid fa-clock-rotate-left w-5"></i>
                         <span>ประวัติค่าคอมแบบเหมารายเดือน</span>
                     </button>
+
+                    <button onclick="switchTab('commission_piece_calc')" id="btn-commission_piece_calc" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
+                        <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                        <span>คิดค่าคอมรายชิ้น (นอกแพลตฟอร์ม)</span>
+                    </button>
+
+                    <button onclick="switchTab('commission_piece_history')" id="btn-commission_piece_history" class="sidebar-link flex items-center gap-3 w-full px-4 py-3 rounded-xl text-base font-medium text-left">
+                        <i class="fa-solid fa-clock-rotate-left w-5"></i>
+                        <span>ประวัติค่าคอมรายชิ้น</span>
+                    </button>
                 </div>
             </div>
 
@@ -256,6 +266,16 @@ $company_address = $company_info['address'] ?? '---';
                 <div id="tab-commission_history" class="tab-pane hidden space-y-6">
                     <?php include 'tabs/commission_history.php'; ?>
                 </div>
+
+                <!-- TAB: COMMISSION PIECE CALCULATION -->
+                <div id="tab-commission_piece_calc" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/commission_piece_calc.php'; ?>
+                </div>
+
+                <!-- TAB: COMMISSION PIECE HISTORY -->
+                <div id="tab-commission_piece_history" class="tab-pane hidden space-y-6">
+                    <?php include 'tabs/commission_piece_history.php'; ?>
+                </div>
             </main>
         </div>
     </div>
@@ -331,6 +351,16 @@ $company_address = $company_info['address'] ?? '---';
                     title = 'ประวัติค่าคอมแบบเหมารายเดือน';
                     subtitle = 'เรียกดู แก้ไข หรือตรวจสอบรายละเอียดค่าคอมมิชชั่นย้อนหลัง';
                     loadCommissionHistory();
+                    break;
+                case 'commission_piece_calc':
+                    title = 'คิดค่าคอมรายชิ้น (นอกแพลตฟอร์ม)';
+                    subtitle = 'คำนวณและปันส่วนค่าคอมมิชชั่นเฟอร์นิเจอร์แบบรายชิ้นให้แอดมิน, เซลล์, ผู้ช่วย';
+                    loadCommissionPieceCalc();
+                    break;
+                case 'commission_piece_history':
+                    title = 'ประวัติค่าคอมรายชิ้น';
+                    subtitle = 'เรียกดู แก้ไข หรือตรวจสอบรายละเอียดค่าคอมมิชชั่นแบบรายชิ้นย้อนหลัง';
+                    loadCommissionPieceHistory();
                     break;
             }
             $('#page-title').text(title);

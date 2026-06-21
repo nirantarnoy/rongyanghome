@@ -1676,6 +1676,7 @@ switch ($action) {
         $total_amount = (float)($_POST['total_amount'] ?? 0.00);
         $total_commission = (float)($_POST['total_commission'] ?? 0.00);
         $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'draft');
+        $commission_type = mysqli_real_escape_string($conn, $_POST['commission_type'] ?? 'monthly');
         $items_json = $_POST['items'] ?? '[]';
         $items = json_decode($items_json, true);
 
@@ -1688,18 +1689,18 @@ switch ($action) {
         try {
             if ($comm_id > 0) {
                 // Update
-                $sql = "UPDATE payroll_commissions SET transaction_date = ?, total_amount = ?, total_commission = ?, status = ? WHERE id = ? AND company_id = ?";
+                $sql = "UPDATE payroll_commissions SET transaction_date = ?, total_amount = ?, total_commission = ?, status = ?, commission_type = ? WHERE id = ? AND company_id = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "sdddii", $transaction_date, $total_amount, $total_commission, $status, $comm_id, $company_id);
+                mysqli_stmt_bind_param($stmt, "sddssii", $transaction_date, $total_amount, $total_commission, $status, $commission_type, $comm_id, $company_id);
                 mysqli_stmt_execute($stmt);
                 
                 // Delete old items
                 mysqli_query($conn, "DELETE FROM payroll_commission_items WHERE commission_id = $comm_id");
             } else {
                 // Insert
-                $sql = "INSERT INTO payroll_commissions (company_id, transaction_date, total_amount, total_commission, status) VALUES (?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO payroll_commissions (company_id, transaction_date, total_amount, total_commission, status, commission_type) VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "issds", $company_id, $transaction_date, $total_amount, $total_commission, $status);
+                mysqli_stmt_bind_param($stmt, "issdss", $company_id, $transaction_date, $total_amount, $total_commission, $status, $commission_type);
                 mysqli_stmt_execute($stmt);
                 $comm_id = mysqli_insert_id($conn);
             }
@@ -1761,13 +1762,14 @@ switch ($action) {
         break;
 
     case 'list_commission_transactions':
+        $type = mysqli_real_escape_string($conn, $_GET['commission_type'] ?? 'monthly');
         $sql = "SELECT c.*, 
                       (SELECT COUNT(*) FROM payroll_commission_items WHERE commission_id = c.id) as total_items
                FROM payroll_commissions c
-               WHERE c.company_id = ?
+               WHERE c.company_id = ? AND c.commission_type = ?
                ORDER BY c.transaction_date DESC, c.id DESC";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "i", $company_id);
+        mysqli_stmt_bind_param($stmt, "is", $company_id, $type);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $list = [];
