@@ -78,19 +78,13 @@ if ($user_role !== 'admin') {
                     $date_from = $_GET['date_from'] ?? '';
                     $date_to = $_GET['date_to'] ?? '';
 
-                    $params = [$company_id];
-                    $types = "i";
                     $where_clause = "WHERE l.company_id = ?";
 
                     if (!empty($date_from)) {
                         $where_clause .= " AND DATE(l.created_at) >= ?";
-                        $params[] = $date_from;
-                        $types .= "s";
                     }
                     if (!empty($date_to)) {
                         $where_clause .= " AND DATE(l.created_at) <= ?";
-                        $params[] = $date_to;
-                        $types .= "s";
                     }
 
                     $log_sql = "SELECT l.*, u.full_name, u.username 
@@ -102,7 +96,15 @@ if ($user_role !== 'admin') {
                     
                     $log_stmt = mysqli_prepare($conn, $log_sql);
                     if ($log_stmt) {
-                        mysqli_stmt_bind_param($log_stmt, $types, ...$params);
+                        if (!empty($date_from) && !empty($date_to)) {
+                            mysqli_stmt_bind_param($log_stmt, "iss", $company_id, $date_from, $date_to);
+                        } else if (!empty($date_from)) {
+                            mysqli_stmt_bind_param($log_stmt, "is", $company_id, $date_from);
+                        } else if (!empty($date_to)) {
+                            mysqli_stmt_bind_param($log_stmt, "is", $company_id, $date_to);
+                        } else {
+                            mysqli_stmt_bind_param($log_stmt, "i", $company_id);
+                        }
                         mysqli_stmt_execute($log_stmt);
                         $log_res = mysqli_stmt_get_result($log_stmt);
 
