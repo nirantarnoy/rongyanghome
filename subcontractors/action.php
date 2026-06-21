@@ -149,6 +149,16 @@ if ($action === 'project_list') {
         } else {
             $row['progress_percent'] = 0;
         }
+        // Fetch assigned subcontractors
+        $assignedSQL = "SELECT * FROM project_assigned_subcontractors WHERE project_id = $pid ORDER BY id ASC";
+        $assignedRes = mysqli_query($conn, $assignedSQL);
+        $assigned_subcontractors = [];
+        if($assignedRes) {
+            while($ar = mysqli_fetch_assoc($assignedRes)) {
+                $assigned_subcontractors[] = $ar;
+            }
+        }
+        $row['assigned_subcontractors'] = $assigned_subcontractors;
         
         $data[] = $row;
     }
@@ -214,6 +224,25 @@ if ($action === 'project_save') {
 
     if (mysqli_query($conn, $sql)) {
         $new_id = $id > 0 ? $id : mysqli_insert_id($conn);
+        
+        // Handle assigned subcontractors
+        if (isset($_POST['assigned_subs_json'])) {
+            $items = json_decode($_POST['assigned_subs_json'], true);
+            mysqli_query($conn, "DELETE FROM project_assigned_subcontractors WHERE project_id = $new_id");
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    $job_type = mysqli_real_escape_string($conn, $item['job_type']);
+                    $subcontractor_id = (int)$item['subcontractor_id'];
+                    $contract_amount = (float)$item['contract_amount'];
+                    if ($subcontractor_id > 0) {
+                        $sub_sql = "INSERT INTO project_assigned_subcontractors (company_id, project_id, job_type, subcontractor_id, contract_amount) 
+                                    VALUES ($company_id, $new_id, '$job_type', $subcontractor_id, $contract_amount)";
+                        mysqli_query($conn, $sub_sql);
+                    }
+                }
+            }
+        }
+        
         echo json_encode(['status' => 'success', 'message' => 'บันทึกข้อมูลโปรเจ็คเรียบร้อยแล้ว', 'id' => $new_id]);
     } else {
         echo json_encode(['status' => 'error', 'message' => mysqli_error($conn)]);

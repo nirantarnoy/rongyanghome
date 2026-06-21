@@ -898,6 +898,50 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
 
+                    function addModalAssignedSubcontractorColumn(job_type = '', sub_id = '', contract_amount = '') {
+                        const index = new Date().getTime() + Math.floor(Math.random() * 1000);
+                        const jobTypes = ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'];
+                        
+                        let jobTypeOptions = '<option value="">-- เลือกประเภทงาน --</option>';
+                        jobTypes.forEach(jt => { 
+                            const selected = (jt === job_type) ? 'selected' : '';
+                            jobTypeOptions += `<option value="${jt}" ${selected}>${jt}</option>`; 
+                        });
+
+                        let subOptions = '<option value="">-- เลือกผู้รับเหมา --</option>';
+                        <?php foreach ($all_subcontractors as $sub): ?>
+                            {
+                                const isSelected = (sub_id == <?=$sub['id']?>) ? 'selected' : '';
+                                subOptions += `<option value="<?=$sub['id']?>" ${isSelected}><?=$sub['name']?> (<?=$sub['team_type']?>)</option>`;
+                            }
+                        <?php endforeach; ?>
+
+                        const rowHtml = `
+                            <div class="modal-assigned-row flex items-end gap-2 bg-slate-50 p-2 border border-slate-200 rounded-lg relative">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ประเภทงาน</label>
+                                    <select class="m-job-type w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
+                                        ${jobTypeOptions}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ชื่อผู้รับเหมา</label>
+                                    <select class="m-sub-id w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
+                                        ${subOptions}
+                                    </select>
+                                </div>
+                                <div class="w-32">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">มูลค่าสัญญา</label>
+                                    <input type="number" class="m-contract-amt w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-right font-bold" value="${contract_amount}" placeholder="0.00">
+                                </div>
+                                <button type="button" onclick="$(this).closest('.modal-assigned-row').remove()" class="w-8 h-8 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded mb-0.5 shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        `;
+                        $('#modal-assigned-subs').append(rowHtml);
+                    }
+
                     function openProjectModal(data = null) {
                         const title = data ? 'แก้ไขรายละเอียดโปรเจ็ค' : 'เพิ่มรายละเอียดโปรเจ็ค';
                         const id = data ? data.id : 0;
@@ -997,8 +1041,25 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                         <label class="block text-sm font-semibold text-slate-500 mb-1">หมายเหตุเพิ่มเติม</label>
                                         <input type="text" id="p-note" class="swal2-input !m-0 !w-full" placeholder="รายละเอียดอื่นๆ" value="${note}">
                                     </div>
+                                    <div class="col-span-2 border-t border-slate-100 pt-4 mt-2">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h4 class="font-bold text-slate-700 text-sm">รายชื่อผู้รับเหมาในโครงการ (ทีมต่างๆ)</h4>
+                                            <button type="button" onclick="addModalAssignedSubcontractorColumn()" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded">+ เพิ่มทีม</button>
+                                        </div>
+                                        <div id="modal-assigned-subs" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                                        </div>
+                                    </div>
                                 </div>
                             `,
+                            didOpen: () => {
+                                if (data && data.assigned_subcontractors && data.assigned_subcontractors.length > 0) {
+                                    data.assigned_subcontractors.forEach(sub => {
+                                        addModalAssignedSubcontractorColumn(sub.job_type, sub.subcontractor_id, sub.contract_amount);
+                                    });
+                                } else {
+                                    addModalAssignedSubcontractorColumn();
+                                }
+                            },
                             showCancelButton: true,
                             confirmButtonText: 'บันทึก',
                             cancelButtonText: 'ยกเลิก',
@@ -1026,6 +1087,20 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     return false;
                                 }
 
+                                const assigned_subs = [];
+                                $('.modal-assigned-row').each(function() {
+                                    const jt = $(this).find('.m-job-type').val();
+                                    const sid = $(this).find('.m-sub-id').val();
+                                    const camt = $(this).find('.m-contract-amt').val() || 0;
+                                    if (sid) {
+                                        assigned_subs.push({
+                                            job_type: jt,
+                                            subcontractor_id: sid,
+                                            contract_amount: camt
+                                        });
+                                    }
+                                });
+
                                 return {
                                     project_name: nameVal,
                                     project_code: codeVal,
@@ -1042,7 +1117,8 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     contract_value: contractVal,
                                     project_manager: managerVal,
                                     main_subcontractor_id: contractorVal,
-                                    note: noteVal
+                                    note: noteVal,
+                                    assigned_subs: assigned_subs
                                 };
                             }
                         }).then((result) => {
@@ -1053,6 +1129,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                                     data: {
                                         action: 'project_save',
                                         id: id,
+                                        assigned_subs_json: JSON.stringify(result.value.assigned_subs),
                                         ...result.value
                                     },
                                     success: function(res) {
