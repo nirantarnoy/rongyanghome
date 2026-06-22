@@ -159,6 +159,13 @@ foreach ($cols_to_add as $col_name => $col_definition) {
     }
 }
 
+// Ensure the status column ENUM contains 'day_off' and 'weekly_off'
+$check_status_enum = mysqli_query($conn, "SHOW COLUMNS FROM payroll_attendance LIKE 'status'");
+if ($check_status_enum && $row = mysqli_fetch_assoc($check_status_enum)) {
+    if (strpos($row['Type'], 'day_off') === false || strpos($row['Type'], 'weekly_off') === false) {
+        mysqli_query($conn, "ALTER TABLE payroll_attendance MODIFY COLUMN status ENUM('normal', 'late', 'absent', 'leave', 'day_off', 'weekly_off') NOT NULL DEFAULT 'normal'");
+    }
+}
 
 $createPayrollRunsTable = "CREATE TABLE IF NOT EXISTS payroll_runs (
     id INT AUTO_INCREMENT PRIMARY KEY,
