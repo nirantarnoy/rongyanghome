@@ -10,6 +10,35 @@ if ($user_role !== 'admin') {
     header("Location: index.php");
     exit();
 }
+
+// Fetch users list for dropdown filter
+$users_sql = "SELECT id, username, full_name FROM users WHERE company_id = ? ORDER BY full_name ASC, username ASC";
+$users_stmt = mysqli_prepare($conn, $users_sql);
+$users_list = [];
+if ($users_stmt) {
+    mysqli_stmt_bind_param($users_stmt, "i", $company_id);
+    mysqli_stmt_execute($users_stmt);
+    $users_res = mysqli_stmt_get_result($users_stmt);
+    while ($u = mysqli_fetch_assoc($users_res)) {
+        $users_list[] = $u;
+    }
+    mysqli_stmt_close($users_stmt);
+}
+
+// Thai Date Formatter Helper
+function formatThaiDate($dateStr) {
+    if (empty($dateStr)) return '';
+    $months = [
+        1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+        5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+        9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+    ];
+    $time = strtotime($dateStr);
+    $day = date('j', $time);
+    $month = $months[(int)date('n', $time)];
+    $year = (int)date('Y', $time) + 543; // Buddhist Era
+    return "วันที่ $day $month $year";
+}
 ?>
 <!DOCTYPE html>
 <html lang="th">
@@ -29,35 +58,62 @@ if ($user_role !== 'admin') {
 <?php include 'navbar.php'; ?>
 
 <div class="container max-w-7xl mx-auto px-4 py-8">
-    <!-- Header Section -->
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            ประวัติกิจกรรมในระบบ
-        </h1>
-        <p class="text-gray-500 mt-1">ตรวจสอบการทำรายการต่างๆ ของผู้ใช้งานในระบบ</p>
-    </div>
+    <?php
+    $selected_date = $_GET['date'] ?? '';
+    $selected_user = $_GET['user_id'] ?? '';
+    ?>
+    <!-- Header & Filter Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
+                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ประวัติกิจกรรมในระบบ
+            </h1>
+            <p class="text-slate-500 mt-1">ตรวจสอบการทำรายการต่างๆ ของผู้ใช้งานในระบบ</p>
+        </div>
+        
+        <!-- Filter Form -->
+        <div class="flex items-center flex-wrap gap-3">
+            <form method="GET" class="flex items-center flex-wrap gap-3">
+                <!-- User Selector -->
+                <div class="relative">
+                    <select name="user_id" onchange="this.form.submit()"
+                            class="pl-4 pr-10 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-700 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-sm cursor-pointer hover:border-slate-300 transition-colors appearance-none">
+                        <option value="">-- ผู้ใช้งานทั้งหมด --</option>
+                        <?php foreach ($users_list as $u): ?>
+                            <?php 
+                            $u_display = $u['full_name'] ? htmlspecialchars($u['full_name']) : htmlspecialchars($u['username']);
+                            $selected = ((string)$u['id'] === (string)$selected_user) ? 'selected' : '';
+                            ?>
+                            <option value="<?= $u['id'] ?>" <?= $selected ?>><?= $u_display ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
 
-    <!-- Filter Section -->
-    <div class="mb-6 bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-        <form method="GET" class="flex flex-wrap gap-4 items-end">
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">ตั้งแต่วันที่</label>
-                <input type="date" name="date_from" value="<?= htmlspecialchars($_GET['date_from'] ?? '') ?>" class="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-            </div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 mb-1">ถึงวันที่</label>
-                <input type="date" name="date_to" value="<?= htmlspecialchars($_GET['date_to'] ?? '') ?>" class="px-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-            </div>
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-sm">
-                ค้นหา
-            </button>
-            <a href="action_logs.php" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-6 py-2 rounded-xl text-sm font-bold transition-all">
-                ล้างตัวกรอง
-            </a>
-        </form>
+                <!-- Date Picker -->
+                <div class="relative">
+                    <input type="date" name="date" value="<?= htmlspecialchars($selected_date) ?>" 
+                           class="pl-4 pr-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-700 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-sm cursor-pointer hover:border-slate-300 transition-colors"
+                           onchange="this.form.submit()">
+                </div>
+                
+                <?php if (!empty($selected_date) || !empty($selected_user)): ?>
+                    <a href="action_logs.php" class="text-slate-400 hover:text-slate-600 transition-colors p-2 bg-slate-50 hover:bg-slate-100 rounded-full border border-slate-200 shadow-sm" title="ล้างตัวกรอง">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </a>
+                <?php endif; ?>
+                <span class="text-sm font-semibold text-slate-600">เลือกวันเวลา</span>
+            </form>
+        </div>
     </div>
 
     <!-- Table Section -->
@@ -75,16 +131,19 @@ if ($user_role !== 'admin') {
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     <?php
-                    $date_from = $_GET['date_from'] ?? '';
-                    $date_to = $_GET['date_to'] ?? '';
-
                     $where_clause = "WHERE l.company_id = ?";
+                    $params = [$company_id];
+                    $types = "i";
 
-                    if (!empty($date_from)) {
-                        $where_clause .= " AND DATE(l.created_at) >= ?";
+                    if (!empty($selected_date)) {
+                        $where_clause .= " AND DATE(l.created_at) = ?";
+                        $params[] = $selected_date;
+                        $types .= "s";
                     }
-                    if (!empty($date_to)) {
-                        $where_clause .= " AND DATE(l.created_at) <= ?";
+                    if (!empty($selected_user)) {
+                        $where_clause .= " AND l.user_id = ?";
+                        $params[] = (int)$selected_user;
+                        $types .= "i";
                     }
 
                     $log_sql = "SELECT l.*, u.full_name, u.username 
@@ -96,22 +155,32 @@ if ($user_role !== 'admin') {
                     
                     $log_stmt = mysqli_prepare($conn, $log_sql);
                     if ($log_stmt) {
-                        if (!empty($date_from) && !empty($date_to)) {
-                            mysqli_stmt_bind_param($log_stmt, "iss", $company_id, $date_from, $date_to);
-                        } else if (!empty($date_from)) {
-                            mysqli_stmt_bind_param($log_stmt, "is", $company_id, $date_from);
-                        } else if (!empty($date_to)) {
-                            mysqli_stmt_bind_param($log_stmt, "is", $company_id, $date_to);
-                        } else {
-                            mysqli_stmt_bind_param($log_stmt, "i", $company_id);
-                        }
+                        mysqli_stmt_bind_param($log_stmt, $types, ...$params);
                         mysqli_stmt_execute($log_stmt);
                         $log_res = mysqli_stmt_get_result($log_stmt);
 
                         if (mysqli_num_rows($log_res) == 0) {
                             echo "<tr><td colspan='5' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
                         } else {
+                            $current_date_group = null;
                             while ($log = mysqli_fetch_assoc($log_res)) {
+                                $log_date = date('Y-m-d', strtotime($log['created_at']));
+                                if ($current_date_group !== $log_date) {
+                                    $current_date_group = $log_date;
+                                    $thai_date_label = formatThaiDate($log_date);
+                                    echo "
+                                    <tr class='bg-emerald-50/60 font-bold text-emerald-900 border-y border-emerald-100/50'>
+                                        <td colspan='5' class='px-6 py-3 text-sm'>
+                                            <div class='flex items-center gap-2'>
+                                                <svg class='w-4 h-4 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                    <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
+                                                </svg>
+                                                $thai_date_label
+                                            </div>
+                                        </td>
+                                    </tr>";
+                                }
+
                                 $type_colors = [
                                     'create' => 'bg-emerald-100 text-emerald-700',
                                     'update' => 'bg-blue-100 text-blue-700',
@@ -131,12 +200,13 @@ if ($user_role !== 'admin') {
                                 $module_label = strtoupper($log['module']);
                                 
                                 $user_display = $log['full_name'] ? htmlspecialchars($log['full_name']) : htmlspecialchars($log['username'] ?? 'System');
+                                $time_display = date('H:i:s', strtotime($log['created_at'])) . " น.";
 
                                 echo "
                                 <tr class='hover:bg-gray-50/80 transition-colors'>
-                                    <td class='px-6 py-4 text-sm text-gray-500'>" . date('d/m/Y H:i:s', strtotime($log['created_at'])) . "</td>
+                                    <td class='px-6 py-4 text-sm text-gray-500 font-medium'>$time_display</td>
                                     <td class='px-6 py-4'>
-                                        <div class='text-sm font-medium text-gray-900'>$user_display</div>
+                                        <div class='text-sm font-semibold text-gray-800'>$user_display</div>
                                     </td>
                                     <td class='px-6 py-4'>
                                         <span class='px-2.5 py-1 rounded-full text-xs font-bold $module_color'>$module_label</span>
@@ -144,7 +214,7 @@ if ($user_role !== 'admin') {
                                     <td class='px-6 py-4'>
                                         <span class='px-2.5 py-1 rounded-full text-xs font-bold $color_class'>$type_label</span>
                                     </td>
-                                    <td class='px-6 py-4 text-sm text-gray-600'>" . htmlspecialchars($log['activity']) . "</td>
+                                    <td class='px-6 py-4 text-sm text-gray-600 font-medium'>" . htmlspecialchars($log['activity']) . "</td>
                                 </tr>";
                             }
                         }
