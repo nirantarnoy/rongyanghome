@@ -1163,22 +1163,7 @@ function ArabicToThaiBaht(numbers) {
     return bahtText;
 }
 
-function exportPDF() {
-    generatePreview();
-    setTimeout(() => {
-        const element = document.getElementById('printable-area');
-        const opt = {
-            margin: 0,
-            filename: `SO_${$('#doc_number').val()}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save();
-    }, 500);
-}
-
-function convertToInvoice(id) {
+// Function removed to avoid duplicates
     Swal.fire({
         title: 'ยืนยันการแปลงเอกสาร?',
         text: 'คุณต้องการแปลงใบสั่งขายนี้เป็นใบแจ้งหนี้ใช่หรือไม่?',
@@ -1226,14 +1211,27 @@ function requestMaterials(id) {
 }
 
 function exportPDF() {
-    generatePreview();
+    if (typeof html2pdf === 'undefined') {
+        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
+        return;
+    }
+
     Swal.fire({
         title: 'กำลังเตรียมไฟล์ PDF...',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
+    
+    // Create a temporary clone for printing to avoid scrollbar clipping
+    const printContent = document.querySelector('#modal-preview-container #printable-area').cloneNode(true);
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.appendChild(printContent);
+    document.body.appendChild(tempDiv);
+
     setTimeout(() => {
-        const element = document.getElementById('print-area');
         const opt = {
             margin: [5, 5],
             filename: `SO_${$('#doc_number').val() || 'document'}.pdf`,
@@ -1247,8 +1245,15 @@ function exportPDF() {
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
-        html2pdf().set(opt).from(element).save().then(() => {
+        
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
+            document.body.removeChild(tempDiv);
             Swal.close();
+        }).catch(err => {
+            document.body.removeChild(tempDiv);
+            Swal.close();
+            console.error('PDF Error:', err);
+            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
         });
     }, 500);
 }

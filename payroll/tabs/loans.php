@@ -73,6 +73,7 @@
         <select id="filterStatus" onchange="filterLoans()" 
                 class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none text-slate-600">
             <option value="active">กำลังผ่อนชำระ (Active)</option>
+            <option value="cash">ชำระเงินสด (Cash)</option>
             <option value="paid_off">ชำระหมดแล้ว (Paid off)</option>
             <option value="all">ทั้งหมด</option>
         </select>
@@ -188,12 +189,21 @@
                             <input type="number" step="0.01" name="monthly_deduction" id="loan_monthly_deduction" placeholder="1000"
                                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm font-bold text-slate-800 outline-none transition-all">
                             
-                            <!-- Auto Deduct Checkbox -->
-                            <label class="flex items-center gap-2 mt-3 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
-                                <input type="checkbox" name="auto_deduct" id="loan_auto_deduct" value="1" checked
-                                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <span class="text-sm font-semibold text-slate-700">หักจากเงินเดือนอัตโนมัติ <br/><span class="text-xs text-slate-500 font-normal">(หากไม่เลือก จะต้องบันทึกชำระเงินสดเอง)</span></span>
-                            </label>
+                            <div class="grid grid-cols-2 gap-4 mt-3">
+                                <!-- Cash Payment Checkbox -->
+                                <label class="flex items-start gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="checkbox" name="is_cash" id="loan_is_cash" value="1"
+                                           class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="text-sm font-semibold text-slate-700">ชำระเงินสด</span>
+                                </label>
+                                
+                                <!-- Auto Deduct Checkbox -->
+                                <label class="flex items-start gap-2 p-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="checkbox" name="auto_deduct" id="loan_auto_deduct" value="1" checked
+                                           class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="text-sm font-semibold text-slate-700">หักจากเงินเดือนอัตโนมัติ <br/><span class="text-xs text-slate-500 font-normal leading-tight mt-0.5 block">(หากไม่เลือก จะต้องบันทึกชำระเงินสดเอง)</span></span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -210,6 +220,7 @@
                         <select name="status" id="loan_status"
                                 class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white text-sm outline-none transition-all text-slate-700">
                             <option value="active">กำลังผ่อนชำระ (Active)</option>
+                            <option value="cash">ชำระเงินสด (Cash)</option>
                             <option value="paid_off">ชำระเสร็จสิ้น (Paid off)</option>
                         </select>
                     </div>
@@ -420,7 +431,7 @@
         list.forEach(item => {
             let bal = parseFloat(item.remaining_balance) || 0;
             let orig = parseFloat(item.amount) || 0;
-            if (item.status === 'active') {
+            if (item.status === 'active' || item.status === 'cash') {
                 activeCount++;
                 if (item.type === 'loan') {
                     totalLoanBalance += bal;
@@ -454,7 +465,9 @@
             list.forEach((item, idx) => {
                 let statusBadge = item.status === 'active'
                     ? `<span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-full border border-emerald-200"><i class="fa-solid fa-spinner mr-0.5"></i> กำลังผ่อนชำระ</span>`
-                    : `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full border border-slate-200">ชำระเสร็จสิ้น</span>`;
+                    : (item.status === 'cash' 
+                        ? `<span class="px-2.5 py-1 bg-amber-50 text-amber-600 text-xs font-bold rounded-full border border-amber-200"><i class="fa-solid fa-money-bill-wave mr-0.5"></i> ชำระเงินสด</span>`
+                        : `<span class="px-2.5 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full border border-slate-200">ชำระเสร็จสิ้น</span>`);
                 
                 let typeBadge = item.type === 'loan'
                     ? `<span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-bold rounded-md border border-blue-100">เงินกู้บริษัท</span>`
@@ -508,7 +521,7 @@
                         <button onclick="openRepaymentHistory(${item.id}, '${item.name} (${item.contract_no})')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="ประวัติการผ่อนชำระ">
                             <i class="fa-solid fa-list-check"></i>
                         </button>
-                        ${item.status === 'active' ? `
+                        ${(item.status === 'active' || item.status === 'cash') ? `
                             <button onclick="openManualRepayment(${item.id}, ${item.remaining_balance})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all" title="รับชำระเป็นเงินสด">
                                 <i class="fa-solid fa-cash-register"></i>
                             </button>
@@ -600,6 +613,7 @@
                 $('#loan_id').val('');
                 $('#loan_loan_date').val(new Date().toISOString().split('T')[0]);
                 $('#loan_status').val('active');
+                $('#loan_is_cash').prop('checked', false);
                 toggleLoanTypeFields('loan');
 
                 if (defaultEmpId) {
@@ -632,6 +646,7 @@
                             $('#loan_due_date').val(res.due_date || '');
                             $('#loan_status').val(res.status);
                             $('#loan_auto_deduct').prop('checked', res.auto_deduct == 1);
+                            $('#loan_is_cash').prop('checked', res.is_cash == 1);
 
                             toggleLoanTypeFields(res.type);
                             if (res.type === 'borrow') {

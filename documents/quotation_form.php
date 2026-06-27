@@ -1331,8 +1331,6 @@ function exportPDF() {
         return;
     }
 
-    generatePreview();
-    
     Swal.fire({
         title: 'กำลังเตรียมไฟล์ PDF...',
         text: 'กรุณารอสักครู่',
@@ -1342,15 +1340,23 @@ function exportPDF() {
         }
     });
 
+    // Create a temporary clone for printing to avoid scrollbar clipping
+    const printContent = document.querySelector('#modal-preview-container #printable-area');
+    if (!printContent) {
+        Swal.close();
+        Swal.fire('ผิดพลาด', 'ไม่พบพื้นที่สำหรับสร้าง PDF', 'error');
+        return;
+    }
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.appendChild(printContent.cloneNode(true));
+    document.body.appendChild(tempDiv);
+
     // Wait for preview to render and images to load
     setTimeout(() => {
-        const element = document.getElementById('printable-area');
-        if (!element) {
-            Swal.close();
-            Swal.fire('ผิดพลาด', 'ไม่พบพื้นที่สำหรับสร้าง PDF', 'error');
-            return;
-        }
-
         const opt = {
             margin: [5, 5],
             filename: `quotation_${$('#doc_number').val() || 'document'}.pdf`,
@@ -1365,9 +1371,11 @@ function exportPDF() {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
-        html2pdf().set(opt).from(element).save().then(() => {
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
+            document.body.removeChild(tempDiv);
             Swal.close();
         }).catch(err => {
+            document.body.removeChild(tempDiv);
             Swal.close();
             console.error('PDF Error:', err);
             Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');

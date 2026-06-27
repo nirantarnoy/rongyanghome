@@ -265,6 +265,20 @@ if ($check_auto_deduct && mysqli_num_rows($check_auto_deduct) == 0) {
     mysqli_query($conn, "ALTER TABLE payroll_loans ADD COLUMN auto_deduct TINYINT(1) NOT NULL DEFAULT 1 AFTER monthly_deduction");
 }
 
+// Ensure the is_cash column exists in payroll_loans
+$check_is_cash = mysqli_query($conn, "SHOW COLUMNS FROM payroll_loans LIKE 'is_cash'");
+if ($check_is_cash && mysqli_num_rows($check_is_cash) == 0) {
+    mysqli_query($conn, "ALTER TABLE payroll_loans ADD COLUMN is_cash TINYINT(1) NOT NULL DEFAULT 0 AFTER auto_deduct");
+}
+
+// Ensure the status column ENUM contains 'cash'
+$check_loan_status_enum = mysqli_query($conn, "SHOW COLUMNS FROM payroll_loans LIKE 'status'");
+if ($check_loan_status_enum && $row = mysqli_fetch_assoc($check_loan_status_enum)) {
+    if (strpos($row['Type'], 'cash') === false) {
+        mysqli_query($conn, "ALTER TABLE payroll_loans MODIFY COLUMN status ENUM('active', 'paid_off', 'cash') NOT NULL DEFAULT 'active'");
+    }
+}
+
 $createLoanPaymentsTable = "CREATE TABLE IF NOT EXISTS payroll_loan_payments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     loan_id INT NOT NULL,
@@ -1910,6 +1924,7 @@ switch ($action) {
         $amount = (float)($_POST['amount'] ?? 0.00);
         $monthly_deduction = (float)($_POST['monthly_deduction'] ?? 0.00);
         $auto_deduct = isset($_POST['auto_deduct']) && $_POST['auto_deduct'] == '1' ? 1 : 0;
+        $is_cash = isset($_POST['is_cash']) && $_POST['is_cash'] == '1' ? 1 : 0;
         $total_installments = !empty($_POST['total_installments']) ? (int)$_POST['total_installments'] : null;
         $due_date = !empty($_POST['due_date']) ? mysqli_real_escape_string($conn, $_POST['due_date']) : null;
         $status = mysqli_real_escape_string($conn, $_POST['status'] ?? 'active');
@@ -1932,13 +1947,13 @@ switch ($action) {
                 $sql = "UPDATE payroll_loans SET 
                             employee_id = ?, type = ?, contract_no = ?, loan_date = ?, 
                             amount = ?, remaining_balance = ?, total_installments = ?, 
-                            monthly_deduction = ?, auto_deduct = ?, due_date = ?, status = ?
+                            monthly_deduction = ?, auto_deduct = ?, is_cash = ?, due_date = ?, status = ?
                         WHERE id = ? AND company_id = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "isssddiidsii", 
+                mysqli_stmt_bind_param($stmt, "isssddiiddsii", 
                     $employee_id, $type, $contract_no, $loan_date, 
                     $amount, $new_rem, $total_installments, 
-                    $monthly_deduction, $auto_deduct, $due_date, $status, $id, $company_id
+                    $monthly_deduction, $auto_deduct, $is_cash, $due_date, $status, $id, $company_id
                 );
                 if (mysqli_stmt_execute($stmt)) {
                     echo json_encode(['status' => 'success', 'message' => 'แก้ไขข้อมูลสัญญาเรียบร้อยแล้ว']);
@@ -1954,13 +1969,13 @@ switch ($action) {
             $sql = "INSERT INTO payroll_loans (
                         company_id, employee_id, type, contract_no, loan_date, 
                         amount, remaining_balance, total_installments, 
-                        monthly_deduction, auto_deduct, due_date, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                        monthly_deduction, auto_deduct, is_cash, due_date, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iisssddiids", 
+            mysqli_stmt_bind_param($stmt, "iisssddiidds", 
                 $company_id, $employee_id, $type, $contract_no, $loan_date, 
                 $amount, $remaining_balance, $total_installments, 
-                $monthly_deduction, $auto_deduct, $due_date, $status
+                $monthly_deduction, $auto_deduct, $is_cash, $due_date, $status
             );
             if (mysqli_stmt_execute($stmt)) {
                 echo json_encode(['status' => 'success', 'message' => 'สร้างสัญญาเงินกู้/ยืมเรียบร้อยแล้ว']);
