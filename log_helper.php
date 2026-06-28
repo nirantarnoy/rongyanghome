@@ -29,19 +29,23 @@ function logActivity($conn, $module, $activity, $action_type = 'create', $refere
         return false;
     }
     
-    $sql = "INSERT INTO action_logs (company_id, user_id, module, activity, action_type, reference_id, year) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    if (!$stmt) {
+    try {
+        $sql = "INSERT INTO action_logs (company_id, user_id, module, activity, action_type, reference_id, year) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        if (!$stmt) {
+            return false;
+        }
+        
+        mysqli_stmt_bind_param($stmt, "iisssii", $company_id, $user_id, $module, $activity, $action_type, $reference_id, $year);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        
+        return $result;
+    } catch (Throwable $e) {
         return false;
     }
-    
-    mysqli_stmt_bind_param($stmt, "iisssii", $company_id, $user_id, $module, $activity, $action_type, $reference_id, $year);
-    $result = mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-    
-    return $result;
 }
 
 /**
@@ -113,37 +117,43 @@ function getActivityLogs($conn, $module = null, $limit = 100) {
         return [];
     }
     
-    $sql = "SELECT l.*, u.full_name, u.username 
-            FROM action_logs l 
-            LEFT JOIN users u ON l.user_id = u.id 
-            WHERE l.company_id = ? AND l.year = ?";
-    
-    if ($module) {
-        $sql .= " AND l.module = ?";
-    }
-    
-    $sql .= " ORDER BY l.created_at DESC LIMIT ?";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    if (!$stmt) {
+    try {
+        $sql = "SELECT l.*, u.full_name, u.username 
+                FROM action_logs l 
+                LEFT JOIN users u ON l.user_id = u.id 
+                WHERE l.company_id = ? AND l.year = ?";
+        
+        if ($module) {
+            $sql .= " AND l.module = ?";
+        }
+        
+        $sql .= " ORDER BY l.created_at DESC LIMIT ?";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        if (!$stmt) {
+            return [];
+        }
+        
+        if ($module) {
+            mysqli_stmt_bind_param($stmt, "iisi", $company_id, $year, $module, $limit);
+        } else {
+            mysqli_stmt_bind_param($stmt, "iii", $company_id, $year, $limit);
+        }
+        
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        
+        $logs = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $logs[] = $row;
+        }
+        
+        mysqli_stmt_close($stmt);
+        
+        return $logs;
+    } catch (Throwable $e) {
         return [];
     }
-    
-    if ($module) {
-        mysqli_stmt_bind_param($stmt, "iisi", $company_id, $year, $module, $limit);
-    } else {
-        mysqli_stmt_bind_param($stmt, "iii", $company_id, $year, $limit);
-    }
-    
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    
-    $logs = [];
-    while ($row = mysqli_fetch_assoc($result)) {
-        $logs[] = $row;
-    }
-    
-    mysqli_stmt_close($stmt);
     
     return $logs;
 }

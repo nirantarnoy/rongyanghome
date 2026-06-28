@@ -153,74 +153,82 @@ function formatThaiDate($dateStr) {
                                ORDER BY l.created_at DESC 
                                LIMIT 500";
                     
-                    $log_stmt = mysqli_prepare($conn, $log_sql);
-                    if ($log_stmt) {
-                        mysqli_stmt_bind_param($log_stmt, $types, ...$params);
-                        mysqli_stmt_execute($log_stmt);
-                        $log_res = mysqli_stmt_get_result($log_stmt);
+                    try {
+                        $log_stmt = mysqli_prepare($conn, $log_sql);
+                        if ($log_stmt) {
+                            mysqli_stmt_bind_param($log_stmt, $types, ...$params);
+                            mysqli_stmt_execute($log_stmt);
+                            $log_res = mysqli_stmt_get_result($log_stmt);
 
-                        if (mysqli_num_rows($log_res) == 0) {
-                            echo "<tr><td colspan='5' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
-                        } else {
-                            $current_date_group = null;
-                            while ($log = mysqli_fetch_assoc($log_res)) {
-                                $log_date = date('Y-m-d', strtotime($log['created_at']));
-                                if ($current_date_group !== $log_date) {
-                                    $current_date_group = $log_date;
-                                    $thai_date_label = formatThaiDate($log_date);
+                            if (mysqli_num_rows($log_res) == 0) {
+                                echo "<tr><td colspan='5' class='px-6 py-12 text-center text-gray-400'>ไม่พบประวัติกิจกรรม</td></tr>";
+                            } else {
+                                $current_date_group = null;
+                                while ($log = mysqli_fetch_assoc($log_res)) {
+                                    $log_date = date('Y-m-d', strtotime($log['created_at']));
+                                    if ($current_date_group !== $log_date) {
+                                        $current_date_group = $log_date;
+                                        $thai_date_label = formatThaiDate($log_date);
+                                        echo "
+                                        <tr class='bg-emerald-50/60 font-bold text-emerald-900 border-y border-emerald-100/50'>
+                                            <td colspan='5' class='px-6 py-3 text-sm'>
+                                                <div class='flex items-center gap-2'>
+                                                    <svg class='w-4 h-4 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                                        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
+                                                    </svg>
+                                                    $thai_date_label
+                                                </div>
+                                            </td>
+                                        </tr>";
+                                    }
+
+                                    $type_colors = [
+                                        'create' => 'bg-emerald-100 text-emerald-700',
+                                        'update' => 'bg-blue-100 text-blue-700',
+                                        'delete' => 'bg-red-100 text-red-700',
+                                        'view' => 'bg-gray-100 text-gray-700'
+                                    ];
+                                    $color_class = $type_colors[$log['action_type']] ?? 'bg-gray-100 text-gray-700';
+                                    $type_label = strtoupper($log['action_type']);
+                                    
+                                    $module_colors = [
+                                        'stock' => 'bg-purple-100 text-purple-700',
+                                        'quotation' => 'bg-indigo-100 text-indigo-700',
+                                        'project' => 'bg-amber-100 text-amber-700',
+                                        'transaction' => 'bg-teal-100 text-teal-700'
+                                    ];
+                                    $module_color = $module_colors[$log['module']] ?? 'bg-gray-100 text-gray-700';
+                                    $module_label = strtoupper($log['module']);
+                                    
+                                    $user_display = $log['full_name'] ? htmlspecialchars($log['full_name']) : htmlspecialchars($log['username'] ?? 'System');
+                                    $time_display = date('H:i:s', strtotime($log['created_at'])) . " น.";
+
                                     echo "
-                                    <tr class='bg-emerald-50/60 font-bold text-emerald-900 border-y border-emerald-100/50'>
-                                        <td colspan='5' class='px-6 py-3 text-sm'>
-                                            <div class='flex items-center gap-2'>
-                                                <svg class='w-4 h-4 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                                    <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'></path>
-                                                </svg>
-                                                $thai_date_label
-                                            </div>
+                                    <tr class='hover:bg-gray-50/80 transition-colors'>
+                                        <td class='px-6 py-4 text-sm text-gray-500 font-medium'>$time_display</td>
+                                        <td class='px-6 py-4'>
+                                            <div class='text-sm font-semibold text-gray-800'>$user_display</div>
                                         </td>
+                                        <td class='px-6 py-4'>
+                                            <span class='px-2.5 py-1 rounded-full text-xs font-bold $module_color'>$module_label</span>
+                                        </td>
+                                        <td class='px-6 py-4'>
+                                            <span class='px-2.5 py-1 rounded-full text-xs font-bold $color_class'>$type_label</span>
+                                        </td>
+                                        <td class='px-6 py-4 text-sm text-gray-600 font-medium'>" . htmlspecialchars($log['activity']) . "</td>
                                     </tr>";
                                 }
-
-                                $type_colors = [
-                                    'create' => 'bg-emerald-100 text-emerald-700',
-                                    'update' => 'bg-blue-100 text-blue-700',
-                                    'delete' => 'bg-red-100 text-red-700',
-                                    'view' => 'bg-gray-100 text-gray-700'
-                                ];
-                                $color_class = $type_colors[$log['action_type']] ?? 'bg-gray-100 text-gray-700';
-                                $type_label = strtoupper($log['action_type']);
-                                
-                                $module_colors = [
-                                    'stock' => 'bg-purple-100 text-purple-700',
-                                    'quotation' => 'bg-indigo-100 text-indigo-700',
-                                    'project' => 'bg-amber-100 text-amber-700',
-                                    'transaction' => 'bg-teal-100 text-teal-700'
-                                ];
-                                $module_color = $module_colors[$log['module']] ?? 'bg-gray-100 text-gray-700';
-                                $module_label = strtoupper($log['module']);
-                                
-                                $user_display = $log['full_name'] ? htmlspecialchars($log['full_name']) : htmlspecialchars($log['username'] ?? 'System');
-                                $time_display = date('H:i:s', strtotime($log['created_at'])) . " น.";
-
-                                echo "
-                                <tr class='hover:bg-gray-50/80 transition-colors'>
-                                    <td class='px-6 py-4 text-sm text-gray-500 font-medium'>$time_display</td>
-                                    <td class='px-6 py-4'>
-                                        <div class='text-sm font-semibold text-gray-800'>$user_display</div>
-                                    </td>
-                                    <td class='px-6 py-4'>
-                                        <span class='px-2.5 py-1 rounded-full text-xs font-bold $module_color'>$module_label</span>
-                                    </td>
-                                    <td class='px-6 py-4'>
-                                        <span class='px-2.5 py-1 rounded-full text-xs font-bold $color_class'>$type_label</span>
-                                    </td>
-                                    <td class='px-6 py-4 text-sm text-gray-600 font-medium'>" . htmlspecialchars($log['activity']) . "</td>
-                                </tr>";
                             }
+                            mysqli_stmt_close($log_stmt);
+                        } else {
+                            throw new Exception("ไม่สามารถเตรียมคำสั่ง SQL ได้");
                         }
-                    } else {
-                        // Error handling, maybe table doesn't exist
-                        echo "<tr><td colspan='5' class='px-6 py-12 text-center text-red-500 font-bold'>เกิดข้อผิดพลาด หรือตาราง action_logs ยังไม่ได้ถูกสร้าง<br><span class='text-sm font-normal text-gray-400'>กรุณารันไฟล์ create_unified_action_logs.php เพื่อสร้างฐานข้อมูล</span></td></tr>";
+                    } catch (Throwable $e) {
+                        echo "<tr><td colspan='5' class='px-6 py-12 text-center text-red-500 font-bold'>
+                            เกิดข้อผิดพลาด หรือตาราง action_logs ยังไม่ได้ถูกสร้าง<br>
+                            <span class='text-sm font-normal text-gray-400'>รายละเอียดข้อผิดพลาด: " . htmlspecialchars($e->getMessage()) . "</span><br>
+                            <a href='create_unified_action_logs.php' target='_blank' class='mt-4 inline-block px-6 py-2 bg-emerald-600 text-white rounded-full text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm'>คลิกที่นี่เพื่อติดตั้งตารางข้อมูลและ Migrate ข้อมูล logs</a>
+                        </td></tr>";
                     }
                     ?>
                 </tbody>
