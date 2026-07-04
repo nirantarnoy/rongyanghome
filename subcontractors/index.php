@@ -898,252 +898,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
 
-                    function addModalAssignedSubcontractorColumn(job_type = '', sub_id = '', contract_amount = '') {
-                        const index = new Date().getTime() + Math.floor(Math.random() * 1000);
-                        const jobTypes = ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'];
-                        
-                        let jobTypeOptions = '<option value="">-- เลือกประเภทงาน --</option>';
-                        jobTypes.forEach(jt => { 
-                            const selected = (jt === job_type) ? 'selected' : '';
-                            jobTypeOptions += `<option value="${jt}" ${selected}>${jt}</option>`; 
-                        });
-
-                        let subOptions = '<option value="">-- เลือกผู้รับเหมา --</option>';
-                        <?php foreach ($all_subcontractors as $sub): ?>
-                            {
-                                const isSelected = (sub_id == <?=$sub['id']?>) ? 'selected' : '';
-                                subOptions += `<option value="<?=$sub['id']?>" ${isSelected}><?=$sub['name']?> (<?=$sub['team_type']?>)</option>`;
-                            }
-                        <?php endforeach; ?>
-
-                        const rowHtml = `
-                            <div class="modal-assigned-row flex items-end gap-2 bg-slate-50 p-2 border border-slate-200 rounded-lg relative">
-                                <div class="flex-1">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ประเภทงาน</label>
-                                    <select class="m-job-type w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
-                                        ${jobTypeOptions}
-                                    </select>
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ชื่อผู้รับเหมา</label>
-                                    <select class="m-sub-id w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
-                                        ${subOptions}
-                                    </select>
-                                </div>
-                                <div class="w-32">
-                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">มูลค่าสัญญา</label>
-                                    <input type="number" class="m-contract-amt w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-right font-bold" value="${contract_amount}" placeholder="0.00">
-                                </div>
-                                <button type="button" onclick="$(this).closest('.modal-assigned-row').remove()" class="w-8 h-8 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded mb-0.5 shrink-0">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                        `;
-                        $('#modal-assigned-subs').append(rowHtml);
-                    }
-
-                    function openProjectModal(data = null) {
-                        const title = data ? 'แก้ไขรายละเอียดโปรเจ็ค' : 'เพิ่มรายละเอียดโปรเจ็ค';
-                        const id = data ? data.id : 0;
-                        const project_name = data ? data.project_name : '';
-                        const project_code = data ? data.project_code : '';
-                        const project_type = data ? data.project_type : '';
-                        const customer_name = data ? data.customer_name : '';
-                        const customer_phone = data ? data.customer_phone : '';
-                        const customer_email = data ? data.customer_email : '';
-                        const address = data ? data.address : '';
-                        const start_date = data ? data.start_date : '';
-                        const end_date = data ? data.end_date : '';
-                        const actual_end_date = data ? data.actual_end_date : '';
-                        const status = data ? data.status : 'กำลังดำเนินการ';
-                        const project_manager = data ? data.project_manager : '';
-                        const budget = data ? data.budget : '';
-                        const contract_value = data ? data.contract_value : '';
-                        const main_subcontractor_id = data ? data.main_subcontractor_id : '';
-                        const note = data ? data.note : '';
-
-                        let subcontractorOptions = '<option value="">-- ไม่ระบุผู้รับเหมาหลัก --</option>';
-                        <?php foreach ($all_subcontractors as $sub): ?>
-                            subcontractorOptions += `<option value="<?=$sub['id']?>" ${main_subcontractor_id == <?=$sub['id']?> ? 'selected' : ''}><?=$sub['name']?> (<?=$sub['team_type']?>)</option>`;
-                        <?php endforeach; ?>
-
-                        Swal.fire({
-                            title: title,
-                            width: '800px',
-                            html: `
-                                <div class="text-left space-y-4 p-2 text-base grid grid-cols-2 gap-4">
-                                    <div class="col-span-2">
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อโครงการ *</label>
-                                        <input type="text" id="p-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อโครงการ" value="${project_name}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">รหัสโครงการ</label>
-                                        <input type="text" id="p-code" class="swal2-input !m-0 !w-full" placeholder="เช่น PJ-67001" value="${project_code}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ประเภทโครงการ</label>
-                                        <input type="text" id="p-type" class="swal2-input !m-0 !w-full" placeholder="เช่น บ้านเดี่ยว 2 ชั้น, ตกแต่งภายใน" value="${project_type}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อลูกค้า</label>
-                                        <input type="text" id="p-customer-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อผู้ติดต่อ" value="${customer_name}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">เบอร์โทรศัพท์ลูกค้า</label>
-                                        <input type="text" id="p-customer-phone" class="swal2-input !m-0 !w-full" placeholder="08X-XXX-XXXX" value="${customer_phone}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">อีเมลลูกค้า</label>
-                                        <input type="email" id="p-customer-email" class="swal2-input !m-0 !w-full" placeholder="wichit@email.com" value="${customer_email}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้รับเหมาหลัก</label>
-                                        <select id="p-subcontractor" class="swal2-input !m-0 !w-full">${subcontractorOptions}</select>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานที่ตั้งโครงการ / ที่อยู่ลูกค้า</label>
-                                        <textarea id="p-address" class="swal2-textarea !m-0 !w-full !h-20" placeholder="ระบุที่ตั้ง">${address}</textarea>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เริ่มงาน</label>
-                                        <input type="date" id="p-start-date" class="swal2-input !m-0 !w-full" value="${start_date}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">กำหนดส่งงาน</label>
-                                        <input type="date" id="p-end-date" class="swal2-input !m-0 !w-full" value="${end_date}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เสร็จสิ้นจริง (ถ้าเสร็จแล้ว)</label>
-                                        <input type="date" id="p-actual-date" class="swal2-input !m-0 !w-full" value="${actual_end_date}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานะโครงการ</label>
-                                        <select id="p-status" class="swal2-input !m-0 !w-full">
-                                            <option value="กำลังดำเนินการ" ${status==='กำลังดำเนินการ'?'selected':''}>กำลังดำเนินการ</option>
-                                            <option value="รอเริ่มงาน" ${status==='รอเริ่มงาน'?'selected':''}>รอเริ่มงาน</option>
-                                            <option value="เสร็จสิ้น" ${status==='เสร็จสิ้น'?'selected':''}>เสร็จสิ้น</option>
-                                            <option value="ยกเลิก" ${status==='ยกเลิก'?'selected':''}>ยกเลิก</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">งบประมาณภายใน (บาท)</label>
-                                        <input type="number" step="0.01" id="p-budget" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${budget}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">มูลค่างานตามสัญญา (บาท)</label>
-                                        <input type="number" step="0.01" id="p-contract-value" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${contract_value}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้จัดการโครงการ</label>
-                                        <input type="text" id="p-manager" class="swal2-input !m-0 !w-full" placeholder="ระบุผู้รับผิดชอบ" value="${project_manager}">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold text-slate-500 mb-1">หมายเหตุเพิ่มเติม</label>
-                                        <input type="text" id="p-note" class="swal2-input !m-0 !w-full" placeholder="รายละเอียดอื่นๆ" value="${note}">
-                                    </div>
-                                    <div class="col-span-2 border-t border-slate-100 pt-4 mt-2">
-                                        <div class="flex justify-between items-center mb-2">
-                                            <h4 class="font-bold text-slate-700 text-sm">รายชื่อผู้รับเหมาในโครงการ (ทีมต่างๆ)</h4>
-                                            <button type="button" onclick="addModalAssignedSubcontractorColumn()" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded">+ เพิ่มทีม</button>
-                                        </div>
-                                        <div id="modal-assigned-subs" class="space-y-3 max-h-48 overflow-y-auto pr-2">
-                                        </div>
-                                    </div>
-                                </div>
-                            `,
-                            didOpen: () => {
-                                if (data && data.assigned_subcontractors && data.assigned_subcontractors.length > 0) {
-                                    data.assigned_subcontractors.forEach(sub => {
-                                        addModalAssignedSubcontractorColumn(sub.job_type, sub.subcontractor_id, sub.contract_amount);
-                                    });
-                                } else {
-                                    addModalAssignedSubcontractorColumn();
-                                }
-                            },
-                            showCancelButton: true,
-                            confirmButtonText: 'บันทึก',
-                            cancelButtonText: 'ยกเลิก',
-                            confirmButtonColor: '#10b981',
-                            preConfirm: () => {
-                                const nameVal = $('#p-name').val();
-                                const codeVal = $('#p-code').val();
-                                const typeVal = $('#p-type').val();
-                                const cNameVal = $('#p-customer-name').val();
-                                const cPhoneVal = $('#p-customer-phone').val();
-                                const cEmailVal = $('#p-customer-email').val();
-                                const addrVal = $('#p-address').val();
-                                const startVal = $('#p-start-date').val();
-                                const endVal = $('#p-end-date').val();
-                                const actualVal = $('#p-actual-date').val();
-                                const statusVal = $('#p-status').val();
-                                const budgetVal = $('#p-budget').val();
-                                const contractVal = $('#p-contract-value').val();
-                                const managerVal = $('#p-manager').val();
-                                const contractorVal = $('#p-subcontractor').val();
-                                const noteVal = $('#p-note').val();
-
-                                if (!nameVal) {
-                                    Swal.showValidationMessage('กรุณาระบุชื่อโครงการ');
-                                    return false;
-                                }
-
-                                const assigned_subs = [];
-                                $('.modal-assigned-row').each(function() {
-                                    const jt = $(this).find('.m-job-type').val();
-                                    const sid = $(this).find('.m-sub-id').val();
-                                    const camt = $(this).find('.m-contract-amt').val() || 0;
-                                    if (sid) {
-                                        assigned_subs.push({
-                                            job_type: jt,
-                                            subcontractor_id: sid,
-                                            contract_amount: camt
-                                        });
-                                    }
-                                });
-
-                                return {
-                                    project_name: nameVal,
-                                    project_code: codeVal,
-                                    project_type: typeVal,
-                                    customer_name: cNameVal,
-                                    customer_phone: cPhoneVal,
-                                    customer_email: cEmailVal,
-                                    address: addrVal,
-                                    start_date: startVal,
-                                    end_date: endVal,
-                                    actual_end_date: actualVal,
-                                    status: statusVal,
-                                    budget: budgetVal,
-                                    contract_value: contractVal,
-                                    project_manager: managerVal,
-                                    main_subcontractor_id: contractorVal,
-                                    note: noteVal,
-                                    assigned_subs: assigned_subs
-                                };
-                            }
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                $.ajax({
-                                    url: 'action.php',
-                                    type: 'POST',
-                                    data: {
-                                        action: 'project_save',
-                                        id: id,
-                                        assigned_subs_json: JSON.stringify(result.value.assigned_subs),
-                                        ...result.value
-                                    },
-                                    success: function(res) {
-                                        if (res.status === 'success') {
-                                            Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false});
-                                            loadProjects();
-                                        } else {
-                                            Swal.fire('ผิดพลาด', res.message, 'error');
-                                        }
-                                    }
-                                });
-                            }
-                        });
-                    }
                 </script>
             
             <?php elseif ($view === 'project_detail'): ?>
@@ -3083,6 +2837,262 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
                 </script>
+
+
+            <script>
+                    function addModalAssignedSubcontractorColumn(job_type = '', sub_id = '', contract_amount = '') {
+                        const index = new Date().getTime() + Math.floor(Math.random() * 1000);
+                        const jobTypes = ['ทีมโครงสร้าง', 'ทีมไม้', 'ทีมสี/ตกแต่ง', 'ทีมไฟฟ้า', 'ทีมปูน/ก่อฉาบ', 'ทีมกระเบื้อง', 'ทีมหลังคา', 'ทีมงานระบบ', 'ทีมอลูมิเนียม', 'ทีมสแตนเลส'];
+                        
+                        let jobTypeOptions = '<option value="">-- เลือกประเภทงาน --</option>';
+                        jobTypes.forEach(jt => { 
+                            const selected = (jt === job_type) ? 'selected' : '';
+                            jobTypeOptions += `<option value="${jt}" ${selected}>${jt}</option>`; 
+                        });
+
+                        let subOptions = '<option value="">-- เลือกผู้รับเหมา --</option>';
+                        <?php foreach ($all_subcontractors as $sub): ?>
+                            {
+                                const isSelected = (sub_id == <?=$sub['id']?>) ? 'selected' : '';
+                                subOptions += `<option value="<?=$sub['id']?>" ${isSelected}><?=$sub['name']?> (<?=$sub['team_type']?>)</option>`;
+                            }
+                        <?php endforeach; ?>
+
+                        const rowHtml = `
+                            <div class="modal-assigned-row flex items-end gap-2 bg-slate-50 p-2 border border-slate-200 rounded-lg relative">
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ประเภทงาน</label>
+                                    <select class="m-job-type w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
+                                        ${jobTypeOptions}
+                                    </select>
+                                </div>
+                                <div class="flex-1">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">ชื่อผู้รับเหมา</label>
+                                    <select class="m-sub-id w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500">
+                                        ${subOptions}
+                                    </select>
+                                </div>
+                                <div class="w-32">
+                                    <label class="block text-[10px] font-bold text-slate-500 mb-0.5">มูลค่าสัญญา</label>
+                                    <input type="number" class="m-contract-amt w-full text-xs border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-right font-bold" value="${contract_amount}" placeholder="0.00">
+                                </div>
+                                <button type="button" onclick="$(this).closest('.modal-assigned-row').remove()" class="w-8 h-8 flex items-center justify-center text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded mb-0.5 shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        `;
+                        $('#modal-assigned-subs').append(rowHtml);
+                    }
+
+                    function openProjectModal(data = null) {
+                        const title = data ? 'แก้ไขรายละเอียดโปรเจ็ค' : 'เพิ่มรายละเอียดโปรเจ็ค';
+                        const id = data ? data.id : 0;
+                        const project_name = data ? data.project_name : '';
+                        const project_code = data ? data.project_code : '';
+                        const project_type = data ? data.project_type : '';
+                        const customer_name = data ? data.customer_name : '';
+                        const customer_phone = data ? data.customer_phone : '';
+                        const customer_email = data ? data.customer_email : '';
+                        const address = data ? data.address : '';
+                        const start_date = data ? data.start_date : '';
+                        const end_date = data ? data.end_date : '';
+                        const actual_end_date = data ? data.actual_end_date : '';
+                        const status = data ? data.status : 'กำลังดำเนินการ';
+                        const project_manager = data ? data.project_manager : '';
+                        const budget = data ? data.budget : '';
+                        const contract_value = data ? data.contract_value : '';
+                        const main_subcontractor_id = data ? data.main_subcontractor_id : '';
+                        const note = data ? data.note : '';
+
+                        let subcontractorOptions = '<option value="">-- ไม่ระบุผู้รับเหมาหลัก --</option>';
+                        <?php foreach ($all_subcontractors as $sub): ?>
+                            subcontractorOptions += `<option value="<?=$sub['id']?>" ${main_subcontractor_id == <?=$sub['id']?> ? 'selected' : ''}><?=$sub['name']?> (<?=$sub['team_type']?>)</option>`;
+                        <?php endforeach; ?>
+
+                        Swal.fire({
+                            title: title,
+                            width: '800px',
+                            html: `
+                                <div class="text-left space-y-4 p-2 text-base grid grid-cols-2 gap-4">
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อโครงการ *</label>
+                                        <input type="text" id="p-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อโครงการ" value="${project_name}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">รหัสโครงการ</label>
+                                        <input type="text" id="p-code" class="swal2-input !m-0 !w-full" placeholder="เช่น PJ-67001" value="${project_code}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ประเภทโครงการ</label>
+                                        <input type="text" id="p-type" class="swal2-input !m-0 !w-full" placeholder="เช่น บ้านเดี่ยว 2 ชั้น, ตกแต่งภายใน" value="${project_type}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ชื่อลูกค้า</label>
+                                        <input type="text" id="p-customer-name" class="swal2-input !m-0 !w-full" placeholder="ระบุชื่อผู้ติดต่อ" value="${customer_name}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">เบอร์โทรศัพท์ลูกค้า</label>
+                                        <input type="text" id="p-customer-phone" class="swal2-input !m-0 !w-full" placeholder="08X-XXX-XXXX" value="${customer_phone}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">อีเมลลูกค้า</label>
+                                        <input type="email" id="p-customer-email" class="swal2-input !m-0 !w-full" placeholder="wichit@email.com" value="${customer_email}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้รับเหมาหลัก</label>
+                                        <select id="p-subcontractor" class="swal2-input !m-0 !w-full">${subcontractorOptions}</select>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานที่ตั้งโครงการ / ที่อยู่ลูกค้า</label>
+                                        <textarea id="p-address" class="swal2-textarea !m-0 !w-full !h-20" placeholder="ระบุที่ตั้ง">${address}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เริ่มงาน</label>
+                                        <input type="date" id="p-start-date" class="swal2-input !m-0 !w-full" value="${start_date}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">กำหนดส่งงาน</label>
+                                        <input type="date" id="p-end-date" class="swal2-input !m-0 !w-full" value="${end_date}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">วันที่เสร็จสิ้นจริง (ถ้าเสร็จแล้ว)</label>
+                                        <input type="date" id="p-actual-date" class="swal2-input !m-0 !w-full" value="${actual_end_date}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">สถานะโครงการ</label>
+                                        <select id="p-status" class="swal2-input !m-0 !w-full">
+                                            <option value="กำลังดำเนินการ" ${status==='กำลังดำเนินการ'?'selected':''}>กำลังดำเนินการ</option>
+                                            <option value="รอเริ่มงาน" ${status==='รอเริ่มงาน'?'selected':''}>รอเริ่มงาน</option>
+                                            <option value="เสร็จสิ้น" ${status==='เสร็จสิ้น'?'selected':''}>เสร็จสิ้น</option>
+                                            <option value="ยกเลิก" ${status==='ยกเลิก'?'selected':''}>ยกเลิก</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">งบประมาณภายใน (บาท)</label>
+                                        <input type="number" step="0.01" id="p-budget" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${budget}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">มูลค่างานตามสัญญา (บาท)</label>
+                                        <input type="number" step="0.01" id="p-contract-value" class="swal2-input !m-0 !w-full" placeholder="0.00" value="${contract_value}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">ผู้จัดการโครงการ</label>
+                                        <input type="text" id="p-manager" class="swal2-input !m-0 !w-full" placeholder="ระบุผู้รับผิดชอบ" value="${project_manager}">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-500 mb-1">หมายเหตุเพิ่มเติม</label>
+                                        <input type="text" id="p-note" class="swal2-input !m-0 !w-full" placeholder="รายละเอียดอื่นๆ" value="${note}">
+                                    </div>
+                                    <div class="col-span-2 border-t border-slate-100 pt-4 mt-2">
+                                        <div class="flex justify-between items-center mb-2">
+                                            <h4 class="font-bold text-slate-700 text-sm">รายชื่อผู้รับเหมาในโครงการ (ทีมต่างๆ)</h4>
+                                            <button type="button" onclick="addModalAssignedSubcontractorColumn()" class="text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded">+ เพิ่มทีม</button>
+                                        </div>
+                                        <div id="modal-assigned-subs" class="space-y-3 max-h-48 overflow-y-auto pr-2">
+                                        </div>
+                                    </div>
+                                </div>
+                            `,
+                            didOpen: () => {
+                                if (data && data.assigned_subcontractors && data.assigned_subcontractors.length > 0) {
+                                    data.assigned_subcontractors.forEach(sub => {
+                                        addModalAssignedSubcontractorColumn(sub.job_type, sub.subcontractor_id, sub.contract_amount);
+                                    });
+                                } else {
+                                    addModalAssignedSubcontractorColumn();
+                                }
+                            },
+                            showCancelButton: true,
+                            confirmButtonText: 'บันทึก',
+                            cancelButtonText: 'ยกเลิก',
+                            confirmButtonColor: '#10b981',
+                            preConfirm: () => {
+                                const nameVal = $('#p-name').val();
+                                const codeVal = $('#p-code').val();
+                                const typeVal = $('#p-type').val();
+                                const cNameVal = $('#p-customer-name').val();
+                                const cPhoneVal = $('#p-customer-phone').val();
+                                const cEmailVal = $('#p-customer-email').val();
+                                const addrVal = $('#p-address').val();
+                                const startVal = $('#p-start-date').val();
+                                const endVal = $('#p-end-date').val();
+                                const actualVal = $('#p-actual-date').val();
+                                const statusVal = $('#p-status').val();
+                                const budgetVal = $('#p-budget').val();
+                                const contractVal = $('#p-contract-value').val();
+                                const managerVal = $('#p-manager').val();
+                                const contractorVal = $('#p-subcontractor').val();
+                                const noteVal = $('#p-note').val();
+
+                                if (!nameVal) {
+                                    Swal.showValidationMessage('กรุณาระบุชื่อโครงการ');
+                                    return false;
+                                }
+
+                                const assigned_subs = [];
+                                $('.modal-assigned-row').each(function() {
+                                    const jt = $(this).find('.m-job-type').val();
+                                    const sid = $(this).find('.m-sub-id').val();
+                                    const camt = $(this).find('.m-contract-amt').val() || 0;
+                                    if (sid) {
+                                        assigned_subs.push({
+                                            job_type: jt,
+                                            subcontractor_id: sid,
+                                            contract_amount: camt
+                                        });
+                                    }
+                                });
+
+                                return {
+                                    project_name: nameVal,
+                                    project_code: codeVal,
+                                    project_type: typeVal,
+                                    customer_name: cNameVal,
+                                    customer_phone: cPhoneVal,
+                                    customer_email: cEmailVal,
+                                    address: addrVal,
+                                    start_date: startVal,
+                                    end_date: endVal,
+                                    actual_end_date: actualVal,
+                                    status: statusVal,
+                                    budget: budgetVal,
+                                    contract_value: contractVal,
+                                    project_manager: managerVal,
+                                    main_subcontractor_id: contractorVal,
+                                    note: noteVal,
+                                    assigned_subs: assigned_subs
+                                };
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.ajax({
+                                    url: 'action.php',
+                                    type: 'POST',
+                                    data: {
+                                        action: 'project_save',
+                                        id: id,
+                                        assigned_subs_json: JSON.stringify(result.value.assigned_subs),
+                                        ...result.value
+                                    },
+                                    success: function(res) {
+                                        if (res.status === 'success') {
+                                            Swal.fire({icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500, showConfirmButton: false});
+                                            if (typeof loadProjects === 'function') {
+                                                loadProjects();
+                                            } else if (typeof loadProjectDetails === 'function') {
+                                                loadProjectDetails();
+                                            } else {
+                                                location.reload();
+                                            }
+                                        } else {
+                                            Swal.fire('ผิดพลาด', res.message, 'error');
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    }
+            </script>
 
             <?php endif; ?>
 

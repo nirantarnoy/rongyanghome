@@ -3,6 +3,24 @@ include 'db.php';
 
 header('Content-Type: application/json');
 
+require_once dirname(__DIR__) . '/log_helper.php';
+ob_start();
+register_shutdown_function(function() {
+    global $conn;
+    $output = ob_get_clean();
+    $json = json_decode($output, true);
+    $action = $_REQUEST['action'] ?? '';
+    if ($action && strpos($action, 'list') === false && strpos($action, 'get_') !== 0 && strpos($action, 'overview') === false) {
+        if ($json && isset($json['status']) && $json['status'] === 'success') {
+            $msg = isset($json['message']) ? $json['message'] : "ดำเนินการ $action สำเร็จ";
+            logAction($conn, $msg, 'general');
+        } elseif (strpos($output, '"status":"success"') !== false || strpos($output, '"status": "success"') !== false) {
+            logAction($conn, "ดำเนินการ $action สำเร็จ", 'general');
+        }
+    }
+    echo $output;
+});
+
 $action = $_REQUEST['action'] ?? '';
 $company_id = $_SESSION['company_id'] ?? 1; // Default to 1 if not set
 
