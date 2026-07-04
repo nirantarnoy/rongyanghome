@@ -61,6 +61,9 @@ function formatThaiDate($dateStr) {
     <?php
     $selected_date = $_GET['date'] ?? '';
     $selected_user = $_GET['user_id'] ?? '';
+    $limit_option = $_GET['limit'] ?? '50';
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    if ($page < 1) $page = 1;
     ?>
     <!-- Header & Filter Section -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -98,6 +101,20 @@ function formatThaiDate($dateStr) {
                     </div>
                 </div>
 
+                <!-- Limit Selector -->
+                <div class="relative">
+                    <select name="limit" onchange="this.form.submit()"
+                            class="pl-4 pr-10 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-700 bg-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 shadow-sm cursor-pointer hover:border-slate-300 transition-colors appearance-none">
+                        <option value="20" <?= $limit_option === '20' ? 'selected' : '' ?>>20 รายการ</option>
+                        <option value="50" <?= $limit_option === '50' ? 'selected' : '' ?>>50 รายการ</option>
+                        <option value="all" <?= $limit_option === 'all' ? 'selected' : '' ?>>ทั้งหมด</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </div>
+                </div>
                 <!-- Date Picker -->
                 <div class="relative">
                     <input type="date" name="date" value="<?= htmlspecialchars($selected_date) ?>" 
@@ -147,17 +164,50 @@ function formatThaiDate($dateStr) {
                         $types .= "i";
                     }
 
+                    // Count total records
+                    $count_sql = "SELECT COUNT(*) as total FROM action_logs l $where_clause";
+                    $count_stmt = mysqli_prepare($conn, $count_sql);
+                    $total_records = 0;
+                    if ($count_stmt) {
+                        mysqli_stmt_bind_param($count_stmt, $types, ...$params);
+                        mysqli_stmt_execute($count_stmt);
+                        $count_res = mysqli_stmt_get_result($count_stmt);
+                        if ($row = mysqli_fetch_assoc($count_res)) {
+                            $total_records = $row['total'];
+                        }
+                        mysqli_stmt_close($count_stmt);
+                    }
+
+                    $total_pages = 1;
+                    $offset = 0;
+                    $limit_sql = "";
+                    $limit_val = 50;
+                    if ($limit_option !== 'all') {
+                        $limit_val = (int)$limit_option;
+                        $total_pages = ceil($total_records / $limit_val);
+                        if ($page > $total_pages && $total_pages > 0) $page = $total_pages;
+                        $offset = ($page - 1) * $limit_val;
+                        $limit_sql = "LIMIT ? OFFSET ?";
+                    }
+
                     $log_sql = "SELECT l.*, u.full_name, u.username 
                                FROM action_logs l 
                                LEFT JOIN users u ON l.user_id = u.id 
                                $where_clause 
                                ORDER BY l.created_at DESC 
-                               LIMIT 500";
+                               $limit_sql";
                     
                     try {
                         $log_stmt = mysqli_prepare($conn, $log_sql);
                         if ($log_stmt) {
-                            mysqli_stmt_bind_param($log_stmt, $types, ...$params);
+                            if ($limit_option !== 'all') {
+                                $log_params = array_merge($params, [$limit_val, $offset]);
+                                $log_types = $types . "ii";
+                            } else {
+                                $log_params = $params;
+                                $log_types = $types;
+                            }
+                            mysqli_stmt_bind_param($log_stmt, $log_types, ...$log_params);
                             mysqli_stmt_execute($log_stmt);
                             $log_res = mysqli_stmt_get_result($log_stmt);
 
@@ -235,6 +285,63 @@ function formatThaiDate($dateStr) {
                 </tbody>
             </table>
         </div>
+        
+        <?php if ($limit_option !== 'all' && $total_pages > 1): ?>
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                แสดงผล <span class="font-bold text-gray-700"><?= number_format($offset + 1) ?></span> ถึง 
+                <span class="font-bold text-gray-700"><?= number_format(min($offset + $limit_val, $total_records)) ?></span> 
+                จาก <span class="font-bold text-gray-700"><?= number_format($total_records) ?></span> รายการ
+            </div>
+            <div class="flex items-center gap-1">
+                <?php 
+                $query_string = http_build_query(array_merge($_GET, ['page' => '__PAGE__']));
+                $link_template = "action_logs.php?" . $query_string;
+                
+                // Previous button
+                if ($page > 1) {
+                    $prev_link = str_replace('__PAGE__', $page - 1, $link_template);
+                    echo "<a href='$prev_link' class='px-3 py-1 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100'>ก่อนหน้า</a>";
+                }
+                
+                // Page numbers
+                $start_page = max(1, $page - 2);
+                $end_page = min($total_pages, $page + 2);
+                
+                if ($start_page > 1) {
+                    $first_link = str_replace('__PAGE__', 1, $link_template);
+                    echo "<a href='$first_link' class='px-3 py-1 text-sm font-medium text-slate-600 border border-transparent rounded-md hover:bg-slate-50'>1</a>";
+                    if ($start_page > 2) echo "<span class='px-2 text-slate-400'>...</span>";
+                }
+                
+                for ($i = $start_page; $i <= $end_page; $i++) {
+                    $page_link = str_replace('__PAGE__', $i, $link_template);
+                    if ($i === $page) {
+                        echo "<span class='px-3 py-1 text-sm font-bold text-white bg-emerald-500 rounded-md shadow-sm'>$i</span>";
+                    } else {
+                        echo "<a href='$page_link' class='px-3 py-1 text-sm font-medium text-slate-600 border border-transparent rounded-md hover:bg-slate-50'>$i</a>";
+                    }
+                }
+                
+                if ($end_page < $total_pages) {
+                    if ($end_page < $total_pages - 1) echo "<span class='px-2 text-slate-400'>...</span>";
+                    $last_link = str_replace('__PAGE__', $total_pages, $link_template);
+                    echo "<a href='$last_link' class='px-3 py-1 text-sm font-medium text-slate-600 border border-transparent rounded-md hover:bg-slate-50'>$total_pages</a>";
+                }
+                
+                // Next button
+                if ($page < $total_pages) {
+                    $next_link = str_replace('__PAGE__', $page + 1, $link_template);
+                    echo "<a href='$next_link' class='px-3 py-1 text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-md hover:bg-slate-100'>ถัดไป</a>";
+                }
+                ?>
+            </div>
+        </div>
+        <?php elseif ($total_records > 0): ?>
+        <div class="px-6 py-4 border-t border-gray-100 text-sm text-gray-500">
+            แสดงผลทั้งหมด <span class="font-bold text-gray-700"><?= number_format($total_records) ?></span> รายการ
+        </div>
+        <?php endif; ?>
     </div>
 </div>
 
