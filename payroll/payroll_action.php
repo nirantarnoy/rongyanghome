@@ -15,9 +15,9 @@ register_shutdown_function(function() {
     if ($action && strpos($action, 'list') === false && strpos($action, 'get_') !== 0 && strpos($action, 'overview') === false) {
         if ($json && isset($json['status']) && $json['status'] === 'success') {
             $msg = isset($json['message']) ? $json['message'] : "ดำเนินการ $action สำเร็จ";
-            logAction($conn, $msg, 'general');
+            logActivity($conn, 'payroll', $msg, 'update');
         } elseif (strpos($output, '"status":"success"') !== false || strpos($output, '"status": "success"') !== false) {
-            logAction($conn, "ดำเนินการ $action สำเร็จ", 'general');
+            logActivity($conn, 'payroll', "ดำเนินการ $action สำเร็จ", 'update');
         }
     }
     echo $output;
