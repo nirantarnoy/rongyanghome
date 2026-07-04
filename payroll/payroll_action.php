@@ -1950,7 +1950,7 @@ switch ($action) {
                             monthly_deduction = ?, auto_deduct = ?, is_cash = ?, due_date = ?, status = ?
                         WHERE id = ? AND company_id = ?";
                 $stmt = mysqli_prepare($conn, $sql);
-                mysqli_stmt_bind_param($stmt, "isssddiidiissii", 
+                mysqli_stmt_bind_param($stmt, "isssddidiissii", 
                     $employee_id, $type, $contract_no, $loan_date, 
                     $amount, $new_rem, $total_installments, 
                     $monthly_deduction, $auto_deduct, $is_cash, $due_date, $status, $id, $company_id
@@ -1972,7 +1972,7 @@ switch ($action) {
                         monthly_deduction, auto_deduct, is_cash, due_date, status
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = mysqli_prepare($conn, $sql);
-            mysqli_stmt_bind_param($stmt, "iisssddiidiiss", 
+            mysqli_stmt_bind_param($stmt, "iisssddidiiss", 
                 $company_id, $employee_id, $type, $contract_no, $loan_date, 
                 $amount, $remaining_balance, $total_installments, 
                 $monthly_deduction, $auto_deduct, $is_cash, $due_date, $status
