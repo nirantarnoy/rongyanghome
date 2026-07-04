@@ -11,11 +11,19 @@ register_shutdown_function(function() {
     $json = json_decode($output, true);
     $action = $_REQUEST['action'] ?? '';
     if ($action && strpos($action, 'list') === false && strpos($action, 'get_') !== 0 && strpos($action, 'overview') === false) {
+        $action_type = 'update';
+        $action_lower = strtolower($action);
+        if (strpos($action_lower, 'delete') !== false || strpos($action_lower, 'del') !== false || strpos($action_lower, 'remove') !== false) {
+            $action_type = 'delete';
+        } elseif (strpos($action_lower, 'add') !== false || strpos($action_lower, 'create') !== false || strpos($action_lower, 'new') !== false) {
+            $action_type = 'create';
+        }
+        
         if ($json && isset($json['status']) && $json['status'] === 'success') {
             $msg = isset($json['message']) ? $json['message'] : "ดำเนินการ $action สำเร็จ";
-            logActivity($conn, 'project', $msg, 'update');
+            logActivity($conn, 'project', $msg, $action_type);
         } elseif (strpos($output, '"status":"success"') !== false || strpos($output, '"status": "success"') !== false) {
-            logActivity($conn, 'project', "ดำเนินการ $action สำเร็จ", 'update');
+            logActivity($conn, 'project', "ดำเนินการ $action สำเร็จ", $action_type);
         }
     }
     echo $output;

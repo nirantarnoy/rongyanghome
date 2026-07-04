@@ -246,7 +246,8 @@ function formatThaiDate($dateStr) {
                                         'stock' => 'bg-purple-100 text-purple-700',
                                         'quotation' => 'bg-indigo-100 text-indigo-700',
                                         'project' => 'bg-amber-100 text-amber-700',
-                                        'transaction' => 'bg-teal-100 text-teal-700'
+                                        'transaction' => 'bg-teal-100 text-teal-700',
+                                        'payroll' => 'bg-pink-100 text-pink-700'
                                     ];
                                     $module_color = $module_colors[$log['module']] ?? 'bg-gray-100 text-gray-700';
                                     $module_label = strtoupper($log['module']);
