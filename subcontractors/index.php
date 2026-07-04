@@ -2837,7 +2837,7 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
                 </script>
-
+            <?php endif; ?>
 
             <script>
                     function addModalAssignedSubcontractorColumn(job_type = '', sub_id = '', contract_amount = '') {
@@ -3093,8 +3093,6 @@ while ($row = mysqli_fetch_assoc($sub_res)) {
                         });
                     }
             </script>
-
-            <?php endif; ?>
 
         </div>
     </main>
