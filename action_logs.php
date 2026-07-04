@@ -84,7 +84,8 @@ function formatThaiDate($dateStr) {
                         <option value="">-- ผู้ใช้งานทั้งหมด --</option>
                         <?php foreach ($users_list as $u): ?>
                             <?php 
-                            $u_display = $u['full_name'] ? htmlspecialchars($u['full_name']) : htmlspecialchars($u['username']);
+                            $u_display = htmlspecialchars($u['username'] ?? '');
+                            if (empty($u_display)) $u_display = htmlspecialchars($u['full_name'] ?? '');
                             $selected = ((string)$u['id'] === (string)$selected_user) ? 'selected' : '';
                             ?>
                             <option value="<?= $u['id'] ?>" <?= $selected ?>><?= $u_display ?></option>

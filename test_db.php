@@ -10,7 +10,7 @@ if (!@mysqli_real_connect($conn, '127.0.0.1', 'root', '', 'rongyang_db')) {
     exit;
 }
 echo "Connected successfully!\n";
-$res = mysqli_query($conn, 'SHOW COLUMNS FROM invoices');
+$res = mysqli_query($conn, 'SHOW COLUMNS FROM projects_list');
 if (!$res) {
     echo mysqli_error($conn);
     exit;
