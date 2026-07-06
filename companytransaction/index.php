@@ -901,7 +901,7 @@ $view = $_GET['view'] ?? 'dashboard';
                                         <a href="../projects/project_details.php?id=${p.id}&module_type=2" class="flex-1 text-center py-2 bg-emerald-600 text-white text-sm font-bold rounded-xl hover:bg-emerald-700 transition-colors">
                                             📊 สรุปโครงการ
                                         </a>
-                                        <button onclick="openProjectModal(${p.id}, '${p.project_name}', '${p.note || ''}')" class="px-3 py-2 border border-emerald-100 text-emerald-600 text-sm font-bold rounded-xl hover:bg-emerald-50 transition-colors">
+                                        <button onclick="openProjectModal(${p.id}, '${p.project_name}', '${p.note || ''}', ${p.project_value || 0})" class="px-3 py-2 border border-emerald-100 text-emerald-600 text-sm font-bold rounded-xl hover:bg-emerald-50 transition-colors">
                                             ✏️ แก้ไข
                                         </button>
                                     </div>
@@ -912,7 +912,7 @@ $view = $_GET['view'] ?? 'dashboard';
                     $('#projectList').html(html);
                 }
 
-                function openProjectModal(id = null, name = '', note = '') {
+                function openProjectModal(id = null, name = '', note = '', project_value = 0) {
                     const title = id ? 'แก้ไขโครงการ' : 'เพิ่มโครงการใหม่';
                     Swal.fire({
                         title: title,
@@ -926,6 +926,13 @@ $view = $_GET['view'] ?? 'dashboard';
                                     <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
                                     <textarea id="projectNote" class="swal2-textarea !m-0 !w-full !h-24" placeholder="ระบุหมายเหตุ (ถ้ามี)">${note}</textarea>
                                 </div>
+                                <div class="pt-2">
+                                    <label class="block text-sm font-bold text-red-600 mb-1 text-center">ยอดหนี้ค้างจ่าย/ยอดทุนที่เหลือ</label>
+                                    <div class="relative">
+                                        <input id="projectValue" type="number" step="0.01" class="swal2-input !m-0 !w-full !border-red-500 text-red-600 font-bold text-center" placeholder="................................" value="${project_value || ''}">
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-red-600 font-bold">บาท</span>
+                                    </div>
+                                </div>
                             </div>
                         `,
                         showCancelButton: true,
@@ -935,11 +942,12 @@ $view = $_GET['view'] ?? 'dashboard';
                         preConfirm: () => {
                             const project_name = $('#projectName').val();
                             const note = $('#projectNote').val();
+                            const project_value = $('#projectValue').val();
                             if (!project_name) {
                                 Swal.showValidationMessage('กรุณาระบุชื่อโครงการ');
                                 return false;
                             }
-                            return { project_name, note };
+                            return { project_name, note, project_value };
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
@@ -951,6 +959,7 @@ $view = $_GET['view'] ?? 'dashboard';
                                     id: id,
                                     project_name: result.value.project_name,
                                     note: result.value.note,
+                                    project_value: result.value.project_value,
                                     module_type: 2
                                 },
                                 success: function(response) {

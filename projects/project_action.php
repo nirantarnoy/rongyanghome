@@ -22,6 +22,7 @@ $createTableSQL = "CREATE TABLE IF NOT EXISTS projects_list (
     id INT AUTO_INCREMENT PRIMARY KEY,
     project_name VARCHAR(255) NOT NULL,
     note TEXT,
+    project_value DECIMAL(15,2) DEFAULT 0,
     module_type INT NOT NULL COMMENT '1=Project Module, 2=Company Module',
     company_id INT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -60,6 +61,7 @@ if ($action == 'save') {
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
     $project_name = mysqli_real_escape_string($conn, $_POST['project_name']);
     $note = mysqli_real_escape_string($conn, $_POST['note']);
+    $project_value = isset($_POST['project_value']) ? (float)$_POST['project_value'] : 0;
     $module_type = (int)$_POST['module_type'];
 
     if (empty($project_name)) {
@@ -69,9 +71,9 @@ if ($action == 'save') {
     }
 
     if ($id > 0) {
-        $sql = "UPDATE projects_list SET project_name = '$project_name', note = '$note' WHERE id = $id AND company_id = $company_id";
+        $sql = "UPDATE projects_list SET project_name = '$project_name', note = '$note', project_value = $project_value WHERE id = $id AND company_id = $company_id";
     } else {
-        $sql = "INSERT INTO projects_list (project_name, note, module_type, company_id) VALUES ('$project_name', '$note', $module_type, $company_id)";
+        $sql = "INSERT INTO projects_list (project_name, note, project_value, module_type, company_id) VALUES ('$project_name', '$note', $project_value, $module_type, $company_id)";
     }
 
     ob_clean();

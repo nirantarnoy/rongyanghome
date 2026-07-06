@@ -114,15 +114,89 @@ function getModuleCategoryStats($conn, $module_type, $company_id, $start, $end) 
     return ['labels' => $labels, 'data' => $data];
 }
 
+/**
+ * Function to get pending income (sum of project_value - income for each project, if > 0)
+ */
+function getPendingIncome($conn, $module_type, $company_id) {
+    $sql = "SELECT p.id, p.project_value, 
+            COALESCE(SUM(CASE WHEN c.direction = 'income' THEN t.amount ELSE 0 END), 0) as project_income
+            FROM projects_list p
+            LEFT JOIN transactions t ON p.id = t.project_id
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE p.module_type = ? AND p.company_id = ?
+            GROUP BY p.id, p.project_value";
+    
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $module_type, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    
+    $total_pending = 0;
+    while ($row = mysqli_fetch_assoc($res)) {
+        $pending = $row['project_value'] - $row['project_income'];
+        if ($pending > 0) {
+            $total_pending += $pending;
+        }
+    }
+    return $total_pending;
+}
+
+/**
+ * Function to get estimated next month expense
+ */
+function getEstimatedNextMonthExpense($conn, $module_type, $company_id) {
+    $current_month = (int)date('n');
+    $current_year = date('Y');
+    
+    if ($current_month == 1) {
+        $months_passed = 1;
+        $start_date = "$current_year-01-01";
+        $end_date = "$current_year-01-31";
+    } else {
+        $months_passed = $current_month - 1;
+        $start_date = "$current_year-01-01";
+        $end_date = date('Y-m-t', strtotime("$current_year-".($current_month-1)."-01"));
+    }
+    
+    $sql = "SELECT SUM(t.amount) as total_expense
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+            WHERE t.module_type = ? AND t.company_id = ? AND c.direction = 'expense' 
+            AND t.transaction_date BETWEEN ? AND ?";
+            
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "iiss", $module_type, $company_id, $start_date, $end_date);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    $total_expense = (float)(mysqli_fetch_assoc($res)['total_expense'] ?? 0);
+    
+    return $total_expense / $months_passed;
+}
+
+/**
+ * Function to get outstanding debt (sum of project_value)
+ */
+function getOutstandingDebt($conn, $module_type, $company_id) {
+    $sql = "SELECT SUM(project_value) as total_debt FROM projects_list WHERE module_type = ? AND company_id = ?";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, "ii", $module_type, $company_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    return (float)(mysqli_fetch_assoc($res)['total_debt'] ?? 0);
+}
+
 // 1. Module 2 Stats (Bansakthong / Personal)
 $stats_m2 = getModuleStats($conn, 2, $company_id, $start_date, $end_date);
 $trend_m2 = getModuleTrend($conn, 2, $company_id, $start_date, $end_date);
 $cat_m2 = getModuleCategoryStats($conn, 2, $company_id, $start_date, $end_date);
+$estimated_expense_m2 = getEstimatedNextMonthExpense($conn, 2, $company_id);
+$outstanding_debt_m2 = getOutstandingDebt($conn, 2, $company_id);
 
 // 2. Module 1 Stats (Projects)
 $stats_m1 = getModuleStats($conn, 1, $company_id, $start_date, $end_date);
 $trend_m1 = getModuleTrend($conn, 1, $company_id, $start_date, $end_date);
 $cat_m1 = getModuleCategoryStats($conn, 1, $company_id, $start_date, $end_date);
+$pending_income_m1 = getPendingIncome($conn, 1, $company_id);
 
 // 3. Project Count
 $sql_projects = "SELECT COUNT(*) as total_projects FROM projects_list WHERE company_id = ?";
@@ -218,6 +292,27 @@ $recent_transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_recent), MY
             <?php renderKPICard("จำนวนรายการ", $stats_m2['count'], "blue", "รายการ"); ?>
         </div>
 
+        <div class="flex flex-col gap-4 max-w-2xl mb-8">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-red-200 shadow-sm relative group cursor-help">
+                <span class="text-red-600 font-bold text-lg">รายจ่ายคาดการณ์เดือนหน้า</span>
+                <span class="text-xl font-bold text-red-600 px-8 py-2 border-2 border-red-500 rounded-xl border-dashed min-w-[200px] text-center"><?= number_format($estimated_expense_m2, 2) ?> บาท</span>
+                
+                <!-- Tooltip -->
+                <div class="absolute left-0 -bottom-14 hidden group-hover:block w-max bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg">
+                    (เอายอดรายจ่ายรวมตั้งแต่ต้นปีถึงเดือนที่แล้ว หารด้วย จำนวนเดือนที่ผ่านไปแล้ว)
+                </div>
+            </div>
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-red-200 shadow-sm relative group cursor-help">
+                <span class="text-red-600 font-bold text-lg">รายจ่ายคงค้างเงินกู้/OD</span>
+                <span class="text-xl font-bold text-red-600 px-8 py-2 border-2 border-red-500 rounded-xl border-dashed min-w-[200px] text-center"><?= number_format($outstanding_debt_m2, 2) ?> บาท</span>
+                
+                <!-- Tooltip -->
+                <div class="absolute left-0 -bottom-10 hidden group-hover:block w-max bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg">
+                    เอายอดหนี้ค้างจ่าย/ยอดทุนที่เหลือของแต่ละโครงการมารวมกัน
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 bg-slate-50 p-6 rounded-2xl border border-slate-100">
                 <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
@@ -255,6 +350,18 @@ $recent_transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_recent), MY
             <?php renderKPICard("รายจ่ายรวม", $stats_m1['expense'], "red"); ?>
             <?php renderKPICard("กำไร/ขาดทุน", $stats_m1['profit'], "indigo"); ?>
             <?php renderKPICard("จำนวนรายการ", $stats_m1['count'], "blue", "รายการ", "โครงการทั้งหมด: $projects_count โครงการ"); ?>
+        </div>
+
+        <div class="flex flex-col gap-4 max-w-2xl mb-8">
+            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-red-200 shadow-sm relative group cursor-help">
+                <span class="text-red-600 font-bold text-lg">รายได้ค้างรับรวม</span>
+                <span class="text-xl font-bold text-red-600 px-8 py-2 border-2 border-red-500 rounded-xl border-dashed min-w-[200px] text-center"><?= number_format($pending_income_m1, 2) ?> บาท</span>
+                
+                <!-- Tooltip -->
+                <div class="absolute left-0 -bottom-10 hidden group-hover:block w-max bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg">
+                    เอายอดค้างรับรวมแต่ละโครงการมารวมตรงนี้
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

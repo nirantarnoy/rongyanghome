@@ -208,18 +208,27 @@ $view = $_GET['view'] ?? 'list';
             <!-- Dashboard View -->
             <div class="mb-10">
                 <h2 class="text-2xl font-bold text-[#4a3f35] mb-6">สรุปภาพรวมโปรเจค</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="stat-card border-l-4 border-emerald-500">
-                        <p class="text-sm text-gray-500 mb-1">รายรับทั้งหมด</p>
-                        <p id="dashIncome" class="text-3xl font-bold text-emerald-600">0.00 ฿</p>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div class="stat-card border-l-4 border-blue-500">
+                        <p class="text-sm text-gray-500 mb-1 font-bold">มูลค่ารวมโครงการ</p>
+                        <p id="dashProjectValue" class="text-2xl font-bold text-blue-600">0.00 ฿</p>
+                    </div>
+                    <div class="stat-card border-l-4 border-emerald-500 relative">
+                        <p class="text-sm text-gray-500 mb-1 font-bold">รายรับ (ได้รับจริง)</p>
+                        <p id="dashIncome" class="text-2xl font-bold text-emerald-600">0.00 ฿</p>
+                    </div>
+                    <div class="stat-card border-l-4 border-purple-500 relative">
+                        <p class="text-sm text-gray-500 mb-1 font-bold">ยอดรายได้ค้างรับ</p>
+                        <p id="dashPending" class="text-2xl font-bold text-purple-600">0.00 ฿</p>
+                        <p class="text-[10px] text-gray-400 mt-1 leading-tight">มูลค่าโครงการ - รับจริง</p>
                     </div>
                     <div class="stat-card border-l-4 border-red-500">
-                        <p class="text-sm text-gray-500 mb-1">รายจ่ายทั้งหมด</p>
-                        <p id="dashExpense" class="text-3xl font-bold text-red-600">0.00 ฿</p>
+                        <p class="text-sm text-gray-500 mb-1 font-bold">รายจ่ายทั้งหมด</p>
+                        <p id="dashExpense" class="text-2xl font-bold text-red-600">0.00 ฿</p>
                     </div>
                     <div class="stat-card border-l-4 border-amber-500">
-                        <p class="text-sm text-gray-500 mb-1">กำไร/ขาดทุน</p>
-                        <p id="dashProfit" class="text-3xl font-bold text-amber-600">+0.00 ฿</p>
+                        <p class="text-sm text-gray-500 mb-1 font-bold">กำไร/ขาดทุน</p>
+                        <p id="dashProfit" class="text-2xl font-bold text-amber-600">+0.00 ฿</p>
                     </div>
                 </div>
             </div>
@@ -243,10 +252,13 @@ $view = $_GET['view'] ?? 'list';
                                 const res = JSON.parse(response);
                                 if (res.status === 'success') {
                                     const d = res.data;
-                                    $('#dashIncome').text(d.total_income.toLocaleString() + ' ฿');
-                                    $('#dashExpense').text(d.total_expense.toLocaleString() + ' ฿');
+                                    const pending = d.total_project_value - d.total_income;
+                                    $('#dashProjectValue').text(d.total_project_value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
+                                    $('#dashIncome').text(d.total_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
+                                    $('#dashPending').text(pending.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
+                                    $('#dashExpense').text(d.total_expense.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                                     const profitSign = d.total_profit >= 0 ? '+' : '';
-                                    $('#dashProfit').text(profitSign + d.total_profit.toLocaleString() + ' ฿');
+                                    $('#dashProfit').text(profitSign + d.total_profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                                     
                                     if (d.total_count >= 0) {
                                         let expenseHtml = '';
@@ -957,10 +969,10 @@ $view = $_GET['view'] ?? 'list';
                 }
 
                 function editProject(project) {
-                    openProjectModal(project.id, project.project_name, project.note);
+                    openProjectModal(project.id, project.project_name, project.note, project.project_value);
                 }
 
-                function openProjectModal(id = null, name = '', note = '') {
+                function openProjectModal(id = null, name = '', note = '', project_value = 0) {
                     const title = id ? 'แก้ไขโครงการ' : 'เพิ่มโครงการใหม่';
                     Swal.fire({
                         title: title,
@@ -974,6 +986,13 @@ $view = $_GET['view'] ?? 'list';
                                     <label class="block text-sm font-medium text-gray-700 mb-1">หมายเหตุ</label>
                                     <textarea id="projectNote" class="swal2-textarea !m-0 !w-full !h-24" placeholder="ระบุหมายเหตุ (ถ้ามี)">${note.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}</textarea>
                                 </div>
+                                <div class="pt-2">
+                                    <label class="block text-sm font-bold text-red-600 mb-1 text-center">มูลค่าโครงการ(ราคาขาย)</label>
+                                    <div class="relative">
+                                        <input id="projectValue" type="number" step="0.01" class="swal2-input !m-0 !w-full !border-red-500 text-red-600 font-bold text-center" placeholder="................................" value="${project_value || ''}">
+                                        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-red-600 font-bold">บาท</span>
+                                    </div>
+                                </div>
                             </div>
                         `,
                         showCancelButton: true,
@@ -983,11 +1002,12 @@ $view = $_GET['view'] ?? 'list';
                         preConfirm: () => {
                             const project_name = $('#projectName').val();
                             const note = $('#projectNote').val();
+                            const project_value = $('#projectValue').val();
                             if (!project_name) {
                                 Swal.showValidationMessage('กรุณาระบุชื่อโครงการ');
                                 return false;
                             }
-                            return { project_name, note };
+                            return { project_name, note, project_value };
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
@@ -999,6 +1019,7 @@ $view = $_GET['view'] ?? 'list';
                                     id: id,
                                     project_name: result.value.project_name,
                                     note: result.value.note,
+                                    project_value: result.value.project_value,
                                     module_type: 1
                                 },
                                 success: function(response) {

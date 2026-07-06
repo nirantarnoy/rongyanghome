@@ -191,6 +191,15 @@ if ($action == 'get_dashboard_stats') {
     $stats['total_profit'] = $stats['total_income'] - $stats['total_expense'];
     $stats['total_count'] = (int)$stats['total_count'];
     
+    // Get total project value
+    $pv_sql = "SELECT SUM(project_value) as total_project_value FROM projects_list WHERE module_type = $module_type AND company_id = $company_id";
+    if ($project_id > 0) {
+        $pv_sql .= " AND id = $project_id";
+    }
+    $pv_res = mysqli_query($conn, $pv_sql);
+    $pv_row = mysqli_fetch_assoc($pv_res);
+    $stats['total_project_value'] = (float)($pv_row['total_project_value'] ?? 0);
+    
     // Get summary by category
     $cat_sql = "SELECT c.name, c.direction, c.icon, SUM(t.amount) as total
                 FROM transactions t
