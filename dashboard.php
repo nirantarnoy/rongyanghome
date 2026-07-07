@@ -292,7 +292,7 @@ $recent_transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_recent), MY
             <?php renderKPICard("จำนวนรายการ", $stats_m2['count'], "blue", "รายการ"); ?>
         </div>
 
-        <div class="flex flex-col gap-4 max-w-2xl mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-red-200 shadow-sm relative group cursor-help">
                 <span class="text-red-600 font-bold text-lg">รายจ่ายคาดการณ์เดือนหน้า</span>
                 <span class="text-xl font-bold text-red-600 px-8 py-2 border-2 border-red-500 rounded-xl border-dashed min-w-[200px] text-center"><?= number_format($estimated_expense_m2, 2) ?> บาท</span>
@@ -352,7 +352,7 @@ $recent_transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_recent), MY
             <?php renderKPICard("จำนวนรายการ", $stats_m1['count'], "blue", "รายการ", "โครงการทั้งหมด: $projects_count โครงการ"); ?>
         </div>
 
-        <div class="flex flex-col gap-4 max-w-2xl mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-red-200 shadow-sm relative group cursor-help">
                 <span class="text-red-600 font-bold text-lg">รายได้ค้างรับรวม</span>
                 <span class="text-xl font-bold text-red-600 px-8 py-2 border-2 border-red-500 rounded-xl border-dashed min-w-[200px] text-center"><?= number_format($pending_income_m1, 2) ?> บาท</span>
