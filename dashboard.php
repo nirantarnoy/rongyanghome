@@ -3,6 +3,16 @@ require 'auth_check.php';
 require 'config.php';
 require 'functions.php';
 
+// Auto-fix schema for missing column 'project_value' on production server
+try {
+    $check_col = mysqli_query($conn, "SHOW COLUMNS FROM projects_list LIKE 'project_value'");
+    if ($check_col && mysqli_num_rows($check_col) == 0) {
+        mysqli_query($conn, "ALTER TABLE projects_list ADD project_value DECIMAL(15,2) NOT NULL DEFAULT 0.00");
+    }
+} catch (Exception $e) {
+    // Ignore errors to prevent breaking the page
+}
+
 $user_role = $_SESSION['user_role'] ?? 'user';
 
 // Only admin can view dashboard
@@ -216,7 +226,11 @@ LIMIT 10";
 $stmt_recent = mysqli_prepare($conn, $sql_recent);
 mysqli_stmt_bind_param($stmt_recent, "iss", $company_id, $start_date, $end_date);
 mysqli_stmt_execute($stmt_recent);
-$recent_transactions = mysqli_fetch_all(mysqli_stmt_get_result($stmt_recent), MYSQLI_ASSOC);
+$recent_res = mysqli_stmt_get_result($stmt_recent);
+$recent_transactions = [];
+while ($row = mysqli_fetch_assoc($recent_res)) {
+    $recent_transactions[] = $row;
+}
 
 ?>
 <!DOCTYPE html>
