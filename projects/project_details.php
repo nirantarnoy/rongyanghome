@@ -105,6 +105,14 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
             </div>
         </div>
 
+        <!-- Export Action -->
+        <div class="flex justify-end mb-6">
+            <a href="export_project.php?id=<?php echo $project_id; ?>&module_type=<?php echo $module_type; ?>" class="bg-white hover:bg-gray-50 text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                ส่งออกรายงาน (Excel)
+            </a>
+        </div>
+
         <!-- Stats -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <div class="stat-card border-l-4 border-emerald-500">

@@ -128,27 +128,26 @@ function getModuleCategoryStats($conn, $module_type, $company_id, $start, $end) 
  * Function to get pending income (sum of project_value - income for each project, if > 0)
  */
 function getPendingIncome($conn, $module_type, $company_id) {
-    $sql = "SELECT p.id, p.project_value, 
-            COALESCE(SUM(CASE WHEN c.direction = 'income' THEN t.amount ELSE 0 END), 0) as project_income
-            FROM projects_list p
-            LEFT JOIN transactions t ON p.id = t.project_id
+    // Get total project value
+    $sql_pv = "SELECT SUM(project_value) as total_project_value FROM projects_list WHERE module_type = ? AND company_id = ?";
+    $stmt_pv = mysqli_prepare($conn, $sql_pv);
+    mysqli_stmt_bind_param($stmt_pv, "ii", $module_type, $company_id);
+    mysqli_stmt_execute($stmt_pv);
+    $res_pv = mysqli_stmt_get_result($stmt_pv);
+    $total_project_value = (float)(mysqli_fetch_assoc($res_pv)['total_project_value'] ?? 0);
+
+    // Get total income
+    $sql_income = "SELECT SUM(CASE WHEN c.direction = 'income' THEN t.amount ELSE 0 END) as total_income
+            FROM transactions t
             LEFT JOIN categories c ON t.category_id = c.id
-            WHERE p.module_type = ? AND p.company_id = ?
-            GROUP BY p.id, p.project_value";
+            WHERE t.module_type = ? AND t.company_id = ?";
+    $stmt_income = mysqli_prepare($conn, $sql_income);
+    mysqli_stmt_bind_param($stmt_income, "ii", $module_type, $company_id);
+    mysqli_stmt_execute($stmt_income);
+    $res_income = mysqli_stmt_get_result($stmt_income);
+    $total_income = (float)(mysqli_fetch_assoc($res_income)['total_income'] ?? 0);
     
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ii", $module_type, $company_id);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    
-    $total_pending = 0;
-    while ($row = mysqli_fetch_assoc($res)) {
-        $pending = $row['project_value'] - $row['project_income'];
-        if ($pending > 0) {
-            $total_pending += $pending;
-        }
-    }
-    return $total_pending;
+    return $total_project_value - $total_income;
 }
 
 /**
@@ -373,7 +372,7 @@ while ($row = mysqli_fetch_assoc($recent_res)) {
                 
                 <!-- Tooltip -->
                 <div class="absolute left-0 -bottom-10 hidden group-hover:block w-max bg-gray-800 text-white text-xs p-2 rounded z-10 shadow-lg">
-                    เอายอดค้างรับรวมแต่ละโครงการมารวมตรงนี้
+                    มูลค่าโครงการรวมทั้งหมด - รายรับรวมทั้งหมด
                 </div>
             </div>
         </div>
