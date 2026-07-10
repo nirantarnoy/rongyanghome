@@ -92,7 +92,7 @@
                 <button onclick="loadPayrollCalculation(true)" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-arrows-rotate"></i> รีเฟรชข้อมูล
                 </button>
-                <button class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm">
+                <button onclick="Swal.fire('แจ้งเตือน', 'ฟังก์ชันพิมพ์รายงานสรุปกำลังอยู่ระหว่างการพัฒนา', 'info')" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm">
                     <i class="fa-solid fa-print"></i> พิมพ์รายงานสรุป
                 </button>
             </div>
@@ -101,10 +101,10 @@
                 <button onclick="savePayrollRun('approved')" id="btn-save-approve" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm transition-all shadow-md shadow-blue-500/20 flex items-center gap-2">
                     <i class="fa-solid fa-money-check-dollar"></i> <span id="btn-pay-text">จ่ายงวดที่ 1 (1-10)</span>
                 </button>
-                <button class="px-4 py-2 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm">
+                <button onclick="Swal.fire('แจ้งเตือน', 'ฟังก์ชันดูยอดหนี้สิ้นเดือนกำลังอยู่ระหว่างการพัฒนา', 'info')" class="px-4 py-2 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm">
                     <i class="fa-regular fa-eye"></i> ดูยอดหนี้สิ้นเดือน
                 </button>
-                <button class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm" id="btn-print-slip">
+                <button onclick="printAllSlips()" class="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-lg text-sm transition-all flex items-center gap-2 shadow-sm" id="btn-print-slip">
                     <i class="fa-solid fa-print"></i> พิมพ์สลิปรอบ 1-10
                 </button>
             </div>
@@ -644,6 +644,29 @@
             }
         }
         return res;
+    }
+
+    // Prints all pay slips for selected employees
+    function printAllSlips() {
+        const selectedEmpIds = [];
+        $('.employee-checkbox:checked').each(function() {
+            selectedEmpIds.push($(this).data('emp-id'));
+        });
+        
+        if (selectedEmpIds.length === 0) {
+            Swal.fire('แจ้งเตือน', 'กรุณาเลือกพนักงานที่ต้องการพิมพ์สลิปเงินเดือน', 'warning');
+            return;
+        }
+        
+        // Loop through each and print (in a real app, this should generate a single PDF or printable page with multiple slips)
+        // For now, we'll just show an info message if there are many, or print them
+        if (selectedEmpIds.length > 5) {
+            Swal.fire('แจ้งเตือน', 'ฟังก์ชันพิมพ์สลิปแบบกลุ่ม (หลายคนพร้อมกัน) กำลังอยู่ระหว่างการพัฒนา', 'info');
+        } else {
+            selectedEmpIds.forEach(id => {
+                printPaySlip(id);
+            });
+        }
     }
 
     // Prints a beautiful pay slip
