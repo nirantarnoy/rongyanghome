@@ -1224,14 +1224,28 @@ function ThaiBaht(number) {
 function printDoc() { generatePreview(); setTimeout(() => { window.print(); }, 800); }
 
 function exportPDF() {
-    generatePreview();
+    if (typeof html2pdf === 'undefined') {
+        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
+        return;
+    }
+
+    const printContent = document.getElementById('print-area').cloneNode(true);
+    printContent.style.display = 'block';
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.appendChild(printContent);
+    document.body.appendChild(tempDiv);
+
     Swal.fire({
         title: 'กำลังเตรียมไฟล์ PDF...',
         allowOutsideClick: false,
         didOpen: () => { Swal.showLoading(); }
     });
+    
     setTimeout(() => {
-        const element = document.getElementById('print-area');
         const opt = {
             margin: [5, 5],
             filename: `GR_${$('#doc_number').val() || 'document'}.pdf`,
@@ -1245,8 +1259,14 @@ function exportPDF() {
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
-        html2pdf().set(opt).from(element).save().then(() => {
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
+            document.body.removeChild(tempDiv);
             Swal.close();
+        }).catch(err => {
+            document.body.removeChild(tempDiv);
+            Swal.close();
+            console.error('PDF Error:', err);
+            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
         });
     }, 500);
 }

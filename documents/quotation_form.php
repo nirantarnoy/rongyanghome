@@ -1223,12 +1223,6 @@ function generatePreview() {
                         <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name1').val()}</p>
                     </div>
                     <div style="width: 170px;">
-                        <p style="margin-bottom: 60px; font-size: 11px;">ผู้อนุมัติ</p>
-                        ${sig2 ? `<img src="${sig2}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
-                        <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
-                        <p style="margin: 5px 0; font-size: 10px;">${$('#signer_name2').val()}</p>
-                    </div>
-                    <div style="width: 170px;">
                         <p style="margin-bottom: 60px; font-size: 11px;">ผู้รับ</p>
                         ${sig3 ? `<img src="${sig3}" style="height: 60px; object-fit: contain; margin-bottom: -15px; display: block; margin-left: auto; margin-right: auto;">` : '<div style="height: 60px;"></div>'}
                         <div style="border-bottom: 1px dotted #000; margin: 0 auto; width: 150px;"></div>
@@ -1268,6 +1262,59 @@ function generatePreview() {
             $('#print-area').html(html).removeClass('hidden');
         }
     });
+}
+
+function exportPDF() {
+    if (typeof html2pdf === 'undefined') {
+        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
+        return;
+    }
+
+    const printContent = document.getElementById('print-area').cloneNode(true);
+    printContent.style.display = 'block';
+    
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.appendChild(printContent);
+    document.body.appendChild(tempDiv);
+
+    Swal.fire({
+        title: 'กำลังเตรียมไฟล์ PDF...',
+        text: 'กรุณารอสักครู่',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Wait for preview to render and images to load
+    setTimeout(() => {
+        const opt = {
+            margin: [5, 5],
+            filename: `quotation_${$('#doc_number').val() || 'document'}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                letterRendering: true,
+                scrollY: 0,
+                scrollX: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+        };
+        
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
+            document.body.removeChild(tempDiv);
+            Swal.close();
+        }).catch(err => {
+            document.body.removeChild(tempDiv);
+            Swal.close();
+            console.error('PDF Error:', err);
+            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
+        });
+    }, 500);
 }
 
 // Thai Baht Text Function

@@ -1163,7 +1163,7 @@ function ArabicToThaiBaht(numbers) {
     return bahtText;
 }
 
-// Function removed to avoid duplicates
+function convertToInvoice(id) {
     Swal.fire({
         title: 'ยืนยันการแปลงเอกสาร?',
         text: 'คุณต้องการแปลงใบสั่งขายนี้เป็นใบแจ้งหนี้ใช่หรือไม่?',
@@ -1216,20 +1216,21 @@ function exportPDF() {
         return;
     }
 
-    Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF...',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading(); }
-    });
+    const printContent = document.getElementById('print-area').cloneNode(true);
+    printContent.style.display = 'block';
     
-    // Create a temporary clone for printing to avoid scrollbar clipping
-    const printContent = document.querySelector('#modal-preview-container #printable-area').cloneNode(true);
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
     tempDiv.style.left = '-9999px';
     tempDiv.style.top = '0';
     tempDiv.appendChild(printContent);
     document.body.appendChild(tempDiv);
+
+    Swal.fire({
+        title: 'กำลังเตรียมไฟล์ PDF...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
     setTimeout(() => {
         const opt = {
