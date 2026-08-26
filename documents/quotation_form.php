@@ -1221,10 +1221,10 @@ function generatePreview(showModal = true) {
                 <div style="width: 180px;">
                     ${$('#qr_preview').attr('src') ? 
                         `<img src="${$('#qr_preview').attr('src')}" style="width: 100%; border: 1px solid #eee;">` : 
-                        `<img src="../assets/logo/bank_acc.png" style="width: 100%; border: 1px solid #eee;" onerror="this.style.display='none'">
-                         <div style="border: 1px solid #ccc; padding: 10px; text-align: center; font-size: 10px;" id="bank_placeholder">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=1971292055" style="width: 80px;">
-                            <p style="margin: 5px 0;">ธ.กสิกรไทย<br>1971-292-055</p>
+                        `<div style="border: 1px solid #ccc; padding: 10px; text-align: center; font-size: 10px; border-radius: 4px; background: #fafafa;" id="bank_placeholder">
+                            <p style="margin: 2px 0; font-weight: bold; font-size: 11px; color: #059669;">ธนาคารกสิกรไทย</p>
+                            <p style="margin: 2px 0; font-weight: bold; font-size: 12px; color: #1e293b;">197-1-29205-5</p>
+                            <p style="margin: 2px 0; color: #64748b; font-size: 10px;">บจก. บ้านสักทอง โรงยาง</p>
                          </div>`
                     }
                 </div>
@@ -1287,11 +1287,15 @@ function exportPDF() {
 
     generatePreview(false);
 
-    const printElement = document.getElementById('print-area');
+    const printElement = document.getElementById('printable-area') || document.getElementById('print-area');
     if (!printElement || !printElement.innerHTML.trim()) {
         Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
         return;
     }
+
+    const origScrollX = window.scrollX || window.pageXOffset || 0;
+    const origScrollY = window.scrollY || window.pageYOffset || 0;
+    window.scrollTo(0, 0);
 
     Swal.fire({
         title: 'กำลังสร้างไฟล์ PDF...',
@@ -1302,15 +1306,17 @@ function exportPDF() {
         }
     });
 
-    const originalStyle = printElement.getAttribute('style') || '';
-    printElement.style.display = 'block';
-    printElement.style.position = 'fixed';
-    printElement.style.left = '0';
-    printElement.style.top = '0';
-    printElement.style.width = '210mm';
-    printElement.style.zIndex = '99999';
-    printElement.style.background = '#ffffff';
-    printElement.style.boxSizing = 'border-box';
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '0';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '210mm';
+    tempDiv.style.background = '#ffffff';
+    tempDiv.style.zIndex = '999999';
+    tempDiv.style.boxSizing = 'border-box';
+    tempDiv.style.padding = '10mm';
+    tempDiv.innerHTML = printElement.outerHTML || printElement.innerHTML;
+    document.body.appendChild(tempDiv);
 
     setTimeout(() => {
         const docNum = $('#doc_number').val() || 'document';
@@ -1321,20 +1327,24 @@ function exportPDF() {
             html2canvas: { 
                 scale: 2, 
                 useCORS: true,
+                allowTaint: true,
                 letterRendering: true,
+                scrollX: 0,
                 scrollY: 0,
-                scrollX: 0
+                windowWidth: 1000
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
         const cleanup = () => {
-            printElement.setAttribute('style', originalStyle);
-            printElement.style.display = 'none';
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
+            window.scrollTo(origScrollX, origScrollY);
             Swal.close();
         };
 
-        html2pdf().set(opt).from(printElement).save().then(() => {
+        html2pdf().set(opt).from(tempDiv).save().then(() => {
             cleanup();
         }).catch(err => {
             cleanup();
