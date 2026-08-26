@@ -69,6 +69,9 @@ function loadInvoices(search = '') {
                                 <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                                 <td class="px-6 py-4 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
+                                        <a href="export_pdf.php?type=invoice&id=${item.id}" target="_blank" class="w-9 h-9 flex items-center justify-center bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="ดาวน์โหลด PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
                                         <a href="invoice_form.php?id=${item.id}" class="w-9 h-9 flex items-center justify-center bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="แก้ไข">
                                             <i class="fas fa-edit"></i>
                                         </a>

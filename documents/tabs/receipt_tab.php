@@ -74,6 +74,9 @@ function renderReceiptList(data) {
                     <td class="px-6 py-4 text-sm text-gray-600">${item.customer_name || '-'}</td>
                     <td class="px-6 py-4 text-sm text-right font-bold text-purple-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                     <td class="px-6 py-4 text-center space-x-2">
+                        <a href="export_pdf.php?type=receipt&id=${item.id}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-all text-sm font-medium">
+                            📄 PDF
+                        </a>
                         <a href="receipt_form.php?id=${item.id}" class="inline-flex items-center px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all text-sm font-medium">
                             ✏️ แก้ไข
                         </a>

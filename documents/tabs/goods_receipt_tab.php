@@ -74,6 +74,9 @@ function renderGRList(data) {
                     <td class="px-6 py-4 text-sm text-gray-600">${item.vendor_name || '-'}</td>
                     <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                     <td class="px-6 py-4 text-center space-x-2">
+                        <a href="export_pdf.php?type=goods_receipt&id=${item.id}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-all text-sm font-medium">
+                            📄 PDF
+                        </a>
                         ${item.is_stocked == 1 
                             ? `<span class="inline-flex items-center px-3 py-1.5 bg-gray-100 text-gray-500 rounded-lg text-sm font-medium">✅ รับเข้าคลังแล้ว</span>`
                             : `<button onclick="receiveStock(${item.id}, '${item.doc_number}')" class="inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-all text-sm font-medium">

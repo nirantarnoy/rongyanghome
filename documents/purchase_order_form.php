@@ -1017,68 +1017,127 @@ function printDoc() {
 }
 
 function exportPDF() {
-    if (typeof html2pdf === 'undefined') {
-        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
+    const id = $('#po_id').val();
+    if (id) {
+        window.open('export_pdf.php?type=purchase_order&id=' + id, '_blank');
+    } else {
+        Swal.fire({
+            title: 'บันทึกเอกสารก่อนดาวน์โหลด PDF',
+            text: 'ระบบจะบันทึกเอกสารและดาวน์โหลดไฟล์ PDF ให้ท่านทันที',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'บันทึกและดาวน์โหลด PDF',
+            cancelButtonText: 'ยกเลิก'
+        }).then((res) => {
+            if (res.isConfirmed) {
+                savePOAndExportPDF();
+            }
+        });
+    }
+}
+
+function savePOAndExportPDF() {
+    const docNumber = $('#doc_number').val().trim();
+    const docDate = $('#doc_date').val();
+    const vendorName = $('#vendor_name').val().trim();
+    
+    if (!docNumber || !docDate || !vendorName) {
+        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเลขที่เอกสาร วันที่ และชื่อผู้ขาย ก่อนดาวน์โหลด PDF', 'warning');
         return;
     }
 
-    generatePreview(false);
-
-    const printElement = document.getElementById('print-area');
-    if (!printElement || !printElement.innerHTML.trim()) {
-        Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
-        return;
-    }
-
-    Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF...',
-        text: 'กรุณารอสักครู่',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+    const items = [];
+    let hasError = false;
+    $('.item-row').each(function() {
+        const name = $(this).find('.item-name').val().trim();
+        const qty = $(this).find('.item-qty').val();
+        const unit = $(this).find('.item-unit').val().trim();
+        const price = $(this).find('.item-price').val();
+        const image = $(this).find('img').attr('src') || '';
+        
+        if (!name) { hasError = true; return false; }
+        items.push({ name, qty, unit, price, discount: 0, image });
     });
 
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'fixed';
-    tempDiv.style.left = '0';
-    tempDiv.style.top = '0';
-    tempDiv.style.width = '210mm';
-    tempDiv.style.zIndex = '999';
-    tempDiv.style.background = '#ffffff';
-    tempDiv.style.boxSizing = 'border-box';
-    tempDiv.innerHTML = printElement.innerHTML;
-    document.body.appendChild(tempDiv);
+    if (items.length === 0 || hasError) {
+        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลรายการสินค้าให้ครบถ้วน', 'warning');
+        return;
+    }
 
-    setTimeout(() => {
-        const docNum = $('#doc_number').val() || 'document';
-        const opt = {
-            margin: [5, 5, 5, 5],
-            filename: `PO_${docNum}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true,
-                letterRendering: true,
-                scrollY: 0,
-                scrollX: 0
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-        };
-        html2pdf().set(opt).from(tempDiv).save().then(() => {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv);
+    const totals = calculateTotal();
+    const subtotal = totals.subtotal;
+    const totalDiscount = totals.totalDiscount;
+    const netSubtotal = subtotal - totalDiscount;
+    const vatEnabled = $('#vat_enabled').is(':checked') ? 1 : 0;
+    const vatType = $('input[name="vat_type"]:checked').val();
+    let vatAmount = 0;
+    let grandTotal = netSubtotal;
+    if (vatEnabled) {
+        if (vatType === 'exclude') {
+            vatAmount = netSubtotal * 0.07;
+            grandTotal = netSubtotal + vatAmount;
+        } else {
+            grandTotal = netSubtotal;
+            vatAmount = netSubtotal * 7 / 107;
+        }
+    }
+
+    const data = {
+        action: 'save',
+        id: $('#po_id').val(),
+        doc_number: docNumber,
+        doc_date: docDate,
+        vendor_name: vendorName,
+        vendor_address: $('#vendor_address').val(),
+        vendor_phone: $('#vendor_phone').val(),
+        vendor_tax_id: $('#vendor_tax_id').val(),
+        delivery_date: $('#delivery_date').val(),
+        payment_terms: $('#payment_terms').val(),
+        items: JSON.stringify(items),
+        vat_enabled: vatEnabled,
+        vat_type: vatType,
+        subtotal: subtotal,
+        total_discount: totalDiscount,
+        vat_amount: vatAmount,
+        grand_total: grandTotal,
+        notes: $('#notes').val(),
+        issuer_company_id: $('#issuer_company_id').val(),
+        header_name: $('#header_name').val(),
+        header_address: $('#header_address').val(),
+        header_phone: $('#header_phone').val(),
+        header_tax_id: $('#header_tax_id').val(),
+        header_logo: $('#header_logo_preview').attr('src') || '',
+        signature1: $('#sig1_preview').attr('src') || '',
+        signature2: $('#sig2_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val(),
+        conditions: $('#conditions').val()
+    };
+
+    Swal.fire({
+        title: 'กำลังบันทึกเอกสาร...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    $.ajax({
+        url: 'purchase_order_action.php',
+        type: 'POST',
+        data: data,
+        success: function(response) {
+            let res = typeof response === 'object' ? response : JSON.parse(response);
+            if (res.status === 'success') {
+                $('#po_id').val(res.id);
+                Swal.close();
+                window.open('export_pdf.php?type=purchase_order&id=' + res.id, '_blank');
+            } else {
+                Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกเอกสารได้', 'error');
             }
-            Swal.close();
-        }).catch(err => {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv);
-            }
-            Swal.close();
-            console.error('PDF Error:', err);
-            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + (err.message || err), 'error');
-        });
-    }, 600);
+        },
+        error: function(xhr, status, error) {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + error, 'error');
+        }
+    });
 }
 
 function openSignaturePad(num) {

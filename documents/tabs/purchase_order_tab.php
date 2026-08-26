@@ -141,6 +141,9 @@ function renderPOList(data) {
                     <td class="px-6 py-4 text-sm text-gray-600">${item.vendor_name || '-'}</td>
                     <td class="px-6 py-4 text-sm text-right font-bold text-green-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                     <td class="px-6 py-4 text-center space-x-2">
+                        <a href="export_pdf.php?type=purchase_order&id=${item.id}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 transition-all text-sm font-medium">
+                            📄 PDF
+                        </a>
                         <a href="purchase_order_form.php?id=${item.id}" class="inline-flex items-center px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all text-sm font-medium">
                             ✏️ แก้ไข
                         </a>
