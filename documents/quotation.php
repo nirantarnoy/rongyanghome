@@ -80,7 +80,7 @@ function loadQuotations() {
         type: 'GET',
         data: { action: 'list', search: search },
         success: function(response) {
-            const res = JSON.parse(response);
+            let res = typeof response === 'object' ? response : JSON.parse(response);
             if (res.status === 'success') {
                 renderList(res.data);
             }
@@ -135,7 +135,7 @@ function deleteQuotation(id) {
                 type: 'POST',
                 data: { action: 'delete', id: id },
                 success: function(response) {
-                    const res = JSON.parse(response);
+                    let res = typeof response === 'object' ? response : JSON.parse(response);
                     if (res.status === 'success') {
                         Swal.fire('ลบแล้ว!', res.message, 'success');
                         loadQuotations();

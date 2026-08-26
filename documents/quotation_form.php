@@ -400,8 +400,21 @@ const existingItems = <?= json_encode($quotation_data['items'] ?? '[]') ?>;
 const allCompanies = <?= json_encode($all_companies) ?>;
 
 $(document).ready(function() {
-    if (existingItems && existingItems.length > 0) {
-        JSON.parse(existingItems).forEach(item => {
+    let items = [];
+    if (existingItems && existingItems !== '[]') {
+        try {
+            items = typeof existingItems === 'string' ? JSON.parse(existingItems) : existingItems;
+            if (typeof items === 'string') {
+                items = JSON.parse(items);
+            }
+        } catch(e) {
+            console.error("Error parsing existing items:", e);
+            items = [];
+        }
+    }
+    
+    if (Array.isArray(items) && items.length > 0) {
+        items.forEach(item => {
             addItem(item);
         });
     } else {
@@ -452,7 +465,7 @@ function loadTemplates() {
         type: 'GET',
         data: { action: 'get_templates' },
         success: function(response) {
-            const res = JSON.parse(response);
+            let res = typeof response === 'object' ? response : JSON.parse(response);
             if (res.status === 'success') {
                 // Populate payment terms templates
                 $('#payment_terms_template').html('<option value="">-- เลือกเทมเพลต --</option>');
@@ -599,7 +612,7 @@ function loadTemplateList(type) {
         type: 'GET',
         data: { action: 'get_templates', type: type },
         success: function(response) {
-            const res = JSON.parse(response);
+            let res = typeof response === 'object' ? response : JSON.parse(response);
             if (res.status === 'success') {
                 let html = '';
                 if (res.data.length === 0) {
@@ -677,7 +690,7 @@ function addNewTemplate(type) {
                     template_content: result.value.content
                 },
                 success: function(response) {
-                    const res = JSON.parse(response);
+                    let res = typeof response === 'object' ? response : JSON.parse(response);
                     if (res.status === 'success') {
                         Swal.fire('สำเร็จ', res.message, 'success').then(() => {
                             loadTemplates();
@@ -742,7 +755,7 @@ function editTemplate(id, type, name, content) {
                     template_content: result.value.content
                 },
                 success: function(response) {
-                    const res = JSON.parse(response);
+                    let res = typeof response === 'object' ? response : JSON.parse(response);
                     if (res.status === 'success') {
                         Swal.fire('สำเร็จ', res.message, 'success').then(() => {
                             loadTemplates();
@@ -775,7 +788,7 @@ function deleteTemplate(id, type) {
                 type: 'POST',
                 data: { action: 'delete_template', id: id },
                 success: function(response) {
-                    const res = JSON.parse(response);
+                    let res = typeof response === 'object' ? response : JSON.parse(response);
                     if (res.status === 'success') {
                         loadTemplates();
                         loadTemplateList(type);

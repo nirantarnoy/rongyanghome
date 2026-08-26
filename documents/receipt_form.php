@@ -402,13 +402,19 @@ const existingItems = <?= json_encode($receipt_data['items'] ?? '[]') ?>;
 
 $(document).ready(function() {
     loadTemplates();
-    if (existingItems && existingItems.length > 0) {
-        let items = [];
+    let items = [];
+    if (existingItems && existingItems !== '[]') {
         try {
             items = typeof existingItems === 'string' ? JSON.parse(existingItems) : existingItems;
+            if (typeof items === 'string') {
+                items = JSON.parse(items);
+            }
         } catch (e) {
             console.error("Error parsing items:", e);
+            items = [];
         }
+    }
+    if (Array.isArray(items) && items.length > 0) {
         items.forEach(item => {
             addItem(item);
         });

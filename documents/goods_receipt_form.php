@@ -509,14 +509,20 @@ const existingItems = <?= json_encode($gr_data['items'] ?? '[]') ?>;
 
 $(document).ready(function() {
     loadTemplates();
+    let items = [];
     if (existingItems && existingItems !== '[]') {
         try {
-            const items = JSON.parse(existingItems);
-            items.forEach(item => addItem(item));
+            items = typeof existingItems === 'string' ? JSON.parse(existingItems) : existingItems;
+            if (typeof items === 'string') {
+                items = JSON.parse(items);
+            }
         } catch (e) {
             console.error("Error parsing items", e);
-            addItem();
+            items = [];
         }
+    }
+    if (Array.isArray(items) && items.length > 0) {
+        items.forEach(item => addItem(item));
     } else {
         addItem();
     }
