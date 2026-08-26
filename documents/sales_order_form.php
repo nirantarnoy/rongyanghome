@@ -345,22 +345,25 @@ if ($edit_id) {
             </div>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-10 pt-8 border-t no-print">
-            <button onclick="saveSO()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-10 pt-8 border-t no-print">
+            <button type="button" onclick="saveSO()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-save"></i> บันทึก
             </button>
-            <button onclick="generatePreview()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="generatePreview()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-eye"></i> ดูตัวอย่าง
+            </button>
+            <button type="button" onclick="exportPDF()" class="bg-rose-500 hover:bg-rose-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                <i class="fas fa-file-pdf"></i> บันทึก PDF
             </button>
             
             <?php if ($edit_id): ?>
-            <button onclick="convertToInvoice(<?= $edit_id ?>)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="convertToInvoice(<?= $edit_id ?>)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-file-invoice"></i> ออกใบแจ้งหนี้
             </button>
-            <button onclick="orderProduction(<?= $edit_id ?>)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="orderProduction(<?= $edit_id ?>)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-industry"></i> สั่งผลิต
             </button>
-            <button onclick="requestMaterials(<?= $edit_id ?>)" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+            <button type="button" onclick="requestMaterials(<?= $edit_id ?>)" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-boxes"></i> เบิกสินค้า
             </button>
             <?php endif; ?>
@@ -917,7 +920,7 @@ function saveSO() {
     });
 }
 
-function generatePreview() {
+function generatePreview(showModal = true) {
     const totals = calculateTotal();
     let subtotal = totals.subtotal;
     const totalDiscount = totals.totalDiscount;
@@ -1085,28 +1088,32 @@ function generatePreview() {
         </div>
     `;
     
-    Swal.fire({
-        title: 'ตัวอย่างเอกสาร',
-        html: `
-            <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
-                ${html}
-            </div>
-            <div class="mt-4 flex gap-2 justify-center no-print">
-                <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
-                    <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
-                </button>
-                <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
-                    <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
-                </button>
-            </div>
-        `,
-        width: '900px',
-        showConfirmButton: false,
-        showCloseButton: true,
-        didOpen: () => {
-            $('#print-area').html(html).removeClass('hidden');
-        }
-    });
+    $('#print-area').html(html).removeClass('hidden');
+
+    if (showModal) {
+        Swal.fire({
+            title: 'ตัวอย่างเอกสาร',
+            html: `
+                <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
+                    ${html}
+                </div>
+                <div class="mt-4 flex gap-2 justify-center no-print">
+                    <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                        <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
+                    </button>
+                    <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
+                        <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
+                    </button>
+                </div>
+            `,
+            width: '900px',
+            showConfirmButton: false,
+            showCloseButton: true,
+            didOpen: () => {
+                $('#print-area').html(html).removeClass('hidden');
+            }
+        });
+    }
 }
 
 function ArabicToThaiBaht(numbers) {
@@ -1216,13 +1223,24 @@ function exportPDF() {
         return;
     }
 
-    const printContent = document.getElementById('print-area').cloneNode(true);
+    generatePreview(false);
+
+    const printElement = document.getElementById('print-area');
+    if (!printElement || !printElement.innerHTML.trim()) {
+        Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
+        return;
+    }
+
+    const printContent = printElement.cloneNode(true);
     printContent.style.display = 'block';
     
     const tempDiv = document.createElement('div');
     tempDiv.style.position = 'absolute';
     tempDiv.style.left = '-9999px';
     tempDiv.style.top = '0';
+    tempDiv.style.width = '210mm';
+    tempDiv.style.background = '#ffffff';
+    tempDiv.style.boxSizing = 'border-box';
     tempDiv.appendChild(printContent);
     document.body.appendChild(tempDiv);
 
@@ -1233,30 +1251,36 @@ function exportPDF() {
     });
 
     setTimeout(() => {
+        const docNum = $('#doc_number').val() || 'document';
         const opt = {
-            margin: [5, 5],
-            filename: `SO_${$('#doc_number').val() || 'document'}.pdf`,
+            margin: [5, 5, 5, 5],
+            filename: `SO_${docNum}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
                 useCORS: true,
                 letterRendering: true,
                 scrollY: 0,
-                scrollX: 0
+                scrollX: 0,
+                windowWidth: 800
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
         html2pdf().set(opt).from(tempDiv).save().then(() => {
-            document.body.removeChild(tempDiv);
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
             Swal.close();
         }).catch(err => {
-            document.body.removeChild(tempDiv);
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
             Swal.close();
             console.error('PDF Error:', err);
-            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
+            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + (err.message || err), 'error');
         });
-    }, 500);
+    }, 600);
 }
 
 function openSignaturePad(num) {

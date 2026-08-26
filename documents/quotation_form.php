@@ -1055,7 +1055,7 @@ function saveQuotation() {
     });
 }
 
-function generatePreview() {
+function generatePreview(showModal = true) {
     const totals = calculateTotal();
     let subtotal = totals.subtotal;
     const totalDiscount = totals.totalDiscount;
@@ -1240,28 +1240,30 @@ function generatePreview() {
     
     $('#print-area').html(html);
 
-    Swal.fire({
-        title: 'ตัวอย่างเอกสาร',
-        html: `
-            <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
-                ${html}
-            </div>
-            <div class="mt-4 flex gap-2 justify-center no-print">
-                <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
-                    <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
-                </button>
-                <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
-                    <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
-                </button>
-            </div>
-        `,
-        width: '900px',
-        showConfirmButton: false,
-        showCloseButton: true,
-        didOpen: () => {
-            $('#print-area').html(html).removeClass('hidden');
-        }
-    });
+    if (showModal) {
+        Swal.fire({
+            title: 'ตัวอย่างเอกสาร',
+            html: `
+                <div id="modal-preview-container" class="text-left overflow-auto" style="max-height: 80vh;">
+                    ${html}
+                </div>
+                <div class="mt-4 flex gap-2 justify-center no-print">
+                    <button onclick="window.print()" class="bg-emerald-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-emerald-700 transition-all flex items-center gap-2">
+                        <i class="fas fa-print"></i> พิมพ์เอกสาร (A4)
+                    </button>
+                    <button onclick="exportPDF()" class="bg-rose-500 text-white px-6 py-2 rounded-lg font-bold hover:bg-rose-600 transition-all flex items-center gap-2">
+                        <i class="fas fa-file-pdf"></i> บันทึกเป็น PDF
+                    </button>
+                </div>
+            `,
+            width: '900px',
+            showConfirmButton: false,
+            showCloseButton: true,
+            didOpen: () => {
+                $('#print-area').html(html).removeClass('hidden');
+            }
+        });
+    }
 }
 
 function exportPDF() {
@@ -1270,15 +1272,13 @@ function exportPDF() {
         return;
     }
 
-    const printContent = document.getElementById('print-area').cloneNode(true);
-    printContent.style.display = 'block';
-    
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.top = '0';
-    tempDiv.appendChild(printContent);
-    document.body.appendChild(tempDiv);
+    generatePreview(false);
+
+    const printElement = document.getElementById('print-area');
+    if (!printElement || !printElement.innerHTML.trim()) {
+        Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
+        return;
+    }
 
     Swal.fire({
         title: 'กำลังเตรียมไฟล์ PDF...',
@@ -1289,32 +1289,50 @@ function exportPDF() {
         }
     });
 
-    // Wait for preview to render and images to load
+    const printContent = printElement.cloneNode(true);
+    printContent.style.display = 'block';
+
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '210mm';
+    tempDiv.style.background = '#ffffff';
+    tempDiv.style.boxSizing = 'border-box';
+    tempDiv.appendChild(printContent);
+    document.body.appendChild(tempDiv);
+
     setTimeout(() => {
+        const docNum = $('#doc_number').val() || 'document';
         const opt = {
-            margin: [5, 5],
-            filename: `quotation_${$('#doc_number').val() || 'document'}.pdf`,
+            margin: [5, 5, 5, 5],
+            filename: `quotation_${docNum}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
                 useCORS: true,
                 letterRendering: true,
                 scrollY: 0,
-                scrollX: 0
+                scrollX: 0,
+                windowWidth: 800
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
         html2pdf().set(opt).from(tempDiv).save().then(() => {
-            document.body.removeChild(tempDiv);
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
             Swal.close();
         }).catch(err => {
-            document.body.removeChild(tempDiv);
+            if (document.body.contains(tempDiv)) {
+                document.body.removeChild(tempDiv);
+            }
             Swal.close();
             console.error('PDF Error:', err);
-            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
+            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + (err.message || err), 'error');
         });
-    }, 500);
+    }, 600);
 }
 
 // Thai Baht Text Function
@@ -1372,63 +1390,7 @@ function ArabicToThaiBaht(numbers) {
     return bahtText;
 }
 
-function exportPDF() {
-    if (typeof html2pdf === 'undefined') {
-        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
-        return;
-    }
 
-    Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF...',
-        text: 'กรุณารอสักครู่',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    // Create a temporary clone for printing to avoid scrollbar clipping
-    const printContent = document.querySelector('#modal-preview-container #printable-area');
-    if (!printContent) {
-        Swal.close();
-        Swal.fire('ผิดพลาด', 'ไม่พบพื้นที่สำหรับสร้าง PDF', 'error');
-        return;
-    }
-    
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.top = '0';
-    tempDiv.appendChild(printContent.cloneNode(true));
-    document.body.appendChild(tempDiv);
-
-    // Wait for preview to render and images to load
-    setTimeout(() => {
-        const opt = {
-            margin: [5, 5],
-            filename: `quotation_${$('#doc_number').val() || 'document'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true,
-                letterRendering: true,
-                scrollY: 0,
-                scrollX: 0
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-        };
-        
-        html2pdf().set(opt).from(tempDiv).save().then(() => {
-            document.body.removeChild(tempDiv);
-            Swal.close();
-        }).catch(err => {
-            document.body.removeChild(tempDiv);
-            Swal.close();
-            console.error('PDF Error:', err);
-            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + err.message, 'error');
-        });
-    }, 1500);
-}
 
 function printQuotation() {
     generatePreview();
