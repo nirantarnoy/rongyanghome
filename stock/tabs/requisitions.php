@@ -52,6 +52,11 @@
             <label>ช่องทางการจัดส่ง</label>
             <input type="text" name="shipping_method" class="form-control" placeholder="เช่น รถบริษัท, Kerry, Flash">
         </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+            <label>หมายเหตุ</label>
+            <textarea name="remark" class="form-control" rows="2" placeholder="ระบุหมายเหตุเพิ่มเติม (ถ้ามี)..."></textarea>
+        </div>
         
         <div style="grid-column: 1/-1;">
             <h3 style="font-size: 1rem; margin-bottom: 1rem; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">รายการสินค้า *</h3>
@@ -396,6 +401,7 @@ function editRequisition(id) {
                 $('input[name="phone"]').val(req.phone);
                 $('textarea[name="shipping_address"]').val(req.shipping_address);
                 $('input[name="shipping_method"]').val(req.shipping_method);
+                $('textarea[name="remark"]').val(req.remark || '');
                 
                 $('#reqItemsContainer').html('');
                 rowCount = 0;

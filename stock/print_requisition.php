@@ -224,9 +224,13 @@ $company = mysqli_fetch_assoc(mysqli_stmt_get_result($comp_stmt));
         <!-- หมายเหตุ -->
         <div class="remark-box">
             <p class="remark-title">หมายเหตุ</p>
-            <div class="remark-lines"></div>
-            <div class="remark-lines"></div>
-            <div class="remark-lines"></div>
+            <?php if (!empty(trim($req['remark'] ?? ''))): ?>
+                <div style="white-space: pre-line; line-height: 1.6; padding: 5px 0;"><?= htmlspecialchars($req['remark']) ?></div>
+            <?php else: ?>
+                <div class="remark-lines"></div>
+                <div class="remark-lines"></div>
+                <div class="remark-lines"></div>
+            <?php endif; ?>
         </div>
 
         <!-- Buttons -->

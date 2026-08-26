@@ -1281,13 +1281,14 @@ if ($action == 'add_requisition') {
     $shipping_address = $_POST['shipping_address'] ?? '';
     $shipping_method = $_POST['shipping_method'] ?? '';
     $requisition_date = $_POST['requisition_date'] ?? date('Y-m-d');
+    $remark = $_POST['remark'] ?? '';
     $items = $_POST['items'] ?? [];
 
     mysqli_begin_transaction($conn);
     try {
-        $sql = "INSERT INTO stock_requisitions (company_id, req_no, po_no, so_no, customer_name, requester_name, phone, shipping_address, shipping_method, requisition_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO stock_requisitions (company_id, req_no, po_no, so_no, customer_name, requester_name, phone, shipping_address, shipping_method, requisition_date, remark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "isssssssss", $company_id, $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date);
+        mysqli_stmt_bind_param($stmt, "issssssssss", $company_id, $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date, $remark);
         mysqli_stmt_execute($stmt);
         $requisition_id = mysqli_insert_id($conn);
 
@@ -1320,6 +1321,7 @@ if ($action == 'update_requisition') {
     $shipping_address = $_POST['shipping_address'] ?? '';
     $shipping_method = $_POST['shipping_method'] ?? '';
     $requisition_date = $_POST['requisition_date'] ?? date('Y-m-d');
+    $remark = $_POST['remark'] ?? '';
     $items = $_POST['items'] ?? [];
 
     mysqli_begin_transaction($conn);
@@ -1347,9 +1349,9 @@ if ($action == 'update_requisition') {
             logStockAction($conn, $company_id, "คืนสต็อกชั่วคราวเพื่อแก้ไขใบเบิก: $old_req_no", 'update');
         }
 
-        $sql = "UPDATE stock_requisitions SET req_no=?, po_no=?, so_no=?, customer_name=?, requester_name=?, phone=?, shipping_address=?, shipping_method=?, requisition_date=? WHERE id=? AND company_id=?";
+        $sql = "UPDATE stock_requisitions SET req_no=?, po_no=?, so_no=?, customer_name=?, requester_name=?, phone=?, shipping_address=?, shipping_method=?, requisition_date=?, remark=? WHERE id=? AND company_id=?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sssssssssii", $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date, $id, $company_id);
+        mysqli_stmt_bind_param($stmt, "ssssssssssii", $req_no, $po_no, $so_no, $customer_name, $requester_name, $phone, $shipping_address, $shipping_method, $requisition_date, $remark, $id, $company_id);
         mysqli_stmt_execute($stmt);
 
         // Delete old items
@@ -1571,6 +1573,7 @@ if ($action == 'get_requisition_details') {
         <div style="margin-top: 1rem;">
             <p><strong>ที่อยู่จัดส่ง:</strong> '.nl2br(htmlspecialchars($req['shipping_address'] ?? '-')).'</p>
             <p><strong>ช่องทางการจัดส่ง:</strong> '.htmlspecialchars($req['shipping_method'] ?? '-').'</p>
+            <p><strong>หมายเหตุ:</strong> '.nl2br(htmlspecialchars($req['remark'] ?? '-')).'</p>
         </div>
     </div>
     
