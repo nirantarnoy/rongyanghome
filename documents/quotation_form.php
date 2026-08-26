@@ -1287,15 +1287,14 @@ function exportPDF() {
 
     generatePreview(false);
 
-    const printElement = document.getElementById('printable-area') || document.getElementById('print-area');
-    if (!printElement || !printElement.innerHTML.trim()) {
+    const printContainer = document.getElementById('print-area');
+    if (!printContainer || !printContainer.innerHTML.trim()) {
         Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
         return;
     }
 
     const origScrollX = window.scrollX || window.pageXOffset || 0;
     const origScrollY = window.scrollY || window.pageYOffset || 0;
-    window.scrollTo(0, 0);
 
     Swal.fire({
         title: 'กำลังสร้างไฟล์ PDF...',
@@ -1306,22 +1305,19 @@ function exportPDF() {
         }
     });
 
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '0';
-    tempDiv.style.top = '0';
-    tempDiv.style.width = '210mm';
-    tempDiv.style.background = '#ffffff';
-    tempDiv.style.zIndex = '999999';
-    tempDiv.style.boxSizing = 'border-box';
-    tempDiv.style.padding = '10mm';
-    tempDiv.innerHTML = printElement.outerHTML || printElement.innerHTML;
-    document.body.appendChild(tempDiv);
+    const origStyle = printContainer.getAttribute('style') || '';
+    printContainer.style.display = 'block';
+    printContainer.style.position = 'relative';
+    printContainer.style.margin = '0 auto';
+    printContainer.style.background = '#ffffff';
+    printContainer.style.visibility = 'visible';
+
+    window.scrollTo(0, printContainer.offsetTop || 0);
 
     setTimeout(() => {
         const docNum = $('#doc_number').val() || 'document';
         const opt = {
-            margin: [5, 5, 5, 5],
+            margin: 0,
             filename: `quotation_${docNum}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
@@ -1329,29 +1325,34 @@ function exportPDF() {
                 useCORS: true,
                 allowTaint: true,
                 letterRendering: true,
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: 1000
+                logging: false
             },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
-        
-        const cleanup = () => {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv);
-            }
+
+        const restoreState = () => {
+            printContainer.setAttribute('style', origStyle);
+            printContainer.style.display = 'none';
             window.scrollTo(origScrollX, origScrollY);
             Swal.close();
         };
 
-        html2pdf().set(opt).from(tempDiv).save().then(() => {
-            cleanup();
+        html2pdf().set(opt).from(printContainer).save().then(() => {
+            restoreState();
         }).catch(err => {
-            cleanup();
-            console.error('PDF Error:', err);
-            Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + (err.message || err), 'error');
+            restoreState();
+            console.error('html2pdf Error:', err);
+            Swal.fire({
+                title: 'เปิดหน้าต่าง พิมพ์ / บันทึก PDF',
+                text: 'กำลังเปิดระบบบันทึก PDF ของเบราว์เซอร์',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                window.print();
+            });
         });
-    }, 500);
+    }, 600);
 }
 
 // Thai Baht Text Function
