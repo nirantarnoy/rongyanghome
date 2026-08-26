@@ -1280,79 +1280,130 @@ function generatePreview(showModal = true) {
 }
 
 function exportPDF() {
-    if (typeof html2pdf === 'undefined') {
-        Swal.fire('ผิดพลาด', 'ไม่พบไลบรารีสำหรับสร้าง PDF กรุณารีโหลดหน้าเว็บ', 'error');
+    const id = $('#quotation_id').val();
+    if (id) {
+        window.open('export_pdf.php?type=quotation&id=' + id, '_blank');
+    } else {
+        Swal.fire({
+            title: 'บันทึกเอกสารก่อนดาวน์โหลด PDF',
+            text: 'ระบบจะบันทึกเอกสารและดาวน์โหลดไฟล์ PDF ให้ท่านทันที',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'บันทึกและดาวน์โหลด PDF',
+            cancelButtonText: 'ยกเลิก'
+        }).then((res) => {
+            if (res.isConfirmed) {
+                saveQuotationAndExportPDF();
+            }
+        });
+    }
+}
+
+function saveQuotationAndExportPDF() {
+    const docNumber = $('#doc_number').val().trim();
+    const docDate = $('#doc_date').val();
+    const customerName = $('#customer_name').val().trim();
+    
+    if (!docNumber || !docDate || !customerName) {
+        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกเลขที่เอกสาร วันที่ และชื่อลูกค้า ก่อนดาวน์โหลด PDF', 'warning');
         return;
     }
 
-    generatePreview(false);
-
-    const printContainer = document.getElementById('print-area');
-    if (!printContainer || !printContainer.innerHTML.trim()) {
-        Swal.fire('ผิดพลาด', 'ไม่พบเนื้อหาเอกสารสำหรับสร้าง PDF', 'error');
-        return;
-    }
-
-    const origScrollX = window.scrollX || window.pageXOffset || 0;
-    const origScrollY = window.scrollY || window.pageYOffset || 0;
-
-    Swal.fire({
-        title: 'กำลังสร้างไฟล์ PDF...',
-        text: 'กรุณารอสักครู่',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+    const items = [];
+    let hasError = false;
+    $('.item-row').each(function() {
+        const name = $(this).find('.item-name').val().trim();
+        const qty = $(this).find('.item-qty').val();
+        const unit = $(this).find('.item-unit').val().trim();
+        const price = $(this).find('.item-price').val();
+        const image = $(this).find('img').attr('src') || '';
+        
+        if (!name) { hasError = true; return false; }
+        items.push({ name, qty, unit, price, discount: 0, image });
     });
 
-    const origStyle = printContainer.getAttribute('style') || '';
-    printContainer.style.display = 'block';
-    printContainer.style.position = 'relative';
-    printContainer.style.margin = '0 auto';
-    printContainer.style.background = '#ffffff';
-    printContainer.style.visibility = 'visible';
+    if (items.length === 0 || hasError) {
+        Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกข้อมูลรายการสินค้าให้ครบถ้วน', 'warning');
+        return;
+    }
 
-    window.scrollTo(0, printContainer.offsetTop || 0);
+    const totals = calculateTotal();
+    const subtotal = totals.subtotal;
+    const totalDiscount = totals.totalDiscount;
+    const netSubtotal = subtotal - totalDiscount;
+    const vatEnabled = $('#vat_enabled').is(':checked') ? 1 : 0;
+    const vatType = $('input[name="vat_type"]:checked').val();
+    let vatAmount = 0;
+    let grandTotal = netSubtotal;
+    if (vatEnabled) {
+        if (vatType === 'exclude') {
+            vatAmount = netSubtotal * 0.07;
+            grandTotal = netSubtotal + vatAmount;
+        } else {
+            grandTotal = netSubtotal;
+            vatAmount = netSubtotal * 7 / 107;
+        }
+    }
 
-    setTimeout(() => {
-        const docNum = $('#doc_number').val() || 'document';
-        const opt = {
-            margin: 0,
-            filename: `quotation_${docNum}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true,
-                allowTaint: true,
-                letterRendering: true,
-                logging: false
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
-        };
+    const data = {
+        action: 'save',
+        id: $('#quotation_id').val(),
+        doc_number: docNumber,
+        doc_date: docDate,
+        customer_name: customerName,
+        customer_address: $('#customer_address').val(),
+        customer_phone: $('#customer_phone').val(),
+        customer_tax_id: $('#customer_tax_id').val(),
+        delivery_time: $('#delivery_time').val(),
+        payment_terms: $('#payment_terms').val(),
+        items: JSON.stringify(items),
+        vat_enabled: vatEnabled,
+        vat_type: vatType,
+        subtotal: subtotal,
+        total_discount: totalDiscount,
+        vat_amount: vatAmount,
+        grand_total: grandTotal,
+        notes: $('#notes').val(),
+        issuer_company_id: $('#issuer_company_id').val(),
+        header_name: $('#header_name').val(),
+        header_address: $('#header_address').val(),
+        header_phone: $('#header_phone').val(),
+        header_tax_id: $('#header_tax_id').val(),
+        header_logo: $('#header_logo_preview').attr('src') || '',
+        signature1: $('#sig1_preview').attr('src') || '',
+        signature2: $('#sig2_preview').attr('src') || '',
+        signature3: $('#sig3_preview').attr('src') || '',
+        signer_name1: $('#signer_name1').val(),
+        signer_name2: $('#signer_name2').val(),
+        signer_name3: $('#signer_name3').val(),
+        qr_code_image: $('#qr_preview').attr('src') || '',
+        conditions: $('#conditions').val()
+    };
 
-        const restoreState = () => {
-            printContainer.setAttribute('style', origStyle);
-            printContainer.style.display = 'none';
-            window.scrollTo(origScrollX, origScrollY);
-            Swal.close();
-        };
+    Swal.fire({
+        title: 'กำลังบันทึกเอกสาร...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
 
-        html2pdf().set(opt).from(printContainer).save().then(() => {
-            restoreState();
-        }).catch(err => {
-            restoreState();
-            console.error('html2pdf Error:', err);
-            Swal.fire({
-                title: 'เปิดหน้าต่าง พิมพ์ / บันทึก PDF',
-                text: 'กำลังเปิดระบบบันทึก PDF ของเบราว์เซอร์',
-                icon: 'info',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                window.print();
-            });
-        });
-    }, 600);
+    $.ajax({
+        url: 'quotation_action.php',
+        type: 'POST',
+        data: data,
+        success: function(response) {
+            let res = typeof response === 'object' ? response : JSON.parse(response);
+            if (res.status === 'success') {
+                $('#quotation_id').val(res.id);
+                Swal.close();
+                window.open('export_pdf.php?type=quotation&id=' + res.id, '_blank');
+            } else {
+                Swal.fire('ผิดพลาด', res.message || 'ไม่สามารถบันทึกเอกสารได้', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: ' + error, 'error');
+        }
+    });
 }
 
 // Thai Baht Text Function

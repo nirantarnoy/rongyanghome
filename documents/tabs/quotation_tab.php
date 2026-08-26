@@ -87,6 +87,9 @@ function renderList(data) {
                     <td class="px-6 py-4 text-sm text-right font-bold text-emerald-600">${parseFloat(item.grand_total).toLocaleString()} ฿</td>
                     <td class="px-6 py-4 text-center whitespace-nowrap">
                         <div class="flex items-center justify-center gap-2">
+                            <a href="export_pdf.php?type=quotation&id=${item.id}" target="_blank" class="w-9 h-9 flex items-center justify-center bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="ดาวน์โหลด PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </a>
                             <button onclick="convertToSO(${item.id})" class="w-9 h-9 flex items-center justify-center bg-emerald-100 text-emerald-700 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="แปลงเป็นใบสั่งขาย">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
