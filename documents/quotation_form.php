@@ -1294,7 +1294,7 @@ function exportPDF() {
     }
 
     Swal.fire({
-        title: 'กำลังเตรียมไฟล์ PDF...',
+        title: 'กำลังสร้างไฟล์ PDF...',
         text: 'กรุณารอสักครู่',
         allowOutsideClick: false,
         didOpen: () => {
@@ -1302,16 +1302,15 @@ function exportPDF() {
         }
     });
 
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'fixed';
-    tempDiv.style.left = '0';
-    tempDiv.style.top = '0';
-    tempDiv.style.width = '210mm';
-    tempDiv.style.zIndex = '999';
-    tempDiv.style.background = '#ffffff';
-    tempDiv.style.boxSizing = 'border-box';
-    tempDiv.innerHTML = printElement.innerHTML;
-    document.body.appendChild(tempDiv);
+    const originalStyle = printElement.getAttribute('style') || '';
+    printElement.style.display = 'block';
+    printElement.style.position = 'fixed';
+    printElement.style.left = '0';
+    printElement.style.top = '0';
+    printElement.style.width = '210mm';
+    printElement.style.zIndex = '99999';
+    printElement.style.background = '#ffffff';
+    printElement.style.boxSizing = 'border-box';
 
     setTimeout(() => {
         const docNum = $('#doc_number').val() || 'document';
@@ -1329,20 +1328,20 @@ function exportPDF() {
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
         };
         
-        html2pdf().set(opt).from(tempDiv).save().then(() => {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv);
-            }
+        const cleanup = () => {
+            printElement.setAttribute('style', originalStyle);
+            printElement.style.display = 'none';
             Swal.close();
+        };
+
+        html2pdf().set(opt).from(printElement).save().then(() => {
+            cleanup();
         }).catch(err => {
-            if (document.body.contains(tempDiv)) {
-                document.body.removeChild(tempDiv);
-            }
-            Swal.close();
+            cleanup();
             console.error('PDF Error:', err);
             Swal.fire('ผิดพลาด', 'ไม่สามารถสร้าง PDF ได้: ' + (err.message || err), 'error');
         });
-    }, 600);
+    }, 500);
 }
 
 // Thai Baht Text Function
