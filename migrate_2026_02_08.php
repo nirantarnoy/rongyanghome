@@ -84,6 +84,7 @@ $queries = [
         `shipping_address` text DEFAULT NULL,
         `shipping_method` varchar(255) DEFAULT NULL,
         `requisition_date` date DEFAULT NULL,
+        `remark` text DEFAULT NULL,
         `requester_name` varchar(255) DEFAULT NULL,
         `status` enum('pending','approved','rejected') DEFAULT 'pending',
         `created_at` datetime DEFAULT CURRENT_TIMESTAMP,

@@ -34,6 +34,13 @@ foreach ($cols_to_add as $col => $type) {
     }
 }
 
+// Auto-migrate stock_requisitions for remark field
+$check_req_remark = mysqli_query($conn, "SHOW COLUMNS FROM stock_requisitions LIKE 'remark'");
+if ($check_req_remark && mysqli_num_rows($check_req_remark) == 0) {
+    mysqli_query($conn, "ALTER TABLE stock_requisitions ADD COLUMN remark TEXT NULL AFTER requisition_date");
+}
+
+
 
 function logStockAction($conn, $company_id, $activity, $action_type) {
     $user_login = $_SESSION['user_login'] ?? 'system';
