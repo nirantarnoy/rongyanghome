@@ -200,6 +200,24 @@
         switchCalcSubTab('calculator');
     }
 
+    function isEndOfMonthOrFullMonth() {
+        if (selectedCycle === 3) return true;
+        const startDate = $('#payroll_start_date').val();
+        const endDate = $('#payroll_end_date').val();
+        if (!startDate || !endDate) return false;
+        
+        const startParts = startDate.split('-');
+        const endParts = endDate.split('-');
+        if (endParts.length < 3) return false;
+
+        const year = parseInt(endParts[0]);
+        const month = parseInt(endParts[1]);
+        const endDay = parseInt(endParts[2]);
+        const lastDayOfMonth = new Date(year, month, 0).getDate();
+        
+        return (startParts[2] === '01' && endDay === lastDayOfMonth) || (endDay === lastDayOfMonth);
+    }
+
     function renderCycleTableHeaders() {
         let cycleText = selectedCycle === 1 ? '1 (1-10)' : (selectedCycle === 2 ? '2 (11-20)' : 'สิ้นเดือน (21-30)');
         let html = `
@@ -212,7 +230,7 @@
                 <th class="px-4 py-3 text-[13px] font-bold tracking-wider text-center border-r border-slate-100">ชื่อ-นามสกุล<br><span class="text-[10px] font-normal text-slate-500">ตำแหน่ง</span></th>
         `;
 
-        if (selectedCycle === 1 || selectedCycle === 2) {
+        if (!isEndOfMonthOrFullMonth() && (selectedCycle === 1 || selectedCycle === 2)) {
             html += `
                 <th class="px-4 py-3 text-[13px] font-bold tracking-wider text-center border-r border-slate-100">เงินได้งวดนี้ ${selectedCycle === 1 ? '(1-10)' : '(11-20)'}</th>
                 <th class="px-4 py-3 text-[13px] font-bold tracking-wider text-center border-r border-slate-100">เงินเพิ่ม</th>
@@ -371,14 +389,14 @@
 
 
                         let cols = '';
-                        if (selectedCycle === 1 || selectedCycle === 2) {
+                        if (!isEndOfMonthOrFullMonth() && (selectedCycle === 1 || selectedCycle === 2)) {
                             cols = `
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-slate-800 border-r border-slate-100">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-emerald-500 border-r border-slate-100">${parseFloat(row.allowance || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-rose-500 border-r border-slate-100">${parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-slate-800 border-r border-slate-100">${parseFloat(row.remaining_debt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center border-r border-slate-100">${parseFloat(row.remaining_debt || 0) > 0 ? '<span class="text-amber-500 bg-amber-50 px-2 py-1 rounded text-xs font-bold">รอหักสิ้นเดือน</span>' : '<span class="text-emerald-500 bg-emerald-50 px-2 py-1 rounded text-[11px] font-bold">ไม่มีหนี้</span>'}</td>
-                                <td class="px-4 py-3 text-[13px] text-center font-bold text-blue-600 border-r border-slate-100">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-4 py-3 text-[13px] text-center font-bold text-blue-600 border-r border-slate-100" id="net-pay-${row.employee_id}">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center">
                                     <button onclick="viewEmployeeDetails(${row.employee_id})" class="inline-flex items-center px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-blue-600 rounded-lg transition-all text-xs font-bold gap-1 shadow-sm">
                                         <i class="fa-regular fa-eye"></i> ดูรายละเอียด
@@ -386,12 +404,19 @@
                                 </td>
                             `;
                         } else {
+                            const loanInputHtml = isLocked 
+                                ? `<span class="font-bold text-rose-600">${parseFloat(row.loan_deduction || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</span>`
+                                : `<input type="number" step="0.01" min="0" value="${parseFloat(row.loan_deduction || 0)}" 
+                                          onchange="updateRowLoanDeduction(${row.employee_id}, this.value)" 
+                                          title="แก้ไขยอดหักเงินกู้/ยืมของพนักงานรายนี้" 
+                                          class="w-24 px-2 py-1 text-center font-bold text-rose-600 bg-rose-50/60 border border-rose-200 rounded-lg focus:ring-2 focus:ring-rose-500 outline-none text-xs">`;
+
                             cols = `
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-slate-800 border-r border-slate-100">${parseFloat(row.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-emerald-500 border-r border-slate-100">${parseFloat(row.allowance || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-rose-500 border-r border-slate-100">${parseFloat(row.deductions).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                                <td class="px-4 py-3 text-[13px] text-center font-bold text-rose-600 border-r border-slate-100">${parseFloat(row.loan_deduction || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
-                                <td class="px-4 py-3 text-[13px] text-center font-bold text-blue-600 border-r border-slate-100">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
+                                <td class="px-4 py-3 text-[13px] text-center border-r border-slate-100">${loanInputHtml}</td>
+                                <td class="px-4 py-3 text-[13px] text-center font-bold text-blue-600 border-r border-slate-100" id="net-pay-${row.employee_id}">${parseFloat(row.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center font-bold text-slate-800 border-r border-slate-100">${parseFloat(row.remaining_debt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})}</td>
                                 <td class="px-4 py-3 text-[13px] text-center border-r border-slate-100">
                                     ${parseFloat(row.remaining_debt) > 0 ? '<span class="text-amber-500 bg-amber-50 px-2 py-1 rounded text-[11px] font-bold">ผ่อนต่อ</span>' : '<span class="text-emerald-500 bg-emerald-50 px-2 py-1 rounded text-[11px] font-bold">ไม่มีหนี้</span>'}
@@ -999,7 +1024,7 @@
 
         // Update table footer
         let tfootHtml = '';
-        if (selectedCycle === 1 || selectedCycle === 2) {
+        if (!isEndOfMonthOrFullMonth() && (selectedCycle === 1 || selectedCycle === 2)) {
             tfootHtml = `
             <tr>
                 <td colspan="3" class="px-4 py-3 text-right font-bold text-slate-800 border-r border-slate-100">รวมทั้งสิ้น</td>
@@ -1047,6 +1072,73 @@
         return filtered;
     }
 
+    function updateRowLoanDeduction(empId, val) {
+        let newDeduct = parseFloat(val);
+        if (isNaN(newDeduct) || newDeduct < 0) newDeduct = 0;
+        
+        const detail = computedDetails.find(d => d.employee_id == empId);
+        if (detail) {
+            detail.loan_deduction = newDeduct;
+            detail.net_pay = parseFloat(detail.base_earnings) + parseFloat(detail.allowance || 0) - parseFloat(detail.deductions || 0) - newDeduct;
+            
+            $(`#net-pay-${empId}`).text(detail.net_pay.toLocaleString('th-TH', {minimumFractionDigits: 2}));
+            updatePayrollSummaryAndPayload();
+        }
+    }
+
+    function viewEmployeeDetails(empId) {
+        const emp = computedDetails.find(e => e.employee_id == empId);
+        if (!emp) return;
+
+        Swal.fire({
+            title: `<strong>รายละเอียดเงินเดือน: ${emp.first_name} ${emp.last_name}</strong>`,
+            html: `
+                <div class="text-left text-sm space-y-3 p-2">
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">รหัสพนักงาน:</span>
+                        <span class="font-bold text-slate-800">${emp.emp_code}</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">ตำแหน่ง / แผนก:</span>
+                        <span class="font-bold text-slate-800">${emp.position} (${emp.department || '-'})</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">เงินเดือน/ค่าจ้างขั้นต้น:</span>
+                        <span class="font-bold text-slate-800">${parseFloat(emp.base_earnings).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">เงินเพิ่ม (ค่าคอมฯ/เบี้ยเลี้ยง):</span>
+                        <span class="font-bold text-emerald-600">+${parseFloat(emp.allowance || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">หักทั่วไป (ขาด/ลา):</span>
+                        <span class="font-bold text-rose-500">-${parseFloat(emp.deductions || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1 bg-rose-50 p-2 rounded-lg">
+                        <span class="font-semibold text-rose-700">หักชำระเงินกู้ / เงินยืม:</span>
+                        <span class="font-bold text-rose-700">-${parseFloat(emp.loan_deduction || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                    <div class="flex justify-between border-b pb-1">
+                        <span class="font-semibold text-slate-500">ยอดหนี้คงเหลือรวม:</span>
+                        <span class="font-bold text-slate-800">${parseFloat(emp.remaining_debt || 0).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                    <div class="flex justify-between pt-2 text-base font-bold bg-blue-50 p-2 rounded-lg text-blue-700">
+                        <span>ยอดจ่ายสุทธิ:</span>
+                        <span>${parseFloat(emp.net_pay).toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท</span>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fa-solid fa-print"></i> พิมพ์สลิปเงินเดือน',
+            cancelButtonText: 'ปิด',
+            confirmButtonColor: '#2563eb'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                printPaySlip(empId);
+            }
+        });
+    }
+
     function onMonthChange() {
         const monthVal = $('#payroll_month_input').val();
         if (monthVal) {
@@ -1060,6 +1152,9 @@
             
             $('#payroll_start_date').val(firstDay);
             $('#payroll_end_date').val(lastDay);
+            selectedCycle = 3;
+            $('#btn-pay-text').text('จ่ายเงินเดือนประจำงวด');
+            $('#btn-print-slip').html('<i class="fa-solid fa-print"></i> พิมพ์สลิปประจำงวด');
         }
         loadPayrollCalculation();
     }

@@ -1479,11 +1479,16 @@ switch ($action) {
                 $loan_deduction = 0.00;
                 $remaining_debt = 0.00;
                 $emp_loans = $emp_loans_map[$emp_id] ?? [];
+                
+                $is_full_month_range = (date('d', strtotime($start_date)) === '01' && date('d', strtotime($end_date)) === date('t', strtotime($start_date)));
+                $is_end_of_month_date = (date('d', strtotime($end_date)) === date('t', strtotime($start_date)));
+                $should_deduct_loans = ($cycle === 3 || $is_full_month_range || $is_end_of_month_date);
+
                 foreach ($emp_loans as $loan) {
                     $rem = (float)$loan['remaining_balance'];
                     $remaining_debt += $rem;
                     
-                    if ($cycle === 3 && (int)$loan['auto_deduct'] === 1) {
+                    if ($should_deduct_loans && (int)$loan['auto_deduct'] === 1) {
                         $deduct = min((float)$loan['monthly_deduction'], $rem);
                         $loan_deduction += $deduct;
                     }
@@ -1630,15 +1635,14 @@ switch ($action) {
                 $loan_ded_amt = (float)($item['loan_deduction'] ?? 0.00);
                 if ($loan_ded_amt <= 0) continue;
                 
-                // Fetch active loans/borrows for this employee ordered by type, then date
-                $l_query = mysqli_query($conn, "SELECT * FROM payroll_loans WHERE employee_id = $employee_id AND status = 'active' ORDER BY type ASC, loan_date ASC");
+                // Fetch active loans/borrows for this employee ordered by auto_deduct DESC, type ASC, loan_date ASC
+                $l_query = mysqli_query($conn, "SELECT * FROM payroll_loans WHERE employee_id = $employee_id AND status = 'active' ORDER BY auto_deduct DESC, type ASC, loan_date ASC");
                 if ($l_query) {
                     $remaining_to_deduct = $loan_ded_amt;
                     while ($loan = mysqli_fetch_assoc($l_query)) {
                         if ($remaining_to_deduct <= 0) break;
                         
-                        $deduct = min((float)$loan['monthly_deduction'], (float)$loan['remaining_balance']);
-                        $deduct = min($deduct, $remaining_to_deduct);
+                        $deduct = min((float)$loan['remaining_balance'], $remaining_to_deduct);
                         
                         if ($deduct > 0) {
                             $new_bal = (float)$loan['remaining_balance'] - $deduct;
