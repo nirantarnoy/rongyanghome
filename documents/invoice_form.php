@@ -598,14 +598,26 @@ $(document).ready(function() {
     loadTemplates();
 });
 
+function escapeAttr(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function addItem(data = null) {
     itemCount++;
+    const nameVal = escapeAttr(data?.name || '');
+    const unitVal = escapeAttr(data?.unit || '');
     const html = `
         <div class="item-row border border-gray-100 rounded-2xl p-4 bg-gray-50/50" data-item="${itemCount}">
             <div class="grid grid-cols-12 gap-3">
                 <div class="col-span-12 md:col-span-5">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">รายการ</label>
-                    <input type="text" class="item-name w-full px-3 py-2 border border-gray-200 rounded-xl text-sm" value="${data?.name || ''}">
+                    <input type="text" class="item-name w-full px-3 py-2 border border-gray-200 rounded-xl text-sm" placeholder="ชื่อสินค้า/รายละเอียด" maxlength="500" value="${nameVal}">
                     <div class="mt-2 flex items-center gap-2">
                         <input type="file" accept="image/*" class="item-image text-[10px]" onchange="previewItemImage(this, ${itemCount})">
                         <img id="item_img_${itemCount}" src="${data?.image || ''}" class="${data?.image ? '' : 'hidden'} h-10 w-10 object-contain border rounded bg-white">

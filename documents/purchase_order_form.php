@@ -569,14 +569,26 @@ function loadConditionsTemplate() {
     }
 }
 
+function escapeAttr(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function addItem(data = null) {
     itemCount++;
+    const nameVal = escapeAttr(data?.name || '');
+    const unitVal = escapeAttr(data?.unit || '');
     const html = `
         <div class="item-row border border-gray-200 rounded-lg p-4 bg-gray-50" data-item="${itemCount}">
             <div class="grid grid-cols-12 gap-3">
                 <div class="col-span-5">
                     <label class="block text-xs font-medium text-gray-600 mb-1">รายการ</label>
-                    <input type="text" class="item-name w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="ชื่อสินค้า/บริการ" value="${data?.name || ''}">
+                    <input type="text" class="item-name w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="ชื่อสินค้า/บริการ" maxlength="500" value="${nameVal}">
                 </div>
                 <div class="col-span-1">
                     <label class="block text-xs font-medium text-gray-600 mb-1">จำนวน</label>
@@ -584,7 +596,7 @@ function addItem(data = null) {
                 </div>
                 <div class="col-span-1">
                     <label class="block text-xs font-medium text-gray-600 mb-1">หน่วย</label>
-                    <input type="text" class="item-unit w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="หน่วย" value="${data?.unit || ''}">
+                    <input type="text" class="item-unit w-full px-3 py-2 border border-gray-300 rounded text-sm" placeholder="หน่วย" value="${unitVal}">
                 </div>
                 <div class="col-span-2">
                     <label class="block text-xs font-medium text-gray-600 mb-1">ราคา/หน่วย</label>
