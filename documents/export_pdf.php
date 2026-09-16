@@ -149,9 +149,15 @@ foreach ($items as $item) {
 $signerLabel1 = 'ผู้ออกเอกสาร';
 $signerLabel2 = 'ผู้รับเอกสาร / ลูกค้า';
 
+$signerName1 = htmlspecialchars($q['signer_name1'] ?? '');
+$signerName2 = htmlspecialchars($q['signer_name2'] ?? $q['signer_name3'] ?? '');
+$sigTarget2 = $sig2 ?: $sig3;
+
 if ($type === 'quotation') {
     $signerLabel1 = 'ผู้เสนอราคา';
     $signerLabel2 = 'ผู้รับ';
+    $signerName2 = htmlspecialchars($q['signer_name3'] ?? '');
+    $sigTarget2 = $sig3;
 } elseif ($type === 'sales_order') {
     $signerLabel1 = 'ผู้รับสั่งซื้อ';
     $signerLabel2 = 'ผู้สั่งซื้อ';
@@ -168,10 +174,6 @@ if ($type === 'quotation') {
     $signerLabel1 = 'ผู้รับสินค้า';
     $signerLabel2 = 'ผู้ส่งสินค้า';
 }
-
-$signerName1 = htmlspecialchars($q['signer_name1'] ?? '');
-$signerName2 = htmlspecialchars($q['signer_name2'] ?? $q['signer_name3'] ?? '');
-$sigTarget2 = $sig2 ?: $sig3;
 
 $html = '
 <!DOCTYPE html>
