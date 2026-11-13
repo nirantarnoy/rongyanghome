@@ -105,9 +105,44 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
             </div>
         </div>
 
-        <!-- Export Action -->
-        <div class="flex justify-end mb-6">
-            <a href="export_project.php?id=<?php echo $project_id; ?>&module_type=<?php echo $module_type; ?>" class="bg-white hover:bg-gray-50 text-emerald-600 border border-emerald-200 px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow">
+        <!-- Filter & Export Toolbar -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <!-- Date Range Filter Bar -->
+            <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm flex flex-wrap items-center gap-2">
+                <!-- Status Badge -->
+                <div class="mr-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">ช่วงเวลา</span>
+                    <span class="text-xs font-medium text-gray-700" id="dashDateBadge">📅 ข้อมูลทั้งหมด</span>
+                </div>
+
+                <!-- Quick Buttons -->
+                <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs">
+                    <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-gray-600 hover:bg-white hover:text-gray-900 transition-all" onclick="setDashboardDateRange('today')">วันนี้</button>
+                    <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-gray-600 hover:bg-white hover:text-gray-900 transition-all" onclick="setDashboardDateRange('7days')">7 วัน</button>
+                    <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-gray-600 hover:bg-white hover:text-gray-900 transition-all" onclick="setDashboardDateRange('this_month')">เดือนนี้</button>
+                    <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-gray-600 hover:bg-white hover:text-gray-900 transition-all" onclick="setDashboardDateRange('this_year')">ปีนี้</button>
+                    <button type="button" class="dash-quick-btn active px-2.5 py-1 rounded-lg font-bold bg-white text-gray-800 shadow-xs transition-all" onclick="setDashboardDateRange('all')">ทั้งหมด</button>
+                </div>
+
+                <!-- Date Inputs -->
+                <div class="flex items-center gap-1.5 text-xs">
+                    <input type="date" id="dashStartDate" class="bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 text-xs cursor-pointer">
+                    <span class="text-gray-400 font-bold">ถึง</span>
+                    <input type="date" id="dashEndDate" class="bg-gray-50 border border-gray-200 text-gray-800 rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-gray-400 text-xs cursor-pointer">
+                </div>
+
+                <!-- Apply & Reset Buttons -->
+                <button type="button" onclick="applyDashboardDateFilter()" style="background-color: <?php echo $theme_color; ?>;" class="text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all hover:opacity-90">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    กรองข้อมูล
+                </button>
+                <button type="button" onclick="resetDashboardDateFilter()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-xl font-medium text-xs transition-all" title="ล้างตัวกรอง">
+                    ล้างค่า
+                </button>
+            </div>
+
+            <!-- Export Action -->
+            <a id="btnExportExcel" href="export_project.php?id=<?php echo $project_id; ?>&module_type=<?php echo $module_type; ?>" class="bg-white hover:bg-gray-50 text-emerald-600 border border-emerald-200 px-4 py-2.5 rounded-2xl font-bold flex items-center gap-2 transition-all shadow-sm hover:shadow text-sm shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 ส่งออกรายงาน (Excel)
             </a>
@@ -169,89 +204,183 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
     </div>
 
     <script>
+        let currentStartDate = '';
+        let currentEndDate = '';
+        const baseExportUrl = 'export_project.php?id=<?php echo $project_id; ?>&module_type=<?php echo $module_type; ?>';
+
         $(document).ready(function() {
             loadStats();
             loadTransactions();
         });
 
-        function loadStats() {
+        function formatThaiDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parseInt(parts[0]) + 543}`;
+            }
+            return dateStr;
+        }
+
+        function setDashboardDateRange(range) {
+            const today = new Date();
+            let start = '';
+            let end = '';
+
+            const formatDate = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            };
+
+            if (range === 'today') {
+                start = formatDate(today);
+                end = formatDate(today);
+            } else if (range === '7days') {
+                const past7 = new Date();
+                past7.setDate(today.getDate() - 6);
+                start = formatDate(past7);
+                end = formatDate(today);
+            } else if (range === 'this_month') {
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                start = formatDate(firstDay);
+                end = formatDate(lastDay);
+            } else if (range === 'this_year') {
+                start = `${today.getFullYear()}-01-01`;
+                end = `${today.getFullYear()}-12-31`;
+            } else if (range === 'all') {
+                start = '';
+                end = '';
+            }
+
+            $('#dashStartDate').val(start);
+            $('#dashEndDate').val(end);
+
+            $('.dash-quick-btn').removeClass('active bg-white text-gray-800 font-bold shadow-xs').addClass('font-medium text-gray-600');
+            $(`.dash-quick-btn[onclick="setDashboardDateRange('${range}')"]`).addClass('active bg-white text-gray-800 font-bold shadow-xs').removeClass('font-medium text-gray-600');
+
+            applyDashboardDateFilter(false);
+        }
+
+        function applyDashboardDateFilter(manual = true) {
+            const start = $('#dashStartDate').val();
+            const end = $('#dashEndDate').val();
+
+            if (manual) {
+                $('.dash-quick-btn').removeClass('active bg-white text-gray-800 font-bold shadow-xs').addClass('font-medium text-gray-600');
+                if (!start && !end) {
+                    $('.dash-quick-btn[onclick="setDashboardDateRange(\'all\')"]').addClass('active bg-white text-gray-800 font-bold shadow-xs').removeClass('font-medium text-gray-600');
+                }
+            }
+
+            if (start && end) {
+                $('#dashDateBadge').html(`📅 <span class="font-bold text-gray-800">${formatThaiDate(start)}</span> - <span class="font-bold text-gray-800">${formatThaiDate(end)}</span>`);
+            } else if (start) {
+                $('#dashDateBadge').html(`📅 ตั้งแต่ <span class="font-bold text-gray-800">${formatThaiDate(start)}</span>`);
+            } else if (end) {
+                $('#dashDateBadge').html(`📅 จนถึง <span class="font-bold text-gray-800">${formatThaiDate(end)}</span>`);
+            } else {
+                $('#dashDateBadge').text('📅 ข้อมูลทั้งหมด');
+            }
+
+            // Update export link with date filter parameters
+            let exportUrl = baseExportUrl;
+            if (start) exportUrl += '&start_date=' + encodeURIComponent(start);
+            if (end) exportUrl += '&end_date=' + encodeURIComponent(end);
+            $('#btnExportExcel').attr('href', exportUrl);
+
+            currentStartDate = start;
+            currentEndDate = end;
+            loadStats(start, end);
+            loadTransactions(start, end);
+        }
+
+        function resetDashboardDateFilter() {
+            setDashboardDateRange('all');
+        }
+
+        function loadStats(startDate = '', endDate = '') {
             $.ajax({
                 url: 'transaction_action.php',
                 type: 'GET',
                 data: { 
                     action: 'get_dashboard_stats', 
                     module_type: <?php echo $module_type; ?>,
-                    project_id: <?php echo $project_id; ?>
+                    project_id: <?php echo $project_id; ?>,
+                    start_date: startDate,
+                    end_date: endDate
                 },
                 success: function(response) {
                     try {
                         const res = JSON.parse(response);
                         if (res.status === 'success') {
                             const d = res.data;
-                            $('#dashIncome').text(d.total_income.toLocaleString() + ' ฿');
-                            $('#dashExpense').text(d.total_expense.toLocaleString() + ' ฿');
+                            $('#dashIncome').text(d.total_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
+                            $('#dashExpense').text(d.total_expense.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                             const profitSign = d.total_profit >= 0 ? '+' : '';
-                            $('#dashProfit').text(profitSign + d.total_profit.toLocaleString() + ' ฿');
+                            $('#dashProfit').text(profitSign + d.total_profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                             $('#transCount').text(d.total_count + ' รายการ');
 
-                            if (d.total_count >= 0) {
-                                let expenseHtml = '';
-                                if (d.categories_summary.expense.length > 0) {
-                                    d.categories_summary.expense.forEach(c => {
-                                        expenseHtml += `
-                                            <div class="bg-white p-4 rounded-2xl border border-red-50 shadow-sm mb-3">
-                                                <div class="flex items-center gap-3 mb-2">
-                                                    <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
-                                                        ${c.icon}
-                                                    </div>
-                                                    <div class="font-bold text-gray-800">${c.name}</div>
+                            let expenseHtml = '';
+                            if (d.categories_summary && d.categories_summary.expense && d.categories_summary.expense.length > 0) {
+                                d.categories_summary.expense.forEach(c => {
+                                    expenseHtml += `
+                                        <div class="bg-white p-4 rounded-2xl border border-red-50 shadow-sm mb-3">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
+                                                    ${c.icon}
                                                 </div>
-                                                <div class="text-right">
-                                                    <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายจ่ายรวม</p>
-                                                    <p class="text-lg font-bold text-red-600">-${c.total.toLocaleString()} ฿</p>
-                                                </div>
+                                                <div class="font-bold text-gray-800">${c.name}</div>
                                             </div>
-                                        `;
-                                    });
-                                }
-                                $('#expenseCatList').html(expenseHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายจ่าย</div>');
-
-                                let incomeHtml = '';
-                                if (d.categories_summary.income.length > 0) {
-                                    d.categories_summary.income.forEach(c => {
-                                        incomeHtml += `
-                                            <div class="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm mb-3">
-                                                <div class="flex items-center gap-3 mb-2">
-                                                    <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
-                                                        ${c.icon}
-                                                    </div>
-                                                    <div class="font-bold text-gray-800">${c.name}</div>
-                                                </div>
-                                                <div class="text-right">
-                                                    <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายรับรวม</p>
-                                                    <p class="text-lg font-bold text-emerald-600">+${c.total.toLocaleString()} ฿</p>
-                                                </div>
+                                            <div class="text-right">
+                                                <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายจ่ายรวม</p>
+                                                <p class="text-lg font-bold text-red-600">-${c.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿</p>
                                             </div>
-                                        `;
-                                    });
-                                }
-                                $('#incomeCatList').html(incomeHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายรับ</div>');
+                                        </div>
+                                    `;
+                                });
                             }
+                            $('#expenseCatList').html(expenseHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายจ่าย</div>');
+
+                            let incomeHtml = '';
+                            if (d.categories_summary && d.categories_summary.income && d.categories_summary.income.length > 0) {
+                                d.categories_summary.income.forEach(c => {
+                                    incomeHtml += `
+                                        <div class="bg-white p-4 rounded-2xl border border-emerald-50 shadow-sm mb-3">
+                                            <div class="flex items-center gap-3 mb-2">
+                                                <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-xl">
+                                                    ${c.icon}
+                                                </div>
+                                                <div class="font-bold text-gray-800">${c.name}</div>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="text-[10px] text-gray-400 uppercase tracking-wider">รายรับรวม</p>
+                                                <p class="text-lg font-bold text-emerald-600">+${c.total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿</p>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                            }
+                            $('#incomeCatList').html(incomeHtml || '<div class="text-center py-10 text-gray-400 italic">ไม่มีข้อมูลรายรับ</div>');
                         }
                     } catch (e) { console.error(e); }
                 }
             });
         }
 
-        function loadTransactions() {
+        function loadTransactions(startDate = '', endDate = '') {
+            $('#transactionList').html('<div class="text-center py-10 text-gray-400 italic">กำลังโหลดข้อมูล...</div>');
             $.ajax({
                 url: 'transaction_action.php',
                 type: 'GET',
                 data: { 
                     action: 'list', 
                     module_type: <?php echo $module_type; ?>,
-                    search: '', // We can add filtering here if needed
-                    project_id: <?php echo $project_id; ?> // Need to update action to support this
+                    project_id: <?php echo $project_id; ?>,
+                    start_date: startDate,
+                    end_date: endDate
                 },
                 success: function(response) {
                     try {
@@ -265,14 +394,11 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
         }
 
         function renderTransactionList(data) {
-            // Filter data by project_id if the action doesn't support it yet
-            const filteredData = data.filter(t => t.project_id == <?php echo $project_id; ?>);
-            
             let html = '';
-            if (filteredData.length === 0) {
-                html = '<div class="text-center py-20 text-gray-400 italic">ยังไม่มีข้อมูลรายการ</div>';
+            if (!data || data.length === 0) {
+                html = '<div class="text-center py-20 text-gray-400 italic">ยังไม่มีข้อมูลรายการในช่วงเวลานี้</div>';
             } else {
-                filteredData.forEach(t => {
+                data.forEach(t => {
                     const amountClass = t.direction === 'income' ? 'text-emerald-600' : 'text-red-600';
                     const amountPrefix = t.direction === 'income' ? '+' : '-';
                     html += `
@@ -280,7 +406,7 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
                             <div class="flex flex-wrap items-center justify-between gap-4">
                                 <div class="flex items-center gap-4 flex-1 min-w-[200px]">
                                     <div class="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-2xl shadow-sm">
-                                        ${t.category_icon}
+                                        ${t.category_icon || '📋'}
                                     </div>
                                     <div>
                                         <div class="font-bold text-gray-800">${t.category_name}</div>
@@ -289,7 +415,7 @@ $header_bg = $module_type == 1 ? '#a88c5a' : '#10b981';
                                 </div>
                                 <div class="text-right min-w-[120px]">
                                     <p class="text-xs text-gray-400 mb-1">${t.transaction_date}</p>
-                                    <p class="text-lg font-bold ${amountClass}">${amountPrefix}${parseFloat(t.amount).toLocaleString()} ฿</p>
+                                    <p class="text-lg font-bold ${amountClass}">${amountPrefix}${parseFloat(t.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ฿</p>
                                 </div>
                             </div>
                         </div>

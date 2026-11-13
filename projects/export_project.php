@@ -31,11 +31,23 @@ if (!$project) {
     die("ไม่พบข้อมูลโครงการ");
 }
 
+$start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? mysqli_real_escape_string($conn, $_GET['start_date']) : '';
+$end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? mysqli_real_escape_string($conn, $_GET['end_date']) : '';
+
+$date_where = "";
+if (!empty($start_date) && !empty($end_date)) {
+    $date_where = " AND t.transaction_date BETWEEN '$start_date' AND '$end_date'";
+} elseif (!empty($start_date)) {
+    $date_where = " AND t.transaction_date >= '$start_date'";
+} elseif (!empty($end_date)) {
+    $date_where = " AND t.transaction_date <= '$end_date'";
+}
+
 // Fetch all transactions
 $sql_t = "SELECT t.*, c.name as category_name, c.direction 
           FROM transactions t
           LEFT JOIN categories c ON t.category_id = c.id
-          WHERE t.project_id = $project_id AND t.module_type = $module_type AND t.company_id = $company_id
+          WHERE t.project_id = $project_id AND t.module_type = $module_type AND t.company_id = $company_id $date_where
           ORDER BY t.transaction_date ASC, t.id ASC";
 $result_t = mysqli_query($conn, $sql_t);
 
@@ -71,8 +83,8 @@ while ($row = mysqli_fetch_assoc($result_t)) {
 }
 $profit = $total_income - $total_expense;
 
-$start_date_str = $min_date ? date('d/m/Y', $min_date) : '-';
-$end_date_str = $max_date ? date('d/m/Y', $max_date) : '-';
+$start_date_str = $start_date ? date('d/m/Y', strtotime($start_date)) : ($min_date ? date('d/m/Y', $min_date) : '-');
+$end_date_str = $end_date ? date('d/m/Y', strtotime($end_date)) : ($max_date ? date('d/m/Y', $max_date) : '-');
 $report_date = date('d/m/Y');
 $project_year = date('Y', strtotime($project['created_at'])) + 543;
 

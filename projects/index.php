@@ -207,7 +207,41 @@ $view = $_GET['view'] ?? 'list';
         <?php if ($view == 'dashboard'): ?>
             <!-- Dashboard View -->
             <div class="mb-10">
-                <h2 class="text-2xl font-bold text-[#4a3f35] mb-6">สรุปภาพรวมโปรเจค</h2>
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-[#4a3f35]">สรุปภาพรวมโปรเจค</h2>
+                        <p class="text-xs text-[#7a6b5d] mt-1" id="dashDateBadge">📅 แสดงข้อมูลทั้งหมด</p>
+                    </div>
+
+                    <!-- Date Range Filter Bar -->
+                    <div class="bg-white/95 backdrop-blur-sm p-2.5 rounded-2xl border border-[#dcd7c5] shadow-sm flex flex-wrap items-center gap-2">
+                        <!-- Quick Buttons -->
+                        <div class="flex items-center gap-1 bg-[#f6f3e9] p-1 rounded-xl border border-[#e1dcc8] text-xs">
+                            <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-[#7a6b5d] hover:bg-white hover:text-[#4a3f35] transition-all" onclick="setDashboardDateRange('today')">วันนี้</button>
+                            <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-[#7a6b5d] hover:bg-white hover:text-[#4a3f35] transition-all" onclick="setDashboardDateRange('7days')">7 วัน</button>
+                            <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-[#7a6b5d] hover:bg-white hover:text-[#4a3f35] transition-all" onclick="setDashboardDateRange('this_month')">เดือนนี้</button>
+                            <button type="button" class="dash-quick-btn px-2.5 py-1 rounded-lg font-medium text-[#7a6b5d] hover:bg-white hover:text-[#4a3f35] transition-all" onclick="setDashboardDateRange('this_year')">ปีนี้</button>
+                            <button type="button" class="dash-quick-btn active px-2.5 py-1 rounded-lg font-bold bg-white text-[#a88c5a] shadow-xs transition-all" onclick="setDashboardDateRange('all')">ทั้งหมด</button>
+                        </div>
+
+                        <!-- Date Inputs -->
+                        <div class="flex items-center gap-1.5 text-xs">
+                            <input type="date" id="dashStartDate" class="bg-[#f6f3e9] border border-[#dcd7c5] text-[#4a3f35] rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#a88c5a] text-xs cursor-pointer">
+                            <span class="text-[#7a6b5d] font-bold">ถึง</span>
+                            <input type="date" id="dashEndDate" class="bg-[#f6f3e9] border border-[#dcd7c5] text-[#4a3f35] rounded-xl px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#a88c5a] text-xs cursor-pointer">
+                        </div>
+
+                        <!-- Apply & Reset Buttons -->
+                        <button type="button" onclick="applyDashboardDateFilter()" class="bg-[#a88c5a] hover:bg-[#947a4d] text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            กรองข้อมูล
+                        </button>
+                        <button type="button" onclick="resetDashboardDateFilter()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-2.5 py-1.5 rounded-xl font-medium text-xs transition-all" title="ล้างตัวกรอง">
+                            ล้างค่า
+                        </button>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div class="stat-card border-l-4 border-blue-500">
                         <p class="text-sm text-gray-500 mb-1 font-bold">มูลค่ารวมโครงการ</p>
@@ -238,21 +272,111 @@ $view = $_GET['view'] ?? 'list';
             </div>
 
             <script>
+                let currentStartDate = '';
+                let currentEndDate = '';
+
                 $(document).ready(function() {
                     loadDashboardStats();
                 });
 
-                function loadDashboardStats() {
+                function formatThaiDate(dateStr) {
+                    if (!dateStr) return '';
+                    const parts = dateStr.split('-');
+                    if (parts.length === 3) {
+                        return `${parts[2]}/${parts[1]}/${parseInt(parts[0]) + 543}`;
+                    }
+                    return dateStr;
+                }
+
+                function setDashboardDateRange(range) {
+                    const today = new Date();
+                    let start = '';
+                    let end = '';
+
+                    const formatDate = (d) => {
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${day}`;
+                    };
+
+                    if (range === 'today') {
+                        start = formatDate(today);
+                        end = formatDate(today);
+                    } else if (range === '7days') {
+                        const past7 = new Date();
+                        past7.setDate(today.getDate() - 6);
+                        start = formatDate(past7);
+                        end = formatDate(today);
+                    } else if (range === 'this_month') {
+                        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                        start = formatDate(firstDay);
+                        end = formatDate(lastDay);
+                    } else if (range === 'this_year') {
+                        start = `${today.getFullYear()}-01-01`;
+                        end = `${today.getFullYear()}-12-31`;
+                    } else if (range === 'all') {
+                        start = '';
+                        end = '';
+                    }
+
+                    $('#dashStartDate').val(start);
+                    $('#dashEndDate').val(end);
+
+                    $('.dash-quick-btn').removeClass('active bg-white text-[#a88c5a] font-bold shadow-xs').addClass('font-medium text-[#7a6b5d]');
+                    $(`.dash-quick-btn[onclick="setDashboardDateRange('${range}')"]`).addClass('active bg-white text-[#a88c5a] font-bold shadow-xs').removeClass('font-medium text-[#7a6b5d]');
+
+                    applyDashboardDateFilter(false);
+                }
+
+                function applyDashboardDateFilter(manual = true) {
+                    const start = $('#dashStartDate').val();
+                    const end = $('#dashEndDate').val();
+
+                    if (manual) {
+                        $('.dash-quick-btn').removeClass('active bg-white text-[#a88c5a] font-bold shadow-xs').addClass('font-medium text-[#7a6b5d]');
+                        if (!start && !end) {
+                            $('.dash-quick-btn[onclick="setDashboardDateRange(\'all\')"]').addClass('active bg-white text-[#a88c5a] font-bold shadow-xs').removeClass('font-medium text-[#7a6b5d]');
+                        }
+                    }
+
+                    if (start && end) {
+                        $('#dashDateBadge').html(`📅 แสดงข้อมูลระหว่างวันที่ <span class="font-bold text-[#a88c5a]">${formatThaiDate(start)}</span> ถึง <span class="font-bold text-[#a88c5a]">${formatThaiDate(end)}</span>`);
+                    } else if (start) {
+                        $('#dashDateBadge').html(`📅 แสดงข้อมูลตั้งแต่วันที่ <span class="font-bold text-[#a88c5a]">${formatThaiDate(start)}</span> เป็นต้นไป`);
+                    } else if (end) {
+                        $('#dashDateBadge').html(`📅 แสดงข้อมูลจนถึงวันที่ <span class="font-bold text-[#a88c5a]">${formatThaiDate(end)}</span>`);
+                    } else {
+                        $('#dashDateBadge').text('📅 แสดงข้อมูลทั้งหมด');
+                    }
+
+                    currentStartDate = start;
+                    currentEndDate = end;
+                    loadDashboardStats(start, end);
+                }
+
+                function resetDashboardDateFilter() {
+                    setDashboardDateRange('all');
+                }
+
+                function loadDashboardStats(startDate = '', endDate = '') {
+                    $('#dashContent').html('<p class="text-gray-400 italic">กำลังโหลดข้อมูล...</p>');
                     $.ajax({
                         url: 'transaction_action.php',
                         type: 'GET',
-                        data: { action: 'get_dashboard_stats', module_type: 1 },
+                        data: { 
+                            action: 'get_dashboard_stats', 
+                            module_type: 1,
+                            start_date: startDate,
+                            end_date: endDate
+                        },
                         success: function(response) {
                             try {
                                 const res = JSON.parse(response);
                                 if (res.status === 'success') {
                                     const d = res.data;
-                                    const pending = d.total_project_value - d.total_income;
+                                    const pending = d.total_pending_income !== undefined ? d.total_pending_income : (d.total_project_value - d.total_income);
                                     $('#dashProjectValue').text(d.total_project_value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                                     $('#dashIncome').text(d.total_income.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');
                                     $('#dashPending').text(pending.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ฿');

@@ -41,8 +41,21 @@ mysqli_query($conn, "ALTER TABLE transactions CONVERT TO CHARACTER SET utf8mb4 C
 if ($action == 'list') {
     $module_type = (int)$_GET['module_type'];
     $search = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
+    $project_id = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+    $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? mysqli_real_escape_string($conn, $_GET['start_date']) : '';
+    $end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? mysqli_real_escape_string($conn, $_GET['end_date']) : '';
     
     $where = "WHERE t.module_type = $module_type AND t.company_id = $company_id";
+    if ($project_id > 0) {
+        $where .= " AND t.project_id = $project_id";
+    }
+    if (!empty($start_date) && !empty($end_date)) {
+        $where .= " AND t.transaction_date BETWEEN '$start_date' AND '$end_date'";
+    } elseif (!empty($start_date)) {
+        $where .= " AND t.transaction_date >= '$start_date'";
+    } elseif (!empty($end_date)) {
+        $where .= " AND t.transaction_date <= '$end_date'";
+    }
     if ($search != '') {
         $where .= " AND (p.project_name LIKE '%$search%' OR c.name LIKE '%$search%' OR t.note LIKE '%$search%')";
     }
@@ -169,10 +182,19 @@ if ($action == 'get_form_data') {
 if ($action == 'get_dashboard_stats') {
     $module_type = (int)$_GET['module_type'];
     $project_id = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+    $start_date = isset($_GET['start_date']) && !empty($_GET['start_date']) ? mysqli_real_escape_string($conn, $_GET['start_date']) : '';
+    $end_date = isset($_GET['end_date']) && !empty($_GET['end_date']) ? mysqli_real_escape_string($conn, $_GET['end_date']) : '';
     
     $where = "WHERE t.module_type = $module_type AND t.company_id = $company_id";
     if ($project_id > 0) {
         $where .= " AND t.project_id = $project_id";
+    }
+    if (!empty($start_date) && !empty($end_date)) {
+        $where .= " AND t.transaction_date BETWEEN '$start_date' AND '$end_date'";
+    } elseif (!empty($start_date)) {
+        $where .= " AND t.transaction_date >= '$start_date'";
+    } elseif (!empty($end_date)) {
+        $where .= " AND t.transaction_date <= '$end_date'";
     }
     
     $sql = "SELECT 
@@ -199,6 +221,21 @@ if ($action == 'get_dashboard_stats') {
     $pv_res = mysqli_query($conn, $pv_sql);
     $pv_row = mysqli_fetch_assoc($pv_res);
     $stats['total_project_value'] = (float)($pv_row['total_project_value'] ?? 0);
+
+    // Get all-time income for calculating actual pending income balance
+    $all_inc_where = "WHERE t.module_type = $module_type AND t.company_id = $company_id";
+    if ($project_id > 0) {
+        $all_inc_where .= " AND t.project_id = $project_id";
+    }
+    $all_inc_sql = "SELECT SUM(t.amount) as all_time_income 
+                    FROM transactions t 
+                    LEFT JOIN categories c ON t.category_id = c.id 
+                    $all_inc_where AND c.direction = 'income'";
+    $all_inc_res = mysqli_query($conn, $all_inc_sql);
+    $all_inc_row = mysqli_fetch_assoc($all_inc_res);
+    $all_time_income = (float)($all_inc_row['all_time_income'] ?? 0);
+    $stats['all_time_income'] = $all_time_income;
+    $stats['total_pending_income'] = max(0, $stats['total_project_value'] - $all_time_income);
     
     // Get summary by category
     $cat_sql = "SELECT c.name, c.direction, c.icon, SUM(t.amount) as total
